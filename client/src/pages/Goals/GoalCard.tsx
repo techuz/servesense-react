@@ -1,7 +1,6 @@
 import { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Badge } from '@/components/primitives/Badge';
-import { Switch } from '@/components/primitives/Switch';
 import { fadeUp, transitions } from '@/lib/motion';
 import { cn } from '@/lib/cn';
 import {
@@ -16,8 +15,6 @@ import type { MenuItem } from '@/lib/mock/menu';
 interface GoalCardProps {
   goal: SalesGoal;
   menuItems: MenuItem[];
-  onEdit: () => void;
-  onToggle: () => void;
 }
 
 const fmtRange = (start: string, end: string) => {
@@ -27,7 +24,7 @@ const fmtRange = (start: string, end: string) => {
   return start === end ? s : `${s} → ${e}`;
 };
 
-export const GoalCard = ({ goal, menuItems, onEdit, onToggle }: GoalCardProps) => {
+export const GoalCard = ({ goal, menuItems }: GoalCardProps) => {
   const status = statusOf(goal);
   const pct = progressOf(goal);
   const remaining = daysRemaining(goal);
@@ -56,17 +53,8 @@ export const GoalCard = ({ goal, menuItems, onEdit, onToggle }: GoalCardProps) =
       layout
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -8, scale: 0.98 }}
       transition={transitions.base}
-      whileHover={{ y: -2 }}
     >
-      <button
-        type="button"
-        className="ss-goal-card__hit"
-        onClick={onEdit}
-        aria-label={`Edit ${goal.name}`}
-      />
-
       <header className="ss-goal-card__head">
         <div className="ss-goal-card__title-block">
           <div className="ss-goal-card__badges">
@@ -80,16 +68,13 @@ export const GoalCard = ({ goal, menuItems, onEdit, onToggle }: GoalCardProps) =
                   ? 'Starts soon'
                   : 'Ended'}
             </Badge>
+            {!goal.isEnabled && (
+              <Badge tone="neutral" subtle>
+                Paused in document
+              </Badge>
+            )}
           </div>
           <h3 className="ss-goal-card__name">{goal.name}</h3>
-        </div>
-        <div className="ss-goal-card__switch" onClick={(e) => e.stopPropagation()}>
-          <Switch
-            checked={goal.isEnabled}
-            onChange={onToggle}
-            size="sm"
-            aria-label={goal.isEnabled ? 'Pause goal' : 'Resume goal'}
-          />
         </div>
       </header>
 
@@ -131,15 +116,11 @@ export const GoalCard = ({ goal, menuItems, onEdit, onToggle }: GoalCardProps) =
             </span>
           )}
           {targetNames.length === 0 && (
-            <span className="ss-goal-card__items-empty">No items selected</span>
+            <span className="ss-goal-card__items-empty">No items linked</span>
           )}
         </div>
         <span className="ss-goal-card__range">{fmtRange(goal.startDate, goal.endDate)}</span>
       </footer>
-
-      <span className="ss-goal-card__edit-hint" aria-hidden="true">
-        Edit →
-      </span>
     </motion.article>
   );
 };

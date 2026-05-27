@@ -1,6 +1,5 @@
 import { motion } from 'framer-motion';
 import { Badge } from '@/components/primitives/Badge';
-import { Textarea } from '@/components/primitives/Textarea';
 import { PhraseList } from '@/components/primitives/PhraseList';
 import { fadeUp } from '@/lib/motion';
 import type { CommAspectData, CommAspectMeta } from '@/lib/mock/communication';
@@ -9,10 +8,9 @@ import { AspectIcon } from './AspectIcon';
 interface Props {
   meta: CommAspectMeta;
   data: CommAspectData;
-  onChange: (patch: Partial<CommAspectData>) => void;
 }
 
-export const AspectCard = ({ meta, data, onChange }: Props) => {
+export const AspectCard = ({ meta, data }: Props) => {
   return (
     <motion.article className="ss-comm-aspect" variants={fadeUp} layout>
       <header className="ss-comm-aspect__head">
@@ -30,40 +28,40 @@ export const AspectCard = ({ meta, data, onChange }: Props) => {
         </div>
       </header>
 
-      <Textarea
-        label="Standard"
-        value={data.description}
-        onChange={(e) => onChange({ description: e.target.value })}
-        rows={3}
-      />
+      {data.description && (
+        <p className="ss-comm-aspect__standard">{data.description}</p>
+      )}
 
       <div className="ss-comm-aspect__lists">
-        <PhraseList
-          label="Principles"
-          helper="What good looks like — signals the AI rewards."
-          phrases={data.principles}
-          onChange={(next) => onChange({ principles: next })}
-          tone="do"
-          placeholder="e.g. Speak slightly slower than the guest"
-        />
-        <PhraseList
-          label="Red flags"
-          helper="Patterns the AI flags as deviations during the live session."
-          phrases={data.redFlags}
-          onChange={(next) => onChange({ redFlags: next })}
-          tone="avoid"
-          placeholder="e.g. Sighing audibly when busy"
-        />
+        {data.principles.length > 0 && (
+          <PhraseList
+            label="Principles"
+            helper="What good looks like — signals the AI rewards."
+            phrases={data.principles}
+            tone="do"
+            readOnly
+          />
+        )}
+        {data.redFlags.length > 0 && (
+          <PhraseList
+            label="Red flags"
+            helper="Patterns the AI flags as deviations during the live session."
+            phrases={data.redFlags}
+            tone="avoid"
+            readOnly
+          />
+        )}
       </div>
 
-      <PhraseList
-        label="Example phrases"
-        helper="Sample lines the AI can suggest in real time."
-        phrases={data.examplePhrases}
-        onChange={(next) => onChange({ examplePhrases: next })}
-        tone="quote"
-        placeholder='e.g. "Of course, let me take care of that right away."'
-      />
+      {data.examplePhrases.length > 0 && (
+        <PhraseList
+          label="Example phrases"
+          helper="Sample lines the AI can suggest in real time."
+          phrases={data.examplePhrases}
+          tone="quote"
+          readOnly
+        />
+      )}
     </motion.article>
   );
 };

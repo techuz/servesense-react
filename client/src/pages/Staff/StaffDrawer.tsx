@@ -9,23 +9,20 @@ import {
   emptyStaff,
   initialsOf,
   avatarTintFor,
-  relativeTime,
   roleLabels,
   type StaffMember,
   type StaffRole,
 } from '@/lib/mock/staff';
-import type { Outlet } from '@/lib/mock/restaurant';
+import { PRIMARY_OUTLET_ID } from '@/lib/mock/restaurant';
 import './StaffDrawer.css';
 
 interface StaffDrawerProps {
   open: boolean;
   member: StaffMember | null;
-  outlets: Outlet[];
   onClose: () => void;
   onSave: (member: StaffMember) => void;
   onDelete?: (id: string) => void;
   onToggleStatus?: (id: string) => void;
-  onResendInvite?: (id: string) => void;
 }
 
 const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -34,27 +31,24 @@ const phoneRe = /^[+0-9\s()-]{7,}$/;
 export const StaffDrawer = ({
   open,
   member,
-  outlets,
   onClose,
   onSave,
   onDelete,
   onToggleStatus,
-  onResendInvite,
 }: StaffDrawerProps) => {
   const { notify } = useToast();
-  const defaultOutletId = outlets[0]?.id ?? '';
   const [draft, setDraft] = useState<StaffMember>(
-    () => member ?? emptyStaff(defaultOutletId),
+    () => member ?? emptyStaff(PRIMARY_OUTLET_ID),
   );
   const [touched, setTouched] = useState<Partial<Record<keyof StaffMember, boolean>>>({});
   const isEdit = !!member;
 
   useEffect(() => {
     if (open) {
-      setDraft(member ?? emptyStaff(defaultOutletId));
+      setDraft(member ?? emptyStaff(PRIMARY_OUTLET_ID));
       setTouched({});
     }
-  }, [open, member, defaultOutletId]);
+  }, [open, member]);
 
   const update = (patch: Partial<StaffMember>) => setDraft((d) => ({ ...d, ...patch }));
   const markTouched = (key: keyof StaffMember) => setTouched((t) => ({ ...t, [key]: true }));
@@ -66,13 +60,12 @@ export const StaffDrawer = ({
     else if (!emailRe.test(draft.email.trim())) e.email = 'Enter a valid email';
     if (!draft.phone.trim()) e.phone = 'WhatsApp number is required';
     else if (!phoneRe.test(draft.phone.trim())) e.phone = 'Enter a valid phone number';
-    if (!draft.outletId) e.outletId = 'Assign an outlet';
     return e;
   }, [draft]);
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
-    setTouched({ name: true, email: true, phone: true, outletId: true });
+    setTouched({ name: true, email: true, phone: true });
     if (Object.keys(errors).length > 0) {
       notify({
         tone: 'error',
@@ -85,18 +78,17 @@ export const StaffDrawer = ({
     onClose();
   };
 
-  const isPending = isEdit && member?.inviteStatus === 'pending';
   const tint = avatarTintFor(draft.id);
 
   return (
     <Drawer
       open={open}
       onClose={onClose}
-      title={isEdit ? 'Edit staff' : 'Invite staff'}
+      title={isEdit ? 'Edit staff' : 'Add staff'}
       description={
         isEdit
-          ? 'Update details, toggle access, or resend the invite.'
-          : 'Send an invite by email + WhatsApp. They\'ll set their PIN on first sign-in.'
+          ? 'Update contact details, role, or active state.'
+          : "Add a new team member. They'll appear in performance scoring once the AI service is live."
       }
       size="md"
       footer={
@@ -118,7 +110,7 @@ export const StaffDrawer = ({
             Cancel
           </Button>
           <Button type="submit" form="ss-staff-form" variant="primary">
-            {isEdit ? 'Save changes' : 'Send invite'}
+            {isEdit ? 'Save changes' : 'Add staff'}
           </Button>
         </>
       }
@@ -143,30 +135,10 @@ export const StaffDrawer = ({
               {draft.name.trim() || 'New staff member'}
             </span>
             <span className="ss-staff-form__identity-sub">
-              {roleLabels[draft.role]} ·{' '}
-              {outlets.find((o) => o.id === draft.outletId)?.name ?? 'No outlet'}
+              {roleLabels[draft.role]}
             </span>
           </div>
         </div>
-
-        {/* --- Invite status banner ------------------------------ */}
-        {isPending && (
-          <div className="ss-staff-form__banner ss-staff-form__banner--pending">
-            <div className="ss-staff-form__banner-text">
-              <strong>Invite still pending.</strong> Sent{' '}
-              {relativeTime(member!.invitedAt)} — they haven't signed in yet.
-            </div>
-            {onResendInvite && (
-              <Button
-                type="button"
-                variant="secondary"
-                onClick={() => onResendInvite(draft.id)}
-              >
-                Resend invite
-              </Button>
-            )}
-          </div>
-        )}
 
         {/* --- Basics -------------------------------------------- */}
         <Input
@@ -202,27 +174,18 @@ export const StaffDrawer = ({
           />
         </div>
 
-        <div className="ss-staff-form__row">
-          <Select
-            label="Role"
-            value={draft.role}
-            onChange={(e) => update({ role: e.target.value as StaffRole })}
-            options={(Object.keys(roleLabels) as StaffRole[]).map((r) => ({
-              value: r,
-              label: roleLabels[r],
-            }))}
-          />
-          <Select
-            label="Outlet"
-            value={draft.outletId}
-            onChange={(e) => update({ outletId: e.target.value })}
-            options={outlets.map((o) => ({ value: o.id, label: o.name }))}
-            error={touched.outletId ? errors.outletId : undefined}
-          />
-        </div>
+        <Select
+          label="Role"
+          value={draft.role}
+          onChange={(e) => update({ role: e.target.value as StaffRole })}
+          options={(Object.keys(roleLabels) as StaffRole[]).map((r) => ({
+            value: r,
+            label: roleLabels[r],
+          }))}
+        />
 
-        {/* --- Performance preview (edit + accepted only) -------- */}
-        {isEdit && !isPending && draft.sessionCount > 0 && (
+        {/* --- Performance preview (edit + has sessions only) ---- */}
+        {isEdit && draft.sessionCount > 0 && (
           <div className="ss-staff-form__perf">
             <div className="ss-staff-form__perf-label">Performance preview</div>
             <div className="ss-staff-form__perf-tiles">

@@ -1,0 +1,175 @@
+.ss-orient-upload {
+  width: 100%;
+}
+
+/* Both variants get vertical breathing room so the drop card never sits
+   flush against surrounding chrome — the page header above (empty state)
+   or the drawer header/footer (replace flow). */
+.ss-orient-upload--empty {
+  padding: var(--sp-4) 0 var(--sp-6);
+}
+
+.ss-orient-upload--replace {
+  padding: var(--sp-3) 0 var(--sp-4);
+}
+
+/* ---- drop zone ---------------------------------------------------------- */
+.ss-orient-upload__drop {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-4);
+  padding: var(--sp-10) var(--sp-6);
+  text-align: center;
+  border: 2px dashed color-mix(in srgb, var(--ss-green-700) 25%, transparent);
+  border-radius: var(--radius-xl);
+  background:
+    radial-gradient(ellipse 80% 60% at 50% 0%, rgba(58, 107, 76, 0.04), transparent 70%),
+    var(--color-card);
+  box-shadow: var(--shadow-card);
+  cursor: pointer;
+  transition:
+    border-color var(--duration-base) var(--ease-out),
+    background var(--duration-base) var(--ease-out),
+    transform var(--duration-base) var(--ease-out);
+}
+
+.ss-orient-upload__drop:hover {
+  border-color: color-mix(in srgb, var(--ss-green-700) 45%, transparent);
+}
+
+.ss-orient-upload__drop--over {
+  border-color: var(--ss-green-700);
+  border-style: solid;
+  background:
+    radial-gradient(ellipse 80% 60% at 50% 0%, rgba(58, 107, 76, 0.1), transparent 70%),
+    var(--color-card);
+  transform: scale(1.005);
+}
+
+.ss-orient-upload--replace .ss-orient-upload__drop {
+  padding: var(--sp-10) var(--sp-5);
+  gap: var(--sp-3);
+}
+
+.ss-orient-upload__icon {
+  display: grid;
+  place-items: center;
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 30% 30%, rgba(232, 199, 123, 0.5), transparent 70%),
+    color-mix(in srgb, var(--ss-green-700) 12%, transparent);
+  color: var(--ss-green-700);
+}
+
+.ss-orient-upload__copy {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+
+.ss-orient-upload__copy h3 {
+  font-family: var(--font-serif);
+  font-size: var(--fs-section);
+  color: var(--ss-green-900);
+  letter-spacing: var(--tracking-tighter);
+  line-height: var(--lh-tight);
+}
+
+.ss-orient-upload__copy p {
+  font-size: var(--fs-sm);
+  color: var(--color-text-muted);
+  font-weight: var(--fw-muted);
+}
+
+.ss-orient-upload__hint {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--radius-pill);
+  background: var(--ss-cream-50);
+  color: var(--ss-warm-gray-600);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-medium);
+  max-width: 64ch;
+}
+
+.ss-orient-upload__hint-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--ss-green-500);
+  box-shadow: 0 0 0 4px rgba(90, 154, 110, 0.18);
+  flex-shrink: 0;
+}
+
+/* ---- processing --------------------------------------------------------- */
+.ss-orient-upload__processing {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-10) var(--sp-6);
+  text-align: center;
+  border-radius: var(--radius-xl);
+  background: var(--color-card);
+  border: var(--border-card);
+  box-shadow: var(--shadow-card);
+}
+
+.ss-orient-upload--replace .ss-orient-upload__processing {
+  padding: var(--sp-8) var(--sp-5);
+}
+
+.ss-orient-upload__processing-visual {
+  position: relative;
+  width: 84px;
+  height: 84px;
+  display: grid;
+  place-items: center;
+  margin-bottom: var(--sp-3);
+}
+
+.ss-orient-upload__ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  border-top-color: var(--ss-green-700);
+  border-right-color: var(--ss-gold-500);
+}
+
+.ss-orient-upload__doc {
+  color: var(--ss-green-700);
+}
+
+.ss-orient-upload__processing h3 {
+  font-family: var(--font-serif);
+  font-size: var(--fs-section);
+  color: var(--ss-green-900);
+  letter-spacing: var(--tracking-tighter);
+  line-height: var(--lh-tight);
+}
+
+.ss-orient-upload__processing p {
+  font-size: var(--fs-sm);
+  color: var(--color-text-muted);
+  font-weight: var(--fw-muted);
+  max-width: 50ch;
+}
+
+.ss-orient-upload__steps {
+  list-style: none;
+  padding: 0;
+  margin-top: var(--sp-2);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  font-size: var(--fs-xs);
+  color: var(--ss-warm-gray-500);
+  font-weight: var(--fw-medium);
+  letter-spacing: var(--tracking-wide);
+}

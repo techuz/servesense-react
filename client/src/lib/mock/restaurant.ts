@@ -39,7 +39,7 @@ const seedProfile: RestaurantProfile = {
   name: 'Lumière Bistro',
   tagline: 'Modern European, served with intention.',
   description:
-    'A 78-seat neighbourhood bistro spanning two outlets — wood-fired mains, natural wines, and a service standard worth talking about.',
+    'A 78-seat neighbourhood bistro — wood-fired mains, natural wines, and a service standard worth talking about.',
   cuisine: 'Modern European',
   logoUrl: null,
   contactEmail: 'hello@lumierebistro.example',
@@ -49,9 +49,14 @@ const seedProfile: RestaurantProfile = {
   currency: 'INR',
 };
 
+/* Phase 1 ships single-outlet per manager. The data model still carries
+ * outletId on staff and sessions so multi-outlet support is non-breaking
+ * when it lands later, but the UI never exposes multi-outlet management. */
+export const PRIMARY_OUTLET_ID = 'outlet_001';
+
 const seedOutlets: Outlet[] = [
   {
-    id: 'outlet_001',
+    id: PRIMARY_OUTLET_ID,
     name: 'Lumière — Indiranagar',
     addressLine1: '12, 100ft Road',
     addressLine2: 'HAL 2nd Stage',
@@ -60,18 +65,6 @@ const seedOutlets: Outlet[] = [
     country: 'India',
     postalCode: '560038',
     contactPhone: '+91 80 4123 9900',
-    status: 'active',
-  },
-  {
-    id: 'outlet_002',
-    name: 'Lumière — Koramangala',
-    addressLine1: '5/2, 80ft Road',
-    addressLine2: '4th Block',
-    city: 'Bengaluru',
-    state: 'Karnataka',
-    country: 'India',
-    postalCode: '560034',
-    contactPhone: '+91 80 4156 1100',
     status: 'active',
   },
 ];
@@ -114,40 +107,50 @@ export function useRestaurantProfile() {
 }
 
 /* --- Outlets -------------------------------------------------------------- */
+/**
+ * Phase 1 = single outlet per manager. `useOutlets` still returns an array
+ * (sessions/staff continue to reference outletId), but the UI only ever
+ * exposes the primary outlet via `usePrimaryOutlet`. When multi-outlet
+ * support lands, restore the upsert/remove/toggle actions and the array
+ * is already in the right shape.
+ */
 export function useOutlets() {
-  const [outlets, setOutlets] = useState<Outlet[]>(() => read(OUTLETS_KEY, seedOutlets));
+  const [outlets] = useState<Outlet[]>(() => {
+    const stored = read<Outlet[]>(OUTLETS_KEY, seedOutlets);
+    // Migration: prior versions seeded two outlets. Collapse to the primary.
+    if (stored.length > 1) {
+      const primary = stored.find((o) => o.id === PRIMARY_OUTLET_ID) ?? stored[0];
+      write(OUTLETS_KEY, [primary]);
+      return [primary];
+    }
+    return stored;
+  });
+
+  return { outlets };
+}
+
+/** Convenience hook for the primary outlet + inline editing. */
+export function usePrimaryOutlet() {
+  const [outlets, setOutlets] = useState<Outlet[]>(() => {
+    const stored = read<Outlet[]>(OUTLETS_KEY, seedOutlets);
+    if (stored.length > 1) {
+      const primary = stored.find((o) => o.id === PRIMARY_OUTLET_ID) ?? stored[0];
+      return [primary];
+    }
+    return stored;
+  });
 
   useEffect(() => {
     write(OUTLETS_KEY, outlets);
   }, [outlets]);
 
-  const upsertOutlet = useCallback((outlet: Outlet) => {
-    setOutlets((list) => {
-      const idx = list.findIndex((o) => o.id === outlet.id);
-      if (idx === -1) return [...list, outlet];
-      const next = [...list];
-      next[idx] = outlet;
-      return next;
-    });
+  const outlet = outlets[0] ?? { ...seedOutlets[0] };
+
+  const updateOutlet = useCallback((patch: Partial<Outlet>) => {
+    setOutlets(([current = seedOutlets[0]]) => [{ ...current, ...patch }]);
   }, []);
 
-  const removeOutlet = useCallback((id: string) => {
-    setOutlets((list) => list.filter((o) => o.id !== id));
-  }, []);
-
-  const toggleOutletStatus = useCallback((id: string) => {
-    setOutlets((list) =>
-      list.map((o) =>
-        o.id === id ? { ...o, status: o.status === 'active' ? 'inactive' : 'active' } : o,
-      ),
-    );
-  }, []);
-
-  return { outlets, upsertOutlet, removeOutlet, toggleOutletStatus };
-}
-
-export function newOutletId() {
-  return `outlet_${Math.random().toString(36).slice(2, 9)}`;
+  return { outlet, updateOutlet };
 }
 
 export const cuisineOptions = [

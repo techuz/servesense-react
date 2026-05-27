@@ -1,20 +1,23 @@
 import { useMemo, useState } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { Badge } from '@/components/primitives/Badge';
-import { Button } from '@/components/primitives/Button';
 import { EmptyState } from '@/components/primitives/EmptyState';
 import {
   statusOf,
   useSalesGoals,
   type GoalStatus,
-  type SalesGoal,
 } from '@/lib/mock/goals';
 import { useMenuItems } from '@/lib/mock/menu';
+import { useOrientationSource } from '@/lib/mock/orientationSource';
 import { useToast } from '@/lib/toast';
 import { fadeUp, stagger } from '@/lib/motion';
 import { cn } from '@/lib/cn';
+import {
+  OrientationReplaceDrawer,
+  OrientationSourceBanner,
+  OrientationUpload,
+} from '@/components/orientation';
 import { GoalCard } from './GoalCard';
-import { GoalDrawer } from './GoalDrawer';
 import './Goals.css';
 
 type Filter = 'all' | GoalStatus;
@@ -28,13 +31,22 @@ const filterLabels: Record<Filter, string> = {
 };
 
 export const GoalsPage = () => {
-  const { goals, upsert, remove, toggleEnabled, stats } = useSalesGoals();
+  const { goals, stats } = useSalesGoals();
   const { items: menuItems } = useMenuItems();
+  const { source, uploadSource, clearSource, meta } = useOrientationSource('goals');
   const { notify } = useToast();
 
   const [filter, setFilter] = useState<Filter>('all');
-  const [drawerOpen, setDrawerOpen] = useState(false);
-  const [editing, setEditing] = useState<SalesGoal | null>(null);
+  const [replaceOpen, setReplaceOpen] = useState(false);
+
+  const handleRemove = () => {
+    clearSource();
+    notify({
+      tone: 'info',
+      title: 'Campaigns document removed',
+      description: 'Upload a new PDF to publish a new campaign schedule.',
+    });
+  };
 
   const counts = useMemo(() => {
     const out: Record<Filter, number> = { all: goals.length, active: 0, upcoming: 0, ended: 0 };
@@ -49,16 +61,6 @@ export const GoalsPage = () => {
     return goals.filter((g) => statusOf(g, today) === filter);
   }, [goals, filter]);
 
-  const openAdd = () => {
-    setEditing(null);
-    setDrawerOpen(true);
-  };
-
-  const openEdit = (goal: SalesGoal) => {
-    setEditing(goal);
-    setDrawerOpen(true);
-  };
-
   return (
     <motion.div
       className="ss-goals"
@@ -69,12 +71,12 @@ export const GoalsPage = () => {
       {/* --- Header ----------------------------------------------------- */}
       <motion.header className="ss-goals__header" variants={fadeUp}>
         <div>
-          <span className="eyebrow">Orientation · §3.6</span>
+          <span className="eyebrow">Orientation · {meta.sowRef}</span>
           <h1>Sales Goals &amp; Campaigns</h1>
           <p className="ss-goals__lede">
-            Set the dishes you want pushed this week — wine pairings, signature starters, the new
-            dessert. The AI biases live upsell prompts toward your active goals and the dashboard
-            scores progress as orders land.
+            Dishes you want pushed this week — wine pairings, signature starters, the new dessert.
+            Defined in the campaign PDF; the AI biases live upsell prompts toward active goals and
+            the dashboard scores progress as orders land.
           </p>
         </div>
         <div className="ss-goals__header-actions">
@@ -84,132 +86,101 @@ export const GoalsPage = () => {
         </div>
       </motion.header>
 
-      {/* --- Stats strip ----------------------------------------------- */}
-      <motion.section className="ss-goals__stats" variants={fadeUp}>
-        <StatTile
-          label="Active campaigns"
-          value={stats.activeCount.toString()}
-          hint={stats.upcomingCount > 0 ? `${stats.upcomingCount} queued` : 'Live across the floor'}
-        />
-        <StatTile
-          label="Orders toward target"
-          value={stats.totalSoldOrders.toString()}
-          hint={`of ${stats.totalTargetOrders} across active goals`}
-        />
-        <StatTile
-          label="Avg. progress"
-          value={`${Math.round(stats.avgProgress * 100)}%`}
-          hint={stats.activeCount === 0 ? 'No active goals' : 'Mean across active campaigns'}
-          accent
-        />
-        <StatTile
-          label="Total goals"
-          value={goals.length.toString()}
-          hint={`${counts.ended} ended · ${counts.upcoming} upcoming`}
-        />
-      </motion.section>
+      {source ? (
+        <>
+          <OrientationSourceBanner
+            source={source}
+            onReplace={() => setReplaceOpen(true)}
+            onRemove={handleRemove}
+          />
 
-      {/* --- Filter rail + add ----------------------------------------- */}
-      <motion.section className="ss-goals__toolbar" variants={fadeUp}>
-        <div className="ss-goals__filter-rail" role="tablist" aria-label="Filter goals">
-          {filterOrder.map((f) => (
-            <FilterChip
-              key={f}
-              label={filterLabels[f]}
-              count={counts[f]}
-              active={filter === f}
-              onClick={() => setFilter(f)}
+          {/* --- Stats strip ----------------------------------------------- */}
+          <motion.section className="ss-goals__stats" variants={fadeUp}>
+            <StatTile
+              label="Active campaigns"
+              value={stats.activeCount.toString()}
+              hint={stats.upcomingCount > 0 ? `${stats.upcomingCount} queued` : 'Live across the floor'}
             />
-          ))}
-        </div>
-        <Button variant="primary" onClick={openAdd}>
-          + New goal
-        </Button>
-      </motion.section>
+            <StatTile
+              label="Orders toward target"
+              value={stats.totalSoldOrders.toString()}
+              hint={`of ${stats.totalTargetOrders} across active goals`}
+            />
+            <StatTile
+              label="Avg. progress"
+              value={`${Math.round(stats.avgProgress * 100)}%`}
+              hint={stats.activeCount === 0 ? 'No active goals' : 'Mean across active campaigns'}
+              accent
+            />
+            <StatTile
+              label="Total goals"
+              value={goals.length.toString()}
+              hint={`${counts.ended} ended · ${counts.upcoming} upcoming`}
+            />
+          </motion.section>
 
-      {/* --- Grid OR empty --------------------------------------------- */}
-      {filtered.length === 0 ? (
-        <EmptyState
-          icon={
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
-              <path
-                d="M4 19V6a1 1 0 011-1h4l2 2h8a1 1 0 011 1v11a1 1 0 01-1 1H5a1 1 0 01-1-1z"
-                stroke="currentColor"
-                strokeWidth="1.6"
-                strokeLinejoin="round"
-              />
-              <path
-                d="M9 14l2.5-2.5 2 2L17 10"
-                stroke="currentColor"
-                strokeWidth="1.6"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          }
-          title={filter === 'all' ? 'No goals yet' : `No ${filterLabels[filter].toLowerCase()} goals`}
-          description={
-            filter === 'all'
-              ? 'Add your first sales campaign — give the AI something to push toward during live sessions.'
-              : 'Try a different filter or add a new goal in this window.'
-          }
-          action={
-            <Button variant="primary" onClick={openAdd}>
-              + {filter === 'all' ? 'Add first goal' : 'New goal'}
-            </Button>
-          }
-        />
+          {/* --- Filter rail ----------------------------------------------- */}
+          <motion.section className="ss-goals__toolbar" variants={fadeUp}>
+            <div className="ss-goals__filter-rail" role="tablist" aria-label="Filter goals">
+              {filterOrder.map((f) => (
+                <FilterChip
+                  key={f}
+                  label={filterLabels[f]}
+                  count={counts[f]}
+                  active={filter === f}
+                  onClick={() => setFilter(f)}
+                />
+              ))}
+            </div>
+          </motion.section>
+
+          {/* --- Grid OR empty --------------------------------------------- */}
+          {filtered.length === 0 ? (
+            <EmptyState
+              icon={
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
+                  <path
+                    d="M4 19V6a1 1 0 011-1h4l2 2h8a1 1 0 011 1v11a1 1 0 01-1 1H5a1 1 0 01-1-1z"
+                    stroke="currentColor"
+                    strokeWidth="1.6"
+                    strokeLinejoin="round"
+                  />
+                  <path
+                    d="M9 14l2.5-2.5 2 2L17 10"
+                    stroke="currentColor"
+                    strokeWidth="1.6"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              }
+              title={`No ${filter === 'all' ? '' : filterLabels[filter].toLowerCase() + ' '}goals in this document`}
+              description="Switch the filter back to All to see every campaign in the document, or replace the PDF to publish a new schedule."
+            />
+          ) : (
+            <motion.div
+              className="ss-goals__grid"
+              variants={stagger(0.06, 0.05)}
+              initial="hidden"
+              animate="visible"
+            >
+              {filtered.map((g) => (
+                <GoalCard key={g.id} goal={g} menuItems={menuItems} />
+              ))}
+            </motion.div>
+          )}
+        </>
       ) : (
-        <motion.div
-          className="ss-goals__grid"
-          variants={stagger(0.06, 0.05)}
-          initial="hidden"
-          animate="visible"
-        >
-          <AnimatePresence initial={false}>
-            {filtered.map((g) => (
-              <GoalCard
-                key={g.id}
-                goal={g}
-                menuItems={menuItems}
-                onEdit={() => openEdit(g)}
-                onToggle={() => {
-                  toggleEnabled(g.id);
-                  notify({
-                    tone: 'info',
-                    title: g.isEnabled ? 'Goal paused' : 'Goal resumed',
-                    description: g.name,
-                  });
-                }}
-              />
-            ))}
-          </AnimatePresence>
+        <motion.div variants={fadeUp}>
+          <OrientationUpload module={meta} onComplete={uploadSource} />
         </motion.div>
       )}
 
-      <motion.div className="ss-goals__footer-note" variants={fadeUp}>
-        <span className="ss-goals__footer-dot" aria-hidden="true" />
-        Goals refresh the AI's upsell bias on the next live session.
-      </motion.div>
-
-      <GoalDrawer
-        open={drawerOpen}
-        goal={editing}
-        menuItems={menuItems}
-        onClose={() => setDrawerOpen(false)}
-        onSave={(g) => {
-          upsert(g);
-          notify({
-            tone: 'success',
-            title: editing ? 'Goal updated' : 'Goal created',
-            description: g.name,
-          });
-        }}
-        onDelete={(id) => {
-          const name = goals.find((g) => g.id === id)?.name ?? 'Goal';
-          remove(id);
-          notify({ tone: 'info', title: 'Goal removed', description: name });
-        }}
+      <OrientationReplaceDrawer
+        open={replaceOpen}
+        onClose={() => setReplaceOpen(false)}
+        module={meta}
+        onComplete={uploadSource}
       />
     </motion.div>
   );

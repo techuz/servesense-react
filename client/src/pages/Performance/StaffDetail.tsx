@@ -6,13 +6,14 @@ import { Button } from '@/components/primitives/Button';
 import { Input } from '@/components/primitives/Input';
 import { EmptyState } from '@/components/primitives/EmptyState';
 import { useStaff } from '@/lib/mock/staff';
-import { useOutlets } from '@/lib/mock/restaurant';
+import { DateFilterControl } from '@/components/primitives/DateFilterControl';
 import {
   formatSessionDate,
   healthScoreTone,
   serviceModeLabels,
   useStaffPerformance,
   useStaffSessions,
+  type DateFilter,
   type Session,
 } from '@/lib/mock/performance';
 import {
@@ -31,16 +32,18 @@ type ModeFilter = 'all' | 'lunch' | 'dinner';
 export const StaffDetailPage = () => {
   const { staffId } = useParams<{ staffId: string }>();
   const { staff } = useStaff();
-  const { outlets } = useOutlets();
-  const perf = useStaffPerformance(staffId);
-  const sessions = useStaffSessions(staffId);
+  const [dateFilter, setDateFilter] = useState<DateFilter>({
+    kind: 'preset',
+    preset: 'last_30_days',
+  });
+  const perf = useStaffPerformance(staffId, dateFilter);
+  const sessions = useStaffSessions(staffId, dateFilter);
 
   const [search, setSearch] = useState('');
   const [modeFilter, setModeFilter] = useState<ModeFilter>('all');
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
 
   const member = staff.find((s) => s.id === staffId);
-  const outletName = outlets.find((o) => o.id === member?.outletId)?.name ?? 'Unassigned';
 
   const selectedSession = useMemo(
     () => sessions.find((s) => s.id === selectedSessionId) ?? null,
@@ -121,7 +124,7 @@ export const StaffDetailPage = () => {
             {initialsOf(member.name)}
           </span>
           <div className="ss-staff-detail__hero-text">
-            <span className="eyebrow">{roleLabels[member.role]} · {outletName}</span>
+            <span className="eyebrow">{roleLabels[member.role]}</span>
             <h1>{member.name}</h1>
             <div className="ss-staff-detail__hero-meta">
               <Badge tone={member.status === 'active' ? 'success' : 'neutral'} subtle dot>
@@ -136,16 +139,19 @@ export const StaffDetailPage = () => {
           </div>
         </div>
 
-        <div className={cn('ss-staff-detail__health-tile', `ss-staff-detail__health-tile--${tone}`)}>
-          <span className="ss-staff-detail__health-label">Health score</span>
-          <div className="ss-staff-detail__health-num">{perf.healthScore}</div>
-          <span className="ss-staff-detail__health-cap">
-            {tone === 'green'
-              ? 'Performing strong'
-              : tone === 'gold'
-                ? 'Solid — minor coaching wins'
-                : 'Needs focused coaching'}
-          </span>
+        <div className="ss-staff-detail__hero-right">
+          <DateFilterControl value={dateFilter} onChange={setDateFilter} />
+          <div className={cn('ss-staff-detail__health-tile', `ss-staff-detail__health-tile--${tone}`)}>
+            <span className="ss-staff-detail__health-label">Health score</span>
+            <div className="ss-staff-detail__health-num">{perf.healthScore}</div>
+            <span className="ss-staff-detail__health-cap">
+              {tone === 'green'
+                ? 'Performing strong'
+                : tone === 'gold'
+                  ? 'Solid — minor coaching wins'
+                  : 'Needs focused coaching'}
+            </span>
+          </div>
         </div>
       </motion.section>
 

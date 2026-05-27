@@ -250,22 +250,34 @@
   min-width: 0;
 }
 
-.ss-situation__title-input .ss-field__control {
-  background-color: transparent;
-  border-color: transparent;
-}
-
-.ss-situation__title-input .ss-field__control:focus-within {
-  background-color: var(--color-surface);
-  border-color: var(--color-brand);
-}
-
-.ss-situation__title-input .ss-field__input {
+.ss-situation__title {
   font-family: var(--font-serif);
   font-size: var(--fs-xl);
   font-weight: var(--fw-regular);
   letter-spacing: var(--tracking-tighter);
-  padding-inline: var(--sp-2);
+  color: var(--ss-green-900);
+  line-height: var(--lh-tight);
+  margin: 0;
+}
+
+.ss-situation__context {
+  font-size: var(--fs-sm);
+  color: var(--color-text);
+  line-height: var(--lh-relaxed);
+  font-weight: var(--fw-prose, 300);
+  margin: 0;
+  padding: var(--sp-2) 0;
+  border-top: 1px solid var(--color-border);
+}
+
+.ss-comm-aspect__standard {
+  font-size: var(--fs-sm);
+  color: var(--color-text);
+  line-height: var(--lh-relaxed);
+  font-weight: var(--fw-prose, 300);
+  margin: 0;
+  padding: var(--sp-2) 0;
+  border-top: 1px solid var(--color-border);
 }
 
 .ss-situation__lists {

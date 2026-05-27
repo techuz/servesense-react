@@ -79,42 +79,6 @@
   margin-top: var(--sp-1);
 }
 
-/* --- Progress bar --------------------------------------------------------- */
-.ss-policies__progress {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-2);
-  margin-top: var(--sp-3);
-}
-
-.ss-policies__progress-bar {
-  height: 6px;
-  background-color: var(--ss-warm-gray-100);
-  border-radius: var(--radius-pill);
-  overflow: hidden;
-}
-
-.ss-policies__progress-fill {
-  display: block;
-  height: 100%;
-  background: linear-gradient(90deg, var(--ss-green-700), var(--ss-green-500));
-  border-radius: var(--radius-pill);
-}
-
-.ss-policies__progress-text {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  font-size: var(--fs-xs);
-  font-weight: var(--fw-muted);
-  color: var(--color-text-muted);
-}
-
-.ss-policies__progress-text strong {
-  font-weight: var(--fw-semibold);
-  color: var(--color-text);
-}
-
 /* --- Nav list ------------------------------------------------------------- */
 .ss-policies__nav-list {
   display: flex;
@@ -197,7 +161,6 @@
   font-size: var(--fs-xs);
   color: var(--color-text-muted);
   font-weight: var(--fw-muted);
-  padding-left: 24px;
   line-height: var(--lh-snug);
 }
 
@@ -231,58 +194,141 @@
   max-width: 64ch;
 }
 
-.ss-policies__save-hint {
+/* ============================================================================
+   Read-only section views
+   ============================================================================ */
+.ss-policy-view {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-6);
+}
+
+/* Fact grid: label-above-value pairs */
+.ss-fact-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--sp-4) var(--sp-5);
+  padding: var(--sp-4);
+  background-color: var(--ss-cream-50);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.ss-fact {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.ss-fact--full { grid-column: 1 / -1; }
+
+.ss-fact__label {
+  font-size: var(--fs-xs);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+  font-weight: var(--fw-semibold);
+  color: var(--color-text-muted);
+}
+
+.ss-fact__value {
+  font-family: var(--font-serif);
+  font-size: var(--fs-lg);
+  color: var(--ss-green-900);
+  letter-spacing: var(--tracking-tighter);
+  line-height: 1.2;
   display: inline-flex;
   align-items: center;
   gap: var(--sp-2);
-  color: var(--color-text-muted);
-  font-size: var(--fs-xs);
-  font-weight: var(--fw-muted);
-  align-self: flex-end;
-  padding: var(--sp-2) var(--sp-3);
-  background-color: var(--ss-green-50);
-  border-radius: var(--radius-pill);
+  flex-wrap: wrap;
 }
 
-.ss-policies__save-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--ss-green-700);
-  box-shadow: 0 0 0 4px rgba(58, 107, 76, 0.15);
-}
-
-/* ============================================================================
-   Section form layouts
-   ============================================================================ */
-.ss-policy-form {
+/* Boolean pills */
+.ss-bool-grid {
   display: flex;
-  flex-direction: column;
-  gap: var(--sp-5);
+  flex-wrap: wrap;
+  gap: var(--sp-2);
 }
 
-.ss-policy-form__row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--sp-4);
-}
-
-.ss-policy-form__label {
-  display: block;
+.ss-bool-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: 6px var(--sp-3);
+  border-radius: var(--radius-pill);
   font-size: var(--fs-sm);
   font-weight: var(--fw-medium);
-  color: var(--color-text);
+  letter-spacing: var(--tracking-tight);
+  border: 1px solid transparent;
+}
+
+.ss-bool-pill--on {
+  background: var(--ss-green-50);
+  color: var(--ss-green-700);
+  border-color: rgba(58, 107, 76, 0.18);
+}
+
+.ss-bool-pill--off {
+  background: var(--ss-warm-gray-100);
+  color: var(--ss-warm-gray-500);
+  border-color: rgba(138, 130, 121, 0.2);
+}
+
+.ss-bool-pill__icon {
+  display: grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.ss-bool-pill--on .ss-bool-pill__icon {
+  background: var(--ss-green-700);
+  color: var(--ss-cream-0);
+}
+
+.ss-bool-pill--off .ss-bool-pill__icon {
+  background: var(--ss-warm-gray-300);
+  color: var(--ss-cream-0);
+}
+
+/* Inline subsection label above a bool grid */
+.ss-subsection-label {
+  display: block;
+  font-size: var(--fs-xs);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+  color: var(--color-text-muted);
+  font-weight: var(--fw-semibold);
   margin-bottom: var(--sp-3);
 }
 
-.ss-policy-form__check-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: var(--sp-3);
-  padding: var(--sp-4);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  background-color: var(--ss-cream-50);
+/* Multiline rules block */
+.ss-rules-block {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding: var(--sp-4) var(--sp-5);
+  border-left: 3px solid var(--ss-green-500);
+  background: linear-gradient(90deg, rgba(58, 107, 76, 0.04), transparent 70%);
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
+}
+
+.ss-rules-block__label {
+  font-size: var(--fs-xs);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+  color: var(--ss-green-700);
+  font-weight: var(--fw-semibold);
+}
+
+.ss-rules-block__body {
+  font-size: var(--fs-sm);
+  color: var(--color-text);
+  line-height: var(--lh-relaxed);
+  font-weight: var(--fw-prose, 300);
+  white-space: pre-wrap;
 }
 
 /* ============================================================================
@@ -335,11 +381,38 @@
 .ss-week-schedule__day {
   display: flex;
   align-items: center;
-  gap: var(--sp-3);
+  gap: var(--sp-2);
 }
 
-/* Time inputs in the schedule grid now use the TimePicker primitive — its own
-   styles live in TimePicker.css. */
+.ss-week-schedule__day-name {
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
+  color: var(--color-text);
+}
+
+.ss-week-schedule__closed-tag {
+  font-size: var(--fs-xs);
+  padding: 2px var(--sp-2);
+  border-radius: var(--radius-pill);
+  background: var(--ss-warm-gray-100);
+  color: var(--ss-warm-gray-500);
+  font-weight: var(--fw-medium);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+}
+
+.ss-week-schedule__time {
+  font-family: var(--font-serif);
+  font-size: var(--fs-md);
+  color: var(--ss-green-900);
+  letter-spacing: var(--tracking-tighter);
+  font-variant-numeric: tabular-nums;
+}
+
+.ss-week-schedule__row--closed .ss-week-schedule__time {
+  color: var(--ss-warm-gray-400);
+  font-family: var(--font-sans);
+}
 
 /* ============================================================================
    Responsive

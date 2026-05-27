@@ -26,6 +26,13 @@
   margin-top: var(--sp-3);
 }
 
+.ss-perf__header-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+}
+
 /* --- Stats strip --------------------------------------------------------- */
 .ss-perf__stats {
   display: grid;

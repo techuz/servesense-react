@@ -8,7 +8,7 @@ import './Topbar.css';
 
 const ROUTE_TITLES: Record<string, string> = {
   '/dashboard': 'Dashboard',
-  '/restaurant': 'Restaurant & Outlets',
+  '/restaurant': 'Restaurant',
   '/staff': 'Staff Management',
   '/orientation/policies': 'Standard Policies',
   '/orientation/menu': 'Menu Knowledge',
