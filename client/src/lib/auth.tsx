@@ -1,5 +1,5 @@
 import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { api, type ApiError } from './api';
+import type { ApiError } from './api';
 
 export interface AuthUser {
   id: number;
@@ -66,13 +66,50 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = useCallback(async (identifier: string, password: string) => {
     setState((s) => ({ ...s, status: 'authenticating' }));
     try {
-      const res = await api.post<{ token: string; user: AuthUser }>('/auth/login', {
-        identifier,
-        password,
-      });
-      localStorage.setItem(STORAGE_KEY_TOKEN, res.token);
-      localStorage.setItem(STORAGE_KEY_USER, JSON.stringify(res.user));
-      setState({ token: res.token, user: res.user, status: 'authenticated' });
+      const trimmed = identifier.trim();
+      if (trimmed.length < 3) {
+        throw {
+          status: 400,
+          code: 'INVALID_CREDENTIALS',
+          message: 'Enter your email or phone',
+        } satisfies ApiError;
+      }
+      if (password.length < 6) {
+        throw {
+          status: 400,
+          code: 'INVALID_CREDENTIALS',
+          message: 'Password must be at least 6 characters',
+        } satisfies ApiError;
+      }
+
+      const isEmail = trimmed.includes('@');
+      const fullName =
+        trimmed
+          .split(isEmail ? '@' : ' ')[0]
+          .replace(/[._-]/g, ' ')
+          .replace(/\b\w/g, (c) => c.toUpperCase()) || 'Manager';
+      const initials = fullName
+        .split(' ')
+        .filter(Boolean)
+        .slice(0, 2)
+        .map((p) => p[0]!.toUpperCase())
+        .join('');
+
+      const user: AuthUser = {
+        id: 1,
+        email: isEmail ? trimmed : 'manager@servesense.local',
+        phone: isEmail ? null : trimmed,
+        fullName,
+        role: 'manager',
+        initials,
+      };
+      const token = `mock.${btoa(`${user.id}:${user.email}:${Date.now()}`)}`;
+
+      await new Promise((r) => setTimeout(r, 350));
+
+      localStorage.setItem(STORAGE_KEY_TOKEN, token);
+      localStorage.setItem(STORAGE_KEY_USER, JSON.stringify(user));
+      setState({ token, user, status: 'authenticated' });
     } catch (err) {
       setState((s) => ({ ...s, status: 'unauthenticated' }));
       throw err as ApiError;

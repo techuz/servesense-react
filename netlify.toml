@@ -1,0 +1,14 @@
+[build]
+  base = "client"
+  publish = "dist"
+  command = "npm install && npm run build"
+
+[build.environment]
+  NODE_VERSION = "20"
+
+# SPA routing — anything that isn't a static asset falls back to index.html
+# so React Router can resolve the route client-side.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
