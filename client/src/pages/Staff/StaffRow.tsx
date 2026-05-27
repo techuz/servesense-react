@@ -4,20 +4,17 @@ import { cn } from '@/lib/cn';
 import {
   avatarTintFor,
   initialsOf,
-  relativeTime,
   roleLabels,
   type StaffMember,
 } from '@/lib/mock/staff';
 
 interface StaffRowProps {
   member: StaffMember;
-  outletName: string;
   onOpen: () => void;
 }
 
-export const StaffRow = ({ member, outletName, onOpen }: StaffRowProps) => {
+export const StaffRow = ({ member, onOpen }: StaffRowProps) => {
   const tint = avatarTintFor(member.id);
-  const isPending = member.inviteStatus === 'pending';
   const isInactive = member.status === 'inactive';
 
   return (
@@ -25,7 +22,6 @@ export const StaffRow = ({ member, outletName, onOpen }: StaffRowProps) => {
       role="row"
       className={cn(
         'ss-staff-row',
-        isPending && 'ss-staff-row--pending',
         isInactive && 'ss-staff-row--inactive',
       )}
       onClick={onOpen}
@@ -61,16 +57,8 @@ export const StaffRow = ({ member, outletName, onOpen }: StaffRowProps) => {
         {roleLabels[member.role]}
       </div>
 
-      <div role="cell" className="ss-staff-row__outlet">
-        {outletName}
-      </div>
-
       <div role="cell" className="ss-staff-row__status">
-        {isPending ? (
-          <Badge tone="gold" subtle dot>
-            Invite sent
-          </Badge>
-        ) : isInactive ? (
+        {isInactive ? (
           <Badge tone="neutral" subtle dot>
             Inactive
           </Badge>
@@ -78,14 +66,6 @@ export const StaffRow = ({ member, outletName, onOpen }: StaffRowProps) => {
           <Badge tone="success" subtle dot>
             Active
           </Badge>
-        )}
-      </div>
-
-      <div role="cell" className="ss-staff-row__last-seen">
-        {isPending ? (
-          <span className="ss-staff-row__muted">Invited {relativeTime(member.invitedAt)}</span>
-        ) : (
-          relativeTime(member.lastLoginAt)
         )}
       </div>
 

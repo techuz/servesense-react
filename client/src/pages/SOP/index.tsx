@@ -1,14 +1,34 @@
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Badge } from '@/components/primitives/Badge';
 import { sopProgress, sopSteps, useSop } from '@/lib/mock/sop';
-import { fadeUp, stagger, transitions } from '@/lib/motion';
+import { useOrientationSource } from '@/lib/mock/orientationSource';
+import { useToast } from '@/lib/toast';
+import { fadeUp, stagger } from '@/lib/motion';
+import {
+  OrientationReplaceDrawer,
+  OrientationSourceBanner,
+  OrientationUpload,
+} from '@/components/orientation';
 import { SopStepCard } from './SopStepCard';
 import './SOP.css';
 
 export const SopPage = () => {
-  const { state, updateStep } = useSop();
+  const { state } = useSop();
+  const { source, uploadSource, clearSource, meta } = useOrientationSource('sop');
+  const { notify } = useToast();
+  const [replaceOpen, setReplaceOpen] = useState(false);
+
   const progress = sopProgress(state);
-  const pct = Math.round((progress.enabled / progress.total) * 100);
+
+  const handleRemove = () => {
+    clearSource();
+    notify({
+      tone: 'info',
+      title: 'SOP document removed',
+      description: 'Upload a new PDF to populate this section.',
+    });
+  };
 
   return (
     <motion.div
@@ -19,7 +39,7 @@ export const SopPage = () => {
     >
       <motion.header className="ss-sop__header" variants={fadeUp}>
         <div className="ss-sop__heading">
-          <span className="eyebrow">Orientation · §3.3</span>
+          <span className="eyebrow">Orientation · {meta.sowRef}</span>
           <h1>Service SOP — Flow of Service</h1>
           <p className="ss-sop__lede">
             The ten-step choreography every guest should experience. The AI follows this script
@@ -31,49 +51,50 @@ export const SopPage = () => {
         </Badge>
       </motion.header>
 
-      <motion.section className="ss-sop__overview" variants={fadeUp}>
-        <div className="ss-sop__overview-grid">
-          <Stat label="Active steps" big={`${progress.enabled}`} sub={`of ${progress.total}`} />
-          <Stat label="Customised" big={`${progress.customized}`} sub="with phrase library" />
-          <Stat label="SOP adherence weight" big="40%" sub="in performance score" />
-        </div>
-
-        <div className="ss-sop__progress" aria-label="Flow completion">
-          <div className="ss-sop__progress-track">
-            <motion.span
-              className="ss-sop__progress-fill"
-              initial={false}
-              animate={{ width: `${pct}%` }}
-              transition={{ ...transitions.softSpring, duration: 0.5 }}
-            />
-          </div>
-          <span className="ss-sop__progress-text">
-            <strong>{pct}%</strong> of the ritual is live
-          </span>
-        </div>
-      </motion.section>
-
-      <motion.ol
-        className="ss-sop__list"
-        variants={stagger(0.05, 0.1)}
-        initial="hidden"
-        animate="visible"
-      >
-        {sopSteps.map((meta, i) => (
-          <SopStepCard
-            key={meta.key}
-            meta={meta}
-            data={state[meta.key]}
-            isLast={i === sopSteps.length - 1}
-            onChange={(patch) => updateStep(meta.key, patch)}
+      {source ? (
+        <>
+          <OrientationSourceBanner
+            source={source}
+            onReplace={() => setReplaceOpen(true)}
+            onRemove={handleRemove}
           />
-        ))}
-      </motion.ol>
 
-      <motion.div className="ss-sop__footer-note" variants={fadeUp}>
-        <span className="ss-sop__footer-dot" aria-hidden="true" />
-        Changes are saved automatically. The AI loads this SOP on its next live session.
-      </motion.div>
+          <motion.section className="ss-sop__overview" variants={fadeUp}>
+            <div className="ss-sop__overview-grid">
+              <Stat label="Steps in document" big={`${progress.enabled}`} sub={`of ${progress.total}`} />
+              <Stat label="With phrase library" big={`${progress.customized}`} sub="detailed coaching" />
+              <Stat label="SOP adherence weight" big="40%" sub="in performance score" />
+            </div>
+          </motion.section>
+
+          <motion.ol
+            className="ss-sop__list"
+            variants={stagger(0.05, 0.1)}
+            initial="hidden"
+            animate="visible"
+          >
+            {sopSteps.map((step, i) => (
+              <SopStepCard
+                key={step.key}
+                meta={step}
+                data={state[step.key]}
+                isLast={i === sopSteps.length - 1}
+              />
+            ))}
+          </motion.ol>
+        </>
+      ) : (
+        <motion.div variants={fadeUp}>
+          <OrientationUpload module={meta} onComplete={uploadSource} />
+        </motion.div>
+      )}
+
+      <OrientationReplaceDrawer
+        open={replaceOpen}
+        onClose={() => setReplaceOpen(false)}
+        module={meta}
+        onComplete={uploadSource}
+      />
     </motion.div>
   );
 };

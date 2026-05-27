@@ -13,7 +13,7 @@ const navGroups: NavGroup[] = [
   {
     label: 'Setup',
     items: [
-      { to: '/restaurant', label: 'Restaurant & Outlets' },
+      { to: '/restaurant', label: 'Restaurant' },
       { to: '/staff', label: 'Staff' },
     ],
   },

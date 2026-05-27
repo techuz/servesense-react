@@ -1,8 +1,4 @@
 import { motion } from 'framer-motion';
-import { Input } from '@/components/primitives/Input';
-import { Textarea } from '@/components/primitives/Textarea';
-import { Switch } from '@/components/primitives/Switch';
-import { Checkbox } from '@/components/primitives/Checkbox';
 import { fadeUp, stagger } from '@/lib/motion';
 import type {
   DiningRules,
@@ -12,315 +8,141 @@ import type {
   TableHolding,
   WaitingPolicy,
 } from '@/lib/mock/policies';
+import {
+  BoolGrid,
+  BoolPill,
+  Fact,
+  FactGrid,
+  RulesBlock,
+  SubsectionLabel,
+} from '../Display';
+
+/* ============================================================================
+   Read-only policy section views. Content is the PDF the manager uploaded
+   on the orientation upload step (SOW §3.1). No editable inputs here.
+   ============================================================================ */
 
 /* ---------- Waiting Policy ----------------------------------------------- */
-export const WaitingPolicySection = ({
-  value,
-  onChange,
-}: {
-  value: WaitingPolicy;
-  onChange: (patch: Partial<WaitingPolicy>) => void;
-}) => (
-  <motion.div className="ss-policy-form" variants={stagger(0.06)} initial="hidden" animate="visible">
+export const WaitingPolicySection = ({ value }: { value: WaitingPolicy }) => (
+  <motion.div className="ss-policy-view" variants={stagger(0.06)} initial="hidden" animate="visible">
     <motion.div variants={fadeUp}>
-      <Switch
-        checked={value.walkInsAllowed}
-        onChange={(on) => onChange({ walkInsAllowed: on })}
-        label="Allow walk-ins"
-        description="Guests without a reservation can be seated subject to availability."
-      />
+      <FactGrid>
+        <Fact
+          label="Walk-ins"
+          value={<BoolPill on={value.walkInsAllowed} label={value.walkInsAllowed ? 'Allowed' : 'Reservations only'} />}
+        />
+        <Fact label="Maximum wait time" value={`${value.maxWaitMinutes} minutes`} />
+      </FactGrid>
     </motion.div>
-
     <motion.div variants={fadeUp}>
-      <Input
-        label="Maximum wait time (minutes)"
-        type="number"
-        min={0}
-        max={180}
-        value={value.maxWaitMinutes}
-        onChange={(e) => onChange({ maxWaitMinutes: Number(e.target.value) })}
-        hint="The longest wait you commit to before suggesting an alternative outlet or time slot."
-      />
-    </motion.div>
-
-    <motion.div variants={fadeUp}>
-      <Textarea
-        label="Queue & wait-list rules"
-        value={value.queueRules}
-        onChange={(e) => onChange({ queueRules: e.target.value })}
-        rows={4}
-        hint="How walk-ins are queued, group-size handling, wait-list notifications."
-      />
+      <RulesBlock label="Queue & wait-list rules" body={value.queueRules} />
     </motion.div>
   </motion.div>
 );
 
 /* ---------- Reservation Policy ------------------------------------------- */
-export const ReservationPolicySection = ({
-  value,
-  onChange,
-}: {
-  value: ReservationPolicy;
-  onChange: (patch: Partial<ReservationPolicy>) => void;
-}) => (
-  <motion.div className="ss-policy-form" variants={stagger(0.06)} initial="hidden" animate="visible">
+export const ReservationPolicySection = ({ value }: { value: ReservationPolicy }) => (
+  <motion.div className="ss-policy-view" variants={stagger(0.06)} initial="hidden" animate="visible">
     <motion.div variants={fadeUp}>
-      <Switch
-        checked={value.bookingEnabled}
-        onChange={(on) => onChange({ bookingEnabled: on })}
-        label="Accept reservations"
-        description="Allow guests to book in advance. Turn off for walk-ins only."
-      />
+      <FactGrid>
+        <Fact
+          label="Reservations"
+          value={<BoolPill on={value.bookingEnabled} label={value.bookingEnabled ? 'Accepted' : 'Walk-ins only'} />}
+        />
+        <Fact label="Advance booking window" value={`${value.advanceBookingDays} days`} />
+        <Fact label="Cancellation window" value={`${value.cancellationWindowHours} hours`} />
+        <Fact label="Min / max party size" value={`${value.minPartySize} – ${value.maxPartySize} guests`} />
+        <Fact label="No-show fee" value={value.noShowFee || '—'} fullWidth />
+      </FactGrid>
     </motion.div>
-
-    <motion.div variants={fadeUp} className="ss-policy-form__row">
-      <Input
-        label="Advance booking window (days)"
-        type="number"
-        min={1}
-        max={365}
-        value={value.advanceBookingDays}
-        onChange={(e) => onChange({ advanceBookingDays: Number(e.target.value) })}
-      />
-      <Input
-        label="Cancellation window (hours)"
-        type="number"
-        min={0}
-        max={72}
-        value={value.cancellationWindowHours}
-        onChange={(e) => onChange({ cancellationWindowHours: Number(e.target.value) })}
-      />
-    </motion.div>
-
-    <motion.div variants={fadeUp} className="ss-policy-form__row">
-      <Input
-        label="Minimum party size"
-        type="number"
-        min={1}
-        value={value.minPartySize}
-        onChange={(e) => onChange({ minPartySize: Number(e.target.value) })}
-      />
-      <Input
-        label="Maximum party size"
-        type="number"
-        min={1}
-        value={value.maxPartySize}
-        onChange={(e) => onChange({ maxPartySize: Number(e.target.value) })}
-      />
-    </motion.div>
-
     <motion.div variants={fadeUp}>
-      <Input
-        label="No-show fee"
-        value={value.noShowFee}
-        onChange={(e) => onChange({ noShowFee: e.target.value })}
-        placeholder="e.g. ₹500 per person"
-        hint="Communicated upfront and charged for missed reservations."
-      />
-    </motion.div>
-
-    <motion.div variants={fadeUp}>
-      <Textarea
-        label="Reservation rules"
-        value={value.rules}
-        onChange={(e) => onChange({ rules: e.target.value })}
-        rows={4}
-        hint="Full text of the policy as it'll be quoted during a guest conversation."
-      />
+      <RulesBlock label="Reservation rules" body={value.rules} />
     </motion.div>
   </motion.div>
 );
 
 /* ---------- Table Holding ------------------------------------------------ */
-export const TableHoldingSection = ({
-  value,
-  onChange,
-}: {
-  value: TableHolding;
-  onChange: (patch: Partial<TableHolding>) => void;
-}) => (
-  <motion.div className="ss-policy-form" variants={stagger(0.06)} initial="hidden" animate="visible">
+export const TableHoldingSection = ({ value }: { value: TableHolding }) => (
+  <motion.div className="ss-policy-view" variants={stagger(0.06)} initial="hidden" animate="visible">
     <motion.div variants={fadeUp}>
-      <Input
-        label="Hold time past reservation (minutes)"
-        type="number"
-        min={0}
-        max={60}
-        value={value.maxHoldMinutes}
-        onChange={(e) => onChange({ maxHoldMinutes: Number(e.target.value) })}
-        hint="How long a reserved table is held before it's released to walk-ins."
-      />
+      <FactGrid>
+        <Fact label="Hold time past reservation" value={`${value.maxHoldMinutes} minutes`} fullWidth />
+      </FactGrid>
     </motion.div>
-
     <motion.div variants={fadeUp}>
-      <Textarea
-        label="Holding rules"
-        value={value.rules}
-        onChange={(e) => onChange({ rules: e.target.value })}
-        rows={4}
-        hint="How late guests are contacted, escalation, when the table is released."
-      />
+      <RulesBlock label="Holding rules" body={value.rules} />
     </motion.div>
   </motion.div>
 );
 
 /* ---------- Dining Rules ------------------------------------------------- */
-export const DiningRulesSection = ({
-  value,
-  onChange,
-}: {
-  value: DiningRules;
-  onChange: (patch: Partial<DiningRules>) => void;
-}) => (
-  <motion.div className="ss-policy-form" variants={stagger(0.06)} initial="hidden" animate="visible">
+export const DiningRulesSection = ({ value }: { value: DiningRules }) => (
+  <motion.div className="ss-policy-view" variants={stagger(0.06)} initial="hidden" animate="visible">
     <motion.div variants={fadeUp}>
-      <span className="ss-policy-form__label">Service modes</span>
-      <div className="ss-policy-form__check-grid">
-        <Checkbox
-          checked={value.dineIn}
-          onChange={(on) => onChange({ dineIn: on })}
-          label="Dine-in"
-          description="On-premise service"
-        />
-        <Checkbox
-          checked={value.takeaway}
-          onChange={(on) => onChange({ takeaway: on })}
-          label="Takeaway"
-          description="Self-pickup"
-        />
-        <Checkbox
-          checked={value.delivery}
-          onChange={(on) => onChange({ delivery: on })}
-          label="Delivery"
-          description="Direct or partner platforms"
-        />
-      </div>
+      <SubsectionLabel>Service modes</SubsectionLabel>
+      <BoolGrid>
+        <BoolPill on={value.dineIn} label="Dine-in" />
+        <BoolPill on={value.takeaway} label="Takeaway" />
+        <BoolPill on={value.delivery} label="Delivery" />
+      </BoolGrid>
     </motion.div>
-
     <motion.div variants={fadeUp}>
-      <span className="ss-policy-form__label">Restrictions</span>
-      <div className="ss-policy-form__check-grid">
-        <Checkbox
-          checked={value.outsideFoodAllowed}
-          onChange={(on) => onChange({ outsideFoodAllowed: on })}
-          label="Outside food allowed"
-          description="Snacks, packed meals, etc."
-        />
-        <Checkbox
-          checked={value.byob}
-          onChange={(on) => onChange({ byob: on })}
-          label="BYOB"
-          description="Bring your own bottle"
-        />
-      </div>
+      <SubsectionLabel>Restrictions</SubsectionLabel>
+      <BoolGrid>
+        <BoolPill on={value.outsideFoodAllowed} label="Outside food allowed" />
+        <BoolPill on={value.byob} label="BYOB" />
+      </BoolGrid>
     </motion.div>
-
     <motion.div variants={fadeUp}>
-      <Textarea
-        label="House rules"
-        value={value.rules}
-        onChange={(e) => onChange({ rules: e.target.value })}
-        rows={4}
-        hint="Other rules staff cannot override — cake plating fees, attire, photography, etc."
-      />
+      <RulesBlock label="House rules" body={value.rules} />
     </motion.div>
   </motion.div>
 );
 
 /* ---------- Guest Accommodation ------------------------------------------ */
-export const GuestAccommodationSection = ({
-  value,
-  onChange,
-}: {
-  value: GuestAccommodation;
-  onChange: (patch: Partial<GuestAccommodation>) => void;
-}) => (
-  <motion.div className="ss-policy-form" variants={stagger(0.06)} initial="hidden" animate="visible">
+export const GuestAccommodationSection = ({ value }: { value: GuestAccommodation }) => (
+  <motion.div className="ss-policy-view" variants={stagger(0.06)} initial="hidden" animate="visible">
     <motion.div variants={fadeUp}>
-      <span className="ss-policy-form__label">Accessibility & accommodation</span>
-      <div className="ss-policy-form__check-grid">
-        <Checkbox
-          checked={value.childSeating}
-          onChange={(on) => onChange({ childSeating: on })}
-          label="Child-friendly seating"
-        />
-        <Checkbox
-          checked={value.highChairs}
-          onChange={(on) => onChange({ highChairs: on })}
-          label="High chairs available"
-        />
-        <Checkbox
-          checked={value.elderlyAssistance}
-          onChange={(on) => onChange({ elderlyAssistance: on })}
-          label="Elderly assistance"
-        />
-        <Checkbox
-          checked={value.wheelchairAccessible}
-          onChange={(on) => onChange({ wheelchairAccessible: on })}
-          label="Wheelchair accessible"
-        />
-        <Checkbox
-          checked={value.petFriendly}
-          onChange={(on) => onChange({ petFriendly: on })}
-          label="Pet friendly"
-        />
-        <Checkbox
-          checked={value.groupBookings}
-          onChange={(on) => onChange({ groupBookings: on })}
-          label="Large group bookings"
-        />
-      </div>
+      <SubsectionLabel>Accessibility & accommodation</SubsectionLabel>
+      <BoolGrid>
+        <BoolPill on={value.childSeating} label="Child-friendly seating" />
+        <BoolPill on={value.highChairs} label="High chairs available" />
+        <BoolPill on={value.elderlyAssistance} label="Elderly assistance" />
+        <BoolPill on={value.wheelchairAccessible} label="Wheelchair accessible" />
+        <BoolPill on={value.petFriendly} label="Pet friendly" />
+        <BoolPill on={value.groupBookings} label="Large group bookings" />
+      </BoolGrid>
     </motion.div>
-
     <motion.div variants={fadeUp}>
-      <Textarea
-        label="Outlet-specific notes"
-        value={value.notes}
-        onChange={(e) => onChange({ notes: e.target.value })}
-        rows={4}
-        hint="Practical guidance the AI will share — entrance details, kid-menu, allergen handling for groups."
-      />
+      <RulesBlock label="Outlet-specific notes" body={value.notes} />
     </motion.div>
   </motion.div>
 );
 
 /* ---------- Payments ----------------------------------------------------- */
-export const PaymentsSection = ({
-  value,
-  onChange,
-}: {
-  value: Payments;
-  onChange: (patch: Partial<Payments>) => void;
-}) => (
-  <motion.div className="ss-policy-form" variants={stagger(0.06)} initial="hidden" animate="visible">
+export const PaymentsSection = ({ value }: { value: Payments }) => (
+  <motion.div className="ss-policy-view" variants={stagger(0.06)} initial="hidden" animate="visible">
     <motion.div variants={fadeUp}>
-      <span className="ss-policy-form__label">Accepted payment methods</span>
-      <div className="ss-policy-form__check-grid">
-        <Checkbox checked={value.cash} onChange={(on) => onChange({ cash: on })} label="Cash" />
-        <Checkbox checked={value.card} onChange={(on) => onChange({ card: on })} label="Credit / debit card" />
-        <Checkbox checked={value.upi} onChange={(on) => onChange({ upi: on })} label="UPI" />
-        <Checkbox checked={value.netBanking} onChange={(on) => onChange({ netBanking: on })} label="Net banking" />
-        <Checkbox checked={value.wallets} onChange={(on) => onChange({ wallets: on })} label="Digital wallets" />
-      </div>
+      <SubsectionLabel>Accepted payment methods</SubsectionLabel>
+      <BoolGrid>
+        <BoolPill on={value.cash} label="Cash" />
+        <BoolPill on={value.card} label="Credit / debit card" />
+        <BoolPill on={value.upi} label="UPI" />
+        <BoolPill on={value.netBanking} label="Net banking" />
+        <BoolPill on={value.wallets} label="Digital wallets" />
+      </BoolGrid>
     </motion.div>
-
     <motion.div variants={fadeUp}>
-      <Switch
-        checked={value.splitBills}
-        onChange={(on) => onChange({ splitBills: on })}
-        label="Split bills supported"
-        description="Allow guests to split the bill across multiple payment methods or people."
-      />
+      <FactGrid>
+        <Fact
+          label="Split bills"
+          value={<BoolPill on={value.splitBills} label={value.splitBills ? 'Supported' : 'Not supported'} />}
+          fullWidth
+        />
+      </FactGrid>
     </motion.div>
-
     <motion.div variants={fadeUp}>
-      <Textarea
-        label="Payment notes"
-        value={value.notes}
-        onChange={(e) => onChange({ notes: e.target.value })}
-        rows={3}
-        hint="Service charge, tipping policy, currency notes for tourists."
-      />
+      <RulesBlock label="Payment notes" body={value.notes} />
     </motion.div>
   </motion.div>
 );

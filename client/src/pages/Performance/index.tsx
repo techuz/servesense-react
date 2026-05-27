@@ -5,11 +5,12 @@ import { Badge } from '@/components/primitives/Badge';
 import { Input } from '@/components/primitives/Input';
 import { Select } from '@/components/primitives/Select';
 import { EmptyState } from '@/components/primitives/EmptyState';
+import { DateFilterControl } from '@/components/primitives/DateFilterControl';
 import { useStaff } from '@/lib/mock/staff';
-import { useOutlets } from '@/lib/mock/restaurant';
 import {
   healthScoreTone,
   useAllStaffPerformance,
+  type DateFilter,
   type StaffPerformance,
 } from '@/lib/mock/performance';
 import { avatarTintFor, initialsOf, relativeTime, roleLabels, type StaffMember } from '@/lib/mock/staff';
@@ -29,15 +30,16 @@ const sortLabels: Record<SortKey, string> = {
 
 export const PerformancePage = () => {
   const { staff, stats } = useStaff();
-  const { outlets } = useOutlets();
-  const performance = useAllStaffPerformance();
+  const [dateFilter, setDateFilter] = useState<DateFilter>({
+    kind: 'preset',
+    preset: 'last_30_days',
+  });
+  const performance = useAllStaffPerformance(dateFilter);
 
   const [search, setSearch] = useState('');
-  const [outletFilter, setOutletFilter] = useState('all');
   const [sortBy, setSortBy] = useState<SortKey>('health');
 
   const staffMap = useMemo(() => new Map(staff.map((s) => [s.id, s])), [staff]);
-  const outletMap = useMemo(() => new Map(outlets.map((o) => [o.id, o.name])), [outlets]);
 
   const rows = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -49,7 +51,6 @@ export const PerformancePage = () => {
           const hay = `${member.name} ${member.email}`.toLowerCase();
           if (!hay.includes(q)) return false;
         }
-        if (outletFilter !== 'all' && member.outletId !== outletFilter) return false;
         return true;
       });
 
@@ -67,7 +68,7 @@ export const PerformancePage = () => {
           return b.perf.avgTone - a.perf.avgTone;
       }
     });
-  }, [performance, staffMap, search, outletFilter, sortBy]);
+  }, [performance, staffMap, search, sortBy]);
 
   const totals = useMemo(() => {
     const totalSessions = performance.reduce((s, p) => s + p.totalSessions, 0);
@@ -84,7 +85,7 @@ export const PerformancePage = () => {
     };
   }, [performance]);
 
-  const isFiltered = search || outletFilter !== 'all';
+  const isFiltered = !!search;
 
   return (
     <motion.div
@@ -103,6 +104,7 @@ export const PerformancePage = () => {
           </p>
         </div>
         <div className="ss-perf__header-actions">
+          <DateFilterControl value={dateFilter} onChange={setDateFilter} />
           <Badge tone="brand" subtle dot>
             {stats.active} active · {rows.length} shown
           </Badge>
@@ -110,7 +112,7 @@ export const PerformancePage = () => {
       </motion.header>
 
       <motion.section className="ss-perf__stats" variants={fadeUp}>
-        <StatTile label="Active staff" value={stats.active.toString()} hint="Across all outlets" />
+        <StatTile label="Active staff" value={stats.active.toString()} hint="At your outlet" />
         <StatTile
           label="Total sessions"
           value={totals.totalSessions.toString()}
@@ -143,15 +145,6 @@ export const PerformancePage = () => {
               </svg>
             }
           />
-          <Select
-            value={outletFilter}
-            onChange={(e) => setOutletFilter(e.target.value)}
-            options={[
-              { value: 'all', label: 'All outlets' },
-              ...outlets.map((o) => ({ value: o.id, label: o.name })),
-            ]}
-            className="ss-perf__select"
-          />
         </div>
         <div className="ss-perf__sort">
           <span className="ss-perf__sort-label">Sort by</span>
@@ -180,10 +173,10 @@ export const PerformancePage = () => {
               />
             </svg>
           }
-          title={isFiltered ? 'No staff match your filters' : 'No performance data yet'}
+          title={isFiltered ? 'No staff match your search' : 'No performance data yet'}
           description={
             isFiltered
-              ? 'Try clearing the search or selecting a different outlet.'
+              ? 'Try clearing the search.'
               : 'Once live sessions begin, performance KPIs will appear here automatically.'
           }
         />
@@ -195,12 +188,7 @@ export const PerformancePage = () => {
           animate="visible"
         >
           {rows.map(({ perf, member }) => (
-            <PerfCard
-              key={perf.staffId}
-              perf={perf}
-              member={member}
-              outletName={outletMap.get(member.outletId) ?? 'Unassigned'}
-            />
+            <PerfCard key={perf.staffId} perf={perf} member={member} />
           ))}
         </motion.div>
       )}
@@ -234,11 +222,9 @@ const StatTile = ({
 const PerfCard = ({
   perf,
   member,
-  outletName,
 }: {
   perf: StaffPerformance;
   member: StaffMember;
-  outletName: string;
 }) => {
   const tint = avatarTintFor(member.id);
   const tone = healthScoreTone(perf.healthScore);
@@ -261,7 +247,7 @@ const PerfCard = ({
             <div className="ss-perf-card__id-text">
               <span className="ss-perf-card__name">{member.name}</span>
               <span className="ss-perf-card__sub">
-                {roleLabels[member.role]} · {outletName}
+                {roleLabels[member.role]}
               </span>
             </div>
           </div>

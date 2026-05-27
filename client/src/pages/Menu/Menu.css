@@ -85,50 +85,13 @@
 }
 
 /* ============================================================================
-   Toolbar (search + dish-type pills)
+   Toolbar (search)
    ============================================================================ */
 .ss-menu__toolbar {
-  display: grid;
-  grid-template-columns: minmax(280px, 1fr) auto;
-  gap: var(--sp-4);
-  align-items: center;
+  display: block;
 }
 
 .ss-menu__search { max-width: 460px; }
-
-.ss-menu__dish-filter {
-  display: inline-flex;
-  background-color: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-pill);
-  padding: 4px;
-  gap: 2px;
-}
-
-.ss-menu__pill {
-  border-radius: var(--radius-pill);
-  padding: var(--sp-2) var(--sp-4);
-  font-family: var(--font-sans);
-  font-size: var(--fs-sm);
-  font-weight: var(--fw-medium);
-  color: var(--color-text-muted);
-  cursor: pointer;
-  background: transparent;
-  border: 0;
-  transition:
-    background-color var(--duration-fast) var(--ease-out),
-    color var(--duration-fast) var(--ease-out);
-  white-space: nowrap;
-}
-
-.ss-menu__pill:hover {
-  color: var(--color-text);
-}
-
-.ss-menu__pill--on {
-  background-color: var(--ss-green-700);
-  color: var(--ss-cream-0);
-}
 
 /* ============================================================================
    Category rail
@@ -251,9 +214,6 @@
 /* --- Row ---------------------------------------------------------------- */
 .ss-menu-row {
   position: relative;
-  display: grid;
-  grid-template-columns: 1fr auto;
-  align-items: center;
   border-bottom: 1px solid var(--color-border);
   transition:
     background-color var(--duration-base) var(--ease-out),
@@ -270,17 +230,12 @@
   opacity: 0.65;
 }
 
-.ss-menu-row__btn {
+.ss-menu-row__inner {
   display: grid;
   grid-template-columns: 24px 1fr auto;
   gap: var(--sp-4);
   align-items: center;
   padding: var(--sp-4) var(--sp-5);
-  background: transparent;
-  border: 0;
-  width: 100%;
-  text-align: left;
-  cursor: pointer;
 }
 
 .ss-menu-row__lead {
@@ -400,26 +355,6 @@
 .ss-menu-row__amount {
   font-size: var(--fs-xl);
   letter-spacing: var(--tracking-tight);
-}
-
-.ss-menu-row__chev {
-  color: var(--color-text-muted);
-  opacity: 0;
-  transform: translateX(-4px);
-  transition:
-    opacity var(--duration-base) var(--ease-out),
-    transform var(--duration-base) var(--ease-out),
-    color var(--duration-base) var(--ease-out);
-}
-
-.ss-menu-row:hover .ss-menu-row__chev {
-  opacity: 1;
-  transform: translateX(0);
-  color: var(--ss-green-700);
-}
-
-.ss-menu-row__toggle {
-  padding-right: var(--sp-5);
 }
 
 /* ============================================================================
@@ -894,10 +829,6 @@
    ============================================================================ */
 @media (max-width: 1100px) {
   .ss-menu__stats { grid-template-columns: repeat(3, 1fr); }
-  .ss-menu__toolbar {
-    grid-template-columns: 1fr;
-  }
-  .ss-menu__dish-filter { overflow-x: auto; }
 }
 
 @media (max-width: 720px) {

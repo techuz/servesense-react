@@ -149,7 +149,7 @@ const seedPolicies: StandardPolicies = {
     petFriendly: false,
     groupBookings: true,
     notes:
-      'Children under 12 receive a complimentary mocktail. The Indiranagar outlet has a step-free entrance; Koramangala has assisted ramp access at the side entrance.',
+      'Children under 12 receive a complimentary mocktail. Step-free main entrance; assisted ramp access at the side entrance for wheelchair users.',
   },
   payments: {
     cash: true,
@@ -245,7 +245,7 @@ export const policySections: PolicySectionMeta[] = [
   {
     key: 'operatingTimings',
     title: 'Operating Timings',
-    description: 'When each outlet is open, the last order cut-off, and any seasonal exceptions.',
+    description: 'When the outlet is open, the last order cut-off, and any seasonal exceptions.',
     short: 'Weekly hours & last order',
   },
   {

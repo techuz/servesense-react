@@ -1,0 +1,184 @@
+/* ============================================================================
+   DateFilterControl — Notion-style preset list.
+   Trigger button shows the current selection. Click opens a portal-rendered
+   popover with one preset per row, plus an expandable "Custom range" footer.
+   ============================================================================ */
+
+/* --- Trigger ----------------------------------------------------------- */
+.ss-datefilter__trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
+  background: var(--color-card);
+  border: var(--border-card);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+  font-family: var(--font-sans);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  color: var(--color-text);
+  letter-spacing: var(--tracking-tight);
+  transition:
+    border-color var(--duration-base) var(--ease-out),
+    background-color var(--duration-base) var(--ease-out),
+    box-shadow var(--duration-base) var(--ease-out);
+}
+
+.ss-datefilter__trigger:hover {
+  border-color: rgba(58, 107, 76, 0.25);
+  background: var(--ss-cream-50);
+}
+
+.ss-datefilter__trigger--open {
+  border-color: var(--ss-green-500);
+  background: var(--color-card);
+  box-shadow: 0 0 0 3px rgba(58, 107, 76, 0.12);
+}
+
+.ss-datefilter__trigger svg:first-child { color: var(--ss-green-700); }
+
+.ss-datefilter__trigger-label {
+  font-variant-numeric: tabular-nums;
+}
+
+.ss-datefilter__chev {
+  color: var(--color-text-muted);
+  transition: transform var(--duration-base) var(--ease-out);
+}
+
+.ss-datefilter__chev--open { transform: rotate(180deg); }
+
+/* --- Popover ----------------------------------------------------------- */
+/* Solid white background — the project-wide --color-card token is translucent
+   (#ffffffe6) so the page would bleed through. The popover is a discrete
+   surface that needs full opacity. */
+.ss-datefilter__popover {
+  position: fixed;
+  width: 280px;
+  max-width: calc(100vw - 16px);
+  background: var(--ss-cream-0);
+  border: var(--border-card);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-card-hover);
+  z-index: var(--z-popover, 200);
+  transform-origin: top right;
+  overflow: hidden;
+}
+
+/* --- List -------------------------------------------------------------- */
+.ss-datefilter__list {
+  display: flex;
+  flex-direction: column;
+  padding: var(--sp-2);
+}
+
+.ss-datefilter__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  width: 100%;
+  padding: var(--sp-2) var(--sp-3);
+  background: transparent;
+  border: 0;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  text-align: left;
+  font-family: var(--font-sans);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  color: var(--color-text);
+  letter-spacing: var(--tracking-tight);
+  transition:
+    background-color var(--duration-fast) var(--ease-out),
+    color var(--duration-fast) var(--ease-out);
+}
+
+.ss-datefilter__item:hover {
+  background: var(--ss-cream-50);
+}
+
+.ss-datefilter__item--on {
+  background: var(--ss-green-50);
+  color: var(--ss-green-700);
+  font-weight: var(--fw-semibold);
+}
+
+.ss-datefilter__item--on:hover {
+  background: var(--ss-green-50);
+}
+
+.ss-datefilter__item-label {
+  flex: 1;
+  min-width: 0;
+}
+
+.ss-datefilter__item-check {
+  display: grid;
+  place-items: center;
+  color: var(--ss-green-700);
+  flex-shrink: 0;
+}
+
+/* --- Divider ----------------------------------------------------------- */
+.ss-datefilter__divider {
+  height: 1px;
+  background: var(--color-border);
+  margin: var(--sp-1) var(--sp-2);
+}
+
+/* --- Custom range inputs ----------------------------------------------- */
+.ss-datefilter__custom {
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.ss-datefilter__custom > *:first-child {
+  margin-top: var(--sp-2);
+}
+
+.ss-datefilter__field {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  padding: 0 var(--sp-3);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+  color: var(--color-text-muted);
+}
+
+.ss-datefilter__field input {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--font-sans);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  color: var(--color-text);
+  padding: var(--sp-2) var(--sp-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  transition:
+    border-color var(--duration-base) var(--ease-out),
+    box-shadow var(--duration-base) var(--ease-out);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: var(--tracking-tight);
+  text-transform: none;
+}
+
+.ss-datefilter__field input:focus {
+  outline: none;
+  border-color: var(--ss-green-500);
+  box-shadow: 0 0 0 3px rgba(58, 107, 76, 0.14);
+}
+
+.ss-datefilter__custom > *:last-child {
+  margin-bottom: var(--sp-2);
+}

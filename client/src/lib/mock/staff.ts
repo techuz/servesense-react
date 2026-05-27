@@ -2,13 +2,15 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 
 /* ============================================================================
    Mock data for M9 — Staff Management (SOW §2.2).
-   Manager-created waiter accounts, scoped to a restaurant + outlet.
+   Manager-created staff accounts, scoped to a restaurant + outlet.
    Real backend will replace the localStorage swap with a fetch.
+
+   Phase 1 model: staff are simply active or inactive. No invite/pending
+   state — the manager adds them and they're on the floor.
    ============================================================================ */
 
 export type StaffRole = 'waiter' | 'receptionist' | 'bartender';
 export type StaffStatus = 'active' | 'inactive';
-export type InviteStatus = 'pending' | 'accepted';
 
 export interface StaffMember {
   id: string;
@@ -18,9 +20,8 @@ export interface StaffMember {
   role: StaffRole;
   outletId: string;
   status: StaffStatus;
-  inviteStatus: InviteStatus;
-  invitedAt: string;      // ISO timestamp
-  lastLoginAt: string | null;
+  /** When the staff member was added to the system (ISO timestamp). */
+  joinedAt: string;
   /** Performance preview — populated post-session by the AI engine. */
   sessionCount: number;
   avgTone: number | null;       // 0–100
@@ -28,7 +29,9 @@ export interface StaffMember {
   upsellRate: number | null;    // 0–1
 }
 
-const STORAGE_KEY = 'ss_mock_staff';
+/* Bumped when the schema changed (dropped inviteStatus / invitedAt /
+   lastLoginAt). Old persisted seeds are wiped so the new shape lands. */
+const STORAGE_KEY = 'ss_mock_staff_v2';
 
 export const roleLabels: Record<StaffRole, string> = {
   waiter: 'Waiter',
@@ -41,18 +44,7 @@ export const statusLabels: Record<StaffStatus, string> = {
   inactive: 'Inactive',
 };
 
-export const inviteStatusLabels: Record<InviteStatus, string> = {
-  pending: 'Invite pending',
-  accepted: 'Joined',
-};
-
 /* --- Helpers -------------------------------------------------------------- */
-function isoOffsetHours(hoursAgo: number): string {
-  const d = new Date();
-  d.setHours(d.getHours() - hoursAgo);
-  return d.toISOString();
-}
-
 function isoOffsetDays(daysAgo: number): string {
   const d = new Date();
   d.setDate(d.getDate() - daysAgo);
@@ -99,7 +91,7 @@ export function avatarTintFor(seed: string) {
   return avatarTints[h % avatarTints.length];
 }
 
-/* --- Seed (uses outlet IDs from mock/restaurant.ts) ----------------------- */
+/* --- Seed (uses outlet ID from mock/restaurant.ts) ------------------------ */
 const seed: StaffMember[] = [
   {
     id: 'staff_001',
@@ -109,9 +101,7 @@ const seed: StaffMember[] = [
     role: 'waiter',
     outletId: 'outlet_001',
     status: 'active',
-    inviteStatus: 'accepted',
-    invitedAt: isoOffsetDays(120),
-    lastLoginAt: isoOffsetHours(2),
+    joinedAt: isoOffsetDays(120),
     sessionCount: 482,
     avgTone: 87,
     avgEmpathy: 84,
@@ -125,9 +115,7 @@ const seed: StaffMember[] = [
     role: 'waiter',
     outletId: 'outlet_001',
     status: 'active',
-    inviteStatus: 'accepted',
-    invitedAt: isoOffsetDays(95),
-    lastLoginAt: isoOffsetHours(5),
+    joinedAt: isoOffsetDays(95),
     sessionCount: 391,
     avgTone: 91,
     avgEmpathy: 89,
@@ -141,9 +129,7 @@ const seed: StaffMember[] = [
     role: 'waiter',
     outletId: 'outlet_001',
     status: 'active',
-    inviteStatus: 'accepted',
-    invitedAt: isoOffsetDays(60),
-    lastLoginAt: isoOffsetDays(2),
+    joinedAt: isoOffsetDays(60),
     sessionCount: 211,
     avgTone: 76,
     avgEmpathy: 72,
@@ -157,9 +143,7 @@ const seed: StaffMember[] = [
     role: 'receptionist',
     outletId: 'outlet_001',
     status: 'active',
-    inviteStatus: 'accepted',
-    invitedAt: isoOffsetDays(150),
-    lastLoginAt: isoOffsetHours(1),
+    joinedAt: isoOffsetDays(150),
     sessionCount: 0,
     avgTone: 93,
     avgEmpathy: 90,
@@ -173,9 +157,7 @@ const seed: StaffMember[] = [
     role: 'bartender',
     outletId: 'outlet_001',
     status: 'active',
-    inviteStatus: 'accepted',
-    invitedAt: isoOffsetDays(80),
-    lastLoginAt: isoOffsetHours(8),
+    joinedAt: isoOffsetDays(80),
     sessionCount: 167,
     avgTone: 82,
     avgEmpathy: 78,
@@ -187,11 +169,9 @@ const seed: StaffMember[] = [
     email: 'sana.q@lumiere.example',
     phone: '+91 99014 88792',
     role: 'waiter',
-    outletId: 'outlet_002',
+    outletId: 'outlet_001',
     status: 'active',
-    inviteStatus: 'accepted',
-    invitedAt: isoOffsetDays(45),
-    lastLoginAt: isoOffsetHours(3),
+    joinedAt: isoOffsetDays(45),
     sessionCount: 178,
     avgTone: 88,
     avgEmpathy: 85,
@@ -203,11 +183,9 @@ const seed: StaffMember[] = [
     email: 'rohit.v@lumiere.example',
     phone: '+91 98442 90011',
     role: 'waiter',
-    outletId: 'outlet_002',
+    outletId: 'outlet_001',
     status: 'active',
-    inviteStatus: 'accepted',
-    invitedAt: isoOffsetDays(200),
-    lastLoginAt: isoOffsetDays(1),
+    joinedAt: isoOffsetDays(200),
     sessionCount: 612,
     avgTone: 84,
     avgEmpathy: 81,
@@ -219,11 +197,9 @@ const seed: StaffMember[] = [
     email: 'tara.k@lumiere.example',
     phone: '+91 99888 21345',
     role: 'waiter',
-    outletId: 'outlet_002',
+    outletId: 'outlet_001',
     status: 'inactive',
-    inviteStatus: 'accepted',
-    invitedAt: isoOffsetDays(220),
-    lastLoginAt: isoOffsetDays(31),
+    joinedAt: isoOffsetDays(220),
     sessionCount: 489,
     avgTone: 79,
     avgEmpathy: 74,
@@ -235,15 +211,13 @@ const seed: StaffMember[] = [
     email: 'nikhil.s@lumiere.example',
     phone: '+91 98765 43210',
     role: 'waiter',
-    outletId: 'outlet_002',
+    outletId: 'outlet_001',
     status: 'active',
-    inviteStatus: 'pending',
-    invitedAt: isoOffsetHours(18),
-    lastLoginAt: null,
-    sessionCount: 0,
-    avgTone: null,
-    avgEmpathy: null,
-    upsellRate: null,
+    joinedAt: isoOffsetDays(20),
+    sessionCount: 64,
+    avgTone: 81,
+    avgEmpathy: 79,
+    upsellRate: 0.24,
   },
   {
     id: 'staff_010',
@@ -251,15 +225,13 @@ const seed: StaffMember[] = [
     email: 'ishaan.k@lumiere.example',
     phone: '+91 90011 23456',
     role: 'bartender',
-    outletId: 'outlet_002',
+    outletId: 'outlet_001',
     status: 'active',
-    inviteStatus: 'pending',
-    invitedAt: isoOffsetHours(40),
-    lastLoginAt: null,
-    sessionCount: 0,
-    avgTone: null,
-    avgEmpathy: null,
-    upsellRate: null,
+    joinedAt: isoOffsetDays(15),
+    sessionCount: 41,
+    avgTone: 86,
+    avgEmpathy: 80,
+    upsellRate: 0.48,
   },
 ];
 
@@ -297,9 +269,7 @@ export function emptyStaff(outletId: string): StaffMember {
     role: 'waiter',
     outletId,
     status: 'active',
-    inviteStatus: 'pending',
-    invitedAt: new Date().toISOString(),
-    lastLoginAt: null,
+    joinedAt: new Date().toISOString(),
     sessionCount: 0,
     avgTone: null,
     avgEmpathy: null,
@@ -339,20 +309,13 @@ export function useStaff() {
     );
   }, []);
 
-  const resendInvite = useCallback((id: string) => {
-    setStaff((list) =>
-      list.map((s) => (s.id === id ? { ...s, invitedAt: new Date().toISOString() } : s)),
-    );
-  }, []);
-
   const stats = useMemo(() => {
     return {
       total: staff.length,
-      active: staff.filter((s) => s.status === 'active' && s.inviteStatus === 'accepted').length,
-      pending: staff.filter((s) => s.inviteStatus === 'pending').length,
+      active: staff.filter((s) => s.status === 'active').length,
       inactive: staff.filter((s) => s.status === 'inactive').length,
     };
   }, [staff]);
 
-  return { staff, upsert, remove, toggleStatus, resendInvite, stats };
+  return { staff, upsert, remove, toggleStatus, stats };
 }

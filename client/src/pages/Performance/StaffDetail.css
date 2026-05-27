@@ -113,6 +113,14 @@
   font-weight: var(--fw-muted);
 }
 
+/* --- Right side of hero: date filter + health tile --------------------- */
+.ss-staff-detail__hero-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--sp-3);
+}
+
 /* --- Health tile inside hero ------------------------------------------ */
 .ss-staff-detail__health-tile {
   display: flex;

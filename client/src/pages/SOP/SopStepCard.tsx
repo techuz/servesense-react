@@ -1,7 +1,5 @@
 import { useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Switch } from '@/components/primitives/Switch';
-import { Textarea } from '@/components/primitives/Textarea';
 import { Badge } from '@/components/primitives/Badge';
 import { fadeUp, transitions } from '@/lib/motion';
 import { cn } from '@/lib/cn';
@@ -12,11 +10,15 @@ interface Props {
   meta: SopStepMeta;
   data: SopStepData;
   isLast: boolean;
-  onChange: (patch: Partial<SopStepData>) => void;
 }
 
-export const SopStepCard = ({ meta, data, isLast, onChange }: Props) => {
+export const SopStepCard = ({ meta, data, isLast }: Props) => {
   const [expanded, setExpanded] = useState(false);
+
+  const hasDetails =
+    data.bestPractices.length > 0 ||
+    data.thingsToAvoid.length > 0 ||
+    data.examplePhrases.length > 0;
 
   return (
     <motion.li
@@ -45,17 +47,16 @@ export const SopStepCard = ({ meta, data, isLast, onChange }: Props) => {
               <Badge tone="gold" subtle>
                 {meta.outcome}
               </Badge>
+              {!data.enabled && (
+                <Badge tone="neutral" subtle>
+                  Not in document
+                </Badge>
+              )}
             </div>
             <span className="ss-sop-step__principle">{meta.shortPrinciple}</span>
           </div>
 
-          <div className="ss-sop-step__actions">
-            <Switch
-              size="sm"
-              checked={data.enabled}
-              onChange={(on) => onChange({ enabled: on })}
-              label={data.enabled ? 'Enabled' : 'Skipped'}
-            />
+          {hasDetails && (
             <button
               type="button"
               className="ss-sop-step__toggle"
@@ -80,19 +81,15 @@ export const SopStepCard = ({ meta, data, isLast, onChange }: Props) => {
                 />
               </motion.svg>
             </button>
-          </div>
+          )}
         </header>
 
-        <Textarea
-          label="Description"
-          value={data.description}
-          onChange={(e) => onChange({ description: e.target.value })}
-          rows={expanded ? 3 : 2}
-          disabled={!data.enabled}
-        />
+        {data.description && (
+          <p className="ss-sop-step__description">{data.description}</p>
+        )}
 
         <AnimatePresence initial={false}>
-          {expanded && (
+          {expanded && hasDetails && (
             <motion.div
               className="ss-sop-step__expanded"
               initial={{ opacity: 0, height: 0 }}
@@ -102,32 +99,35 @@ export const SopStepCard = ({ meta, data, isLast, onChange }: Props) => {
               style={{ overflow: 'hidden' }}
             >
               <div className="ss-sop-step__lists">
-                <PhraseList
-                  label="Best practices"
-                  helper="Specific things waiters should do at this step."
-                  phrases={data.bestPractices}
-                  onChange={(next) => onChange({ bestPractices: next })}
-                  tone="do"
-                  placeholder="e.g. Make eye contact before speaking"
-                />
-                <PhraseList
-                  label="Things to avoid"
-                  helper="Behaviours the AI will flag if it detects them."
-                  phrases={data.thingsToAvoid}
-                  onChange={(next) => onChange({ thingsToAvoid: next })}
-                  tone="avoid"
-                  placeholder="e.g. Keeping the guest waiting at the door"
-                />
+                {data.bestPractices.length > 0 && (
+                  <PhraseList
+                    label="Best practices"
+                    helper="Specific things waiters should do at this step."
+                    phrases={data.bestPractices}
+                    tone="do"
+                    readOnly
+                  />
+                )}
+                {data.thingsToAvoid.length > 0 && (
+                  <PhraseList
+                    label="Things to avoid"
+                    helper="Behaviours the AI will flag if it detects them."
+                    phrases={data.thingsToAvoid}
+                    tone="avoid"
+                    readOnly
+                  />
+                )}
               </div>
 
-              <PhraseList
-                label="Example phrases"
-                helper="Sample lines the AI can suggest in real time during this step."
-                phrases={data.examplePhrases}
-                onChange={(next) => onChange({ examplePhrases: next })}
-                tone="quote"
-                placeholder='e.g. "Welcome to Lumière, do you have a reservation?"'
-              />
+              {data.examplePhrases.length > 0 && (
+                <PhraseList
+                  label="Example phrases"
+                  helper="Sample lines the AI can suggest in real time during this step."
+                  phrases={data.examplePhrases}
+                  tone="quote"
+                  readOnly
+                />
+              )}
             </motion.div>
           )}
         </AnimatePresence>

@@ -64,7 +64,9 @@ export interface StaffPerformance {
   healthScore: number;
 }
 
-const STORAGE_KEY = 'ss_mock_performance';
+/* Bumped to v2 when the seed was re-spread over 18 months so the
+   monthly / yearly / overall filter has visibly distinct counts. */
+const STORAGE_KEY = 'ss_mock_performance_v2';
 
 /* --- Helpers -------------------------------------------------------------- */
 function isoOffsetHours(hoursAgo: number): string {
@@ -159,11 +161,17 @@ function buildSessionsForStaff(staffId: string): Session[] {
   const profile = baselines[staffId];
   if (!profile) return [];
   const rng = rand(staffId.split('').reduce((a, c) => a + c.charCodeAt(0), 0));
-  const count = 6 + Math.floor(rng() * 5); // 6–10
+  const count = 24 + Math.floor(rng() * 13); // 24–36
   const sessions: Session[] = [];
 
+  /* Spread sessions over the last 18 months, biased toward recent so the
+     "monthly" cutoff still has plenty of data while "yearly" and "overall"
+     show meaningfully different totals. */
+  const HISTORY_MONTHS = 18;
   for (let i = 0; i < count; i++) {
-    const hoursAgo = (i * 18) + Math.floor(rng() * 12); // sessions in the last ~ week
+    const t = count <= 1 ? 0 : i / (count - 1);
+    const monthsAgo = Math.pow(t, 2.2) * HISTORY_MONTHS;
+    const hoursAgo = monthsAgo * 30 * 24 + Math.floor(rng() * 24);
     const startedAt = isoOffsetHours(hoursAgo);
     const durationMins = 45 + Math.floor(rng() * 50); // 45–95 min
     const endedAt = new Date(new Date(startedAt).getTime() + durationMins * 60_000).toISOString();
@@ -204,9 +212,7 @@ function buildSessionsForStaff(staffId: string): Session[] {
     sessions.push({
       id: `sess_${staffId}_${i}`,
       staffId,
-      outletId: ['staff_001', 'staff_002', 'staff_003', 'staff_004', 'staff_005'].includes(staffId)
-        ? 'outlet_001'
-        : 'outlet_002',
+      outletId: 'outlet_001',
       tableNumber,
       guestName: guestName || undefined,
       serviceMode,
@@ -299,32 +305,179 @@ function aggregate(staffId: string, sessions: Session[]): StaffPerformance {
   };
 }
 
+/* --- Date filter -------------------------------------------------------- */
+/**
+ * Notion-style preset filters + an escape hatch for custom date ranges.
+ * Every preset compiles down to a [start, end) bounds pair (or null for
+ * "all time"), so filtering logic stays uniform regardless of which option
+ * the manager picked.
+ */
+export type DatePreset =
+  | 'today'
+  | 'yesterday'
+  | 'last_7_days'
+  | 'last_30_days'
+  | 'this_month'
+  | 'last_month'
+  | 'this_year'
+  | 'last_year'
+  | 'all_time';
+
+export type DateFilter =
+  | { kind: 'preset'; preset: DatePreset }
+  | { kind: 'custom'; from: string; to: string };
+
+export const ALL_TIME_FILTER: DateFilter = { kind: 'preset', preset: 'all_time' };
+
+export const datePresetOrder: DatePreset[] = [
+  'today',
+  'yesterday',
+  'last_7_days',
+  'last_30_days',
+  'this_month',
+  'last_month',
+  'this_year',
+  'last_year',
+  'all_time',
+];
+
+export const datePresetLabels: Record<DatePreset, string> = {
+  today: 'Today',
+  yesterday: 'Yesterday',
+  last_7_days: 'Last 7 days',
+  last_30_days: 'Last 30 days',
+  this_month: 'This month',
+  last_month: 'Last month',
+  this_year: 'This year',
+  last_year: 'Last year',
+  all_time: 'All time',
+};
+
+function startOfDay(d: Date): Date {
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+}
+
+function presetBounds(preset: DatePreset, now: Date = new Date()): [Date, Date] | null {
+  const today = startOfDay(now);
+  switch (preset) {
+    case 'today': {
+      const end = new Date(today);
+      end.setDate(end.getDate() + 1);
+      return [today, end];
+    }
+    case 'yesterday': {
+      const start = new Date(today);
+      start.setDate(start.getDate() - 1);
+      return [start, today];
+    }
+    case 'last_7_days': {
+      const start = new Date(today);
+      start.setDate(start.getDate() - 7);
+      const end = new Date(today);
+      end.setDate(end.getDate() + 1);
+      return [start, end];
+    }
+    case 'last_30_days': {
+      const start = new Date(today);
+      start.setDate(start.getDate() - 30);
+      const end = new Date(today);
+      end.setDate(end.getDate() + 1);
+      return [start, end];
+    }
+    case 'this_month': {
+      const start = new Date(today.getFullYear(), today.getMonth(), 1);
+      const end = new Date(today.getFullYear(), today.getMonth() + 1, 1);
+      return [start, end];
+    }
+    case 'last_month': {
+      const start = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+      const end = new Date(today.getFullYear(), today.getMonth(), 1);
+      return [start, end];
+    }
+    case 'this_year': {
+      const start = new Date(today.getFullYear(), 0, 1);
+      const end = new Date(today.getFullYear() + 1, 0, 1);
+      return [start, end];
+    }
+    case 'last_year': {
+      const start = new Date(today.getFullYear() - 1, 0, 1);
+      const end = new Date(today.getFullYear(), 0, 1);
+      return [start, end];
+    }
+    case 'all_time':
+      return null;
+  }
+}
+
+/** Compute the half-open [start, endExclusive) bounds for any filter. */
+function filterBounds(filter: DateFilter): [Date, Date] | null {
+  if (filter.kind === 'preset') return presetBounds(filter.preset);
+  const start = new Date(`${filter.from}T00:00:00`);
+  const end = new Date(`${filter.to}T00:00:00`);
+  end.setDate(end.getDate() + 1);
+  return [start, end];
+}
+
+function filterByDate(sessions: Session[], filter: DateFilter): Session[] {
+  const bounds = filterBounds(filter);
+  if (!bounds) return sessions;
+  const [start, end] = bounds;
+  return sessions.filter((s) => {
+    const d = new Date(s.startedAt);
+    return d >= start && d < end;
+  });
+}
+
+/** Pretty label for the picker trigger. */
+export function describeDateFilter(filter: DateFilter): string {
+  if (filter.kind === 'preset') return datePresetLabels[filter.preset];
+  const fmt = (iso: string) =>
+    new Date(`${iso}T00:00:00`).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    });
+  if (filter.from === filter.to) return fmt(filter.from);
+  return `${fmt(filter.from)} – ${fmt(filter.to)}`;
+}
+
 /* --- Hooks -------------------------------------------------------------- */
 export function useAllSessions(): Session[] {
   return useMemo(() => read(), []);
 }
 
-export function useStaffSessions(staffId: string | undefined): Session[] {
-  const all = useAllSessions();
-  return useMemo(
-    () => (staffId ? all.filter((s) => s.staffId === staffId) : []),
-    [all, staffId],
-  );
-}
-
-export function useStaffPerformance(staffId: string | undefined): StaffPerformance | null {
-  const all = useAllSessions();
-  return useMemo(
-    () => (staffId ? aggregate(staffId, all) : null),
-    [all, staffId],
-  );
-}
-
-export function useAllStaffPerformance(): StaffPerformance[] {
+export function useStaffSessions(
+  staffId: string | undefined,
+  filter: DateFilter = ALL_TIME_FILTER,
+): Session[] {
   const all = useAllSessions();
   return useMemo(() => {
-    return Object.keys(baselines).map((id) => aggregate(id, all));
-  }, [all]);
+    if (!staffId) return [];
+    const mine = all.filter((s) => s.staffId === staffId);
+    return filterByDate(mine, filter);
+  }, [all, staffId, filter]);
+}
+
+export function useStaffPerformance(
+  staffId: string | undefined,
+  filter: DateFilter = ALL_TIME_FILTER,
+): StaffPerformance | null {
+  const all = useAllSessions();
+  return useMemo(() => {
+    if (!staffId) return null;
+    const scoped = filterByDate(all, filter);
+    return aggregate(staffId, scoped);
+  }, [all, staffId, filter]);
+}
+
+export function useAllStaffPerformance(
+  filter: DateFilter = ALL_TIME_FILTER,
+): StaffPerformance[] {
+  const all = useAllSessions();
+  return useMemo(() => {
+    const scoped = filterByDate(all, filter);
+    return Object.keys(baselines).map((id) => aggregate(id, scoped));
+  }, [all, filter]);
 }
 
 export function useSession(sessionId: string | undefined): Session | null {

@@ -3,14 +3,12 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { Badge } from '@/components/primitives/Badge';
 import { Button } from '@/components/primitives/Button';
 import { Input } from '@/components/primitives/Input';
-import { Select } from '@/components/primitives/Select';
 import { EmptyState } from '@/components/primitives/EmptyState';
 import {
   useStaff,
   type StaffMember,
   type StaffStatus,
 } from '@/lib/mock/staff';
-import { useOutlets } from '@/lib/mock/restaurant';
 import { useToast } from '@/lib/toast';
 import { fadeUp, stagger } from '@/lib/motion';
 import { cn } from '@/lib/cn';
@@ -18,31 +16,23 @@ import { StaffRow } from './StaffRow';
 import { StaffDrawer } from './StaffDrawer';
 import './Staff.css';
 
-type StatusFilter = 'all' | StaffStatus | 'pending';
+type StatusFilter = 'all' | StaffStatus;
 
-const statusFilterOrder: StatusFilter[] = ['all', 'active', 'pending', 'inactive'];
+const statusFilterOrder: StatusFilter[] = ['all', 'active', 'inactive'];
 const statusFilterLabels: Record<StatusFilter, string> = {
   all: 'All',
   active: 'Active',
-  pending: 'Pending',
   inactive: 'Inactive',
 };
 
 export const StaffPage = () => {
-  const { staff, upsert, remove, toggleStatus, resendInvite, stats } = useStaff();
-  const { outlets } = useOutlets();
+  const { staff, upsert, remove, toggleStatus, stats } = useStaff();
   const { notify } = useToast();
 
   const [search, setSearch] = useState('');
-  const [outletFilter, setOutletFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [editing, setEditing] = useState<StaffMember | null>(null);
-
-  const outletMap = useMemo(
-    () => new Map(outlets.map((o) => [o.id, o.name])),
-    [outlets],
-  );
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -51,19 +41,14 @@ export const StaffPage = () => {
         const hay = `${s.name} ${s.email} ${s.phone}`.toLowerCase();
         if (!hay.includes(q)) return false;
       }
-      if (outletFilter !== 'all' && s.outletId !== outletFilter) return false;
-      if (statusFilter === 'pending' && s.inviteStatus !== 'pending') return false;
-      if (statusFilter === 'active' && (s.status !== 'active' || s.inviteStatus !== 'accepted'))
-        return false;
-      if (statusFilter === 'inactive' && s.status !== 'inactive') return false;
+      if (statusFilter !== 'all' && s.status !== statusFilter) return false;
       return true;
     });
-  }, [staff, search, outletFilter, statusFilter]);
+  }, [staff, search, statusFilter]);
 
   const counts = useMemo(() => ({
     all: staff.length,
     active: stats.active,
-    pending: stats.pending,
     inactive: stats.inactive,
   }), [staff, stats]);
 
@@ -78,7 +63,7 @@ export const StaffPage = () => {
   };
 
   const noResults = filtered.length === 0;
-  const isFiltered = search || outletFilter !== 'all' || statusFilter !== 'all';
+  const isFiltered = !!search || statusFilter !== 'all';
 
   return (
     <motion.div
@@ -93,31 +78,25 @@ export const StaffPage = () => {
           <span className="eyebrow">Setup · §2.2</span>
           <h1>Staff Management</h1>
           <p className="ss-staff__lede">
-            Invite waiters, receptionists, and bartenders to ServeSense. Each invite goes out by
-            email + WhatsApp with a one-tap link to the mobile app. Deactivate accounts to revoke
-            access without losing history.
+            Add waiters, receptionists, and bartenders to ServeSense. Deactivate accounts to
+            revoke access without losing history — performance records stay intact.
           </p>
         </div>
         <div className="ss-staff__header-actions">
           <Badge tone="brand" subtle dot>
-            {stats.active} active · {stats.pending} pending
+            {stats.active} active · {stats.inactive} inactive
           </Badge>
         </div>
       </motion.header>
 
       {/* --- Stats strip ----------------------------------------------- */}
       <motion.section className="ss-staff__stats" variants={fadeUp}>
-        <StatTile label="Total staff" value={stats.total.toString()} hint="Across all outlets" />
+        <StatTile label="Total staff" value={stats.total.toString()} hint="At your outlet" />
         <StatTile
           label="On the floor"
           value={stats.active.toString()}
-          hint="Active + accepted invites"
+          hint="Active accounts"
           accent
-        />
-        <StatTile
-          label="Pending invites"
-          value={stats.pending.toString()}
-          hint={stats.pending > 0 ? 'Awaiting first login' : 'All caught up'}
         />
         <StatTile
           label="Deactivated"
@@ -147,16 +126,6 @@ export const StaffPage = () => {
             }
           />
 
-          <Select
-            value={outletFilter}
-            onChange={(e) => setOutletFilter(e.target.value)}
-            options={[
-              { value: 'all', label: 'All outlets' },
-              ...outlets.map((o) => ({ value: o.id, label: o.name })),
-            ]}
-            className="ss-staff__outlet"
-          />
-
           <div
             className="ss-staff__status-rail"
             role="tablist"
@@ -175,7 +144,7 @@ export const StaffPage = () => {
         </div>
 
         <Button variant="primary" onClick={openAdd}>
-          + Invite staff
+          + Add staff
         </Button>
       </motion.section>
 
@@ -196,12 +165,12 @@ export const StaffPage = () => {
           title={isFiltered ? 'No staff match your filters' : 'No staff yet'}
           description={
             isFiltered
-              ? 'Try clearing a filter or invite someone new.'
-              : 'Invite your first waiter — they\'ll get an SMS + email with a link to the ServeSense mobile app.'
+              ? 'Try clearing a filter or add someone new.'
+              : 'Add your first waiter to start scoring service interactions.'
           }
           action={
             <Button variant="primary" onClick={openAdd}>
-              + {isFiltered ? 'Invite someone new' : 'Invite first waiter'}
+              + {isFiltered ? 'Add someone new' : 'Add first waiter'}
             </Button>
           }
         />
@@ -210,9 +179,7 @@ export const StaffPage = () => {
           <div className="ss-staff__table-head" role="row">
             <div role="columnheader">Staff</div>
             <div role="columnheader">Role</div>
-            <div role="columnheader">Outlet</div>
             <div role="columnheader">Status</div>
-            <div role="columnheader">Last seen</div>
             <div role="columnheader" className="ss-staff__th--right">Sessions</div>
             <div role="columnheader" aria-label="Actions" />
           </div>
@@ -224,12 +191,7 @@ export const StaffPage = () => {
           >
             <AnimatePresence initial={false}>
               {filtered.map((s) => (
-                <StaffRow
-                  key={s.id}
-                  member={s}
-                  outletName={outletMap.get(s.outletId) ?? 'Unassigned'}
-                  onOpen={() => openEdit(s)}
-                />
+                <StaffRow key={s.id} member={s} onOpen={() => openEdit(s)} />
               ))}
             </AnimatePresence>
           </motion.div>
@@ -244,14 +206,13 @@ export const StaffPage = () => {
       <StaffDrawer
         open={drawerOpen}
         member={editing}
-        outlets={outlets}
         onClose={() => setDrawerOpen(false)}
         onSave={(m) => {
           upsert(m);
           notify({
             tone: 'success',
-            title: editing ? 'Staff updated' : 'Invite sent',
-            description: editing ? m.name : `${m.name} will get an SMS + email shortly.`,
+            title: editing ? 'Staff updated' : 'Staff added',
+            description: m.name,
           });
         }}
         onDelete={(id) => {
@@ -267,16 +228,6 @@ export const StaffPage = () => {
             tone: 'info',
             title: member.status === 'active' ? 'Deactivated' : 'Reactivated',
             description: member.name,
-          });
-        }}
-        onResendInvite={(id) => {
-          const member = staff.find((s) => s.id === id);
-          if (!member) return;
-          resendInvite(id);
-          notify({
-            tone: 'success',
-            title: 'Invite resent',
-            description: `${member.name} — email + WhatsApp on the way.`,
           });
         }}
       />

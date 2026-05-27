@@ -32,7 +32,7 @@
 /* --- Stats strip --------------------------------------------------------- */
 .ss-staff__stats {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: var(--sp-4);
 }
 
@@ -122,10 +122,6 @@
   max-width: 360px;
 }
 
-.ss-staff__outlet {
-  flex: 0 0 220px;
-}
-
 .ss-staff__status-rail {
   display: inline-flex;
   align-items: center;
@@ -204,9 +200,7 @@
   grid-template-columns:
     minmax(240px, 2.4fr)
     minmax(110px, 1fr)
-    minmax(160px, 1.4fr)
     minmax(120px, 1fr)
-    minmax(110px, 1fr)
     minmax(110px, 0.9fr)
     32px;
   align-items: center;
@@ -261,10 +255,6 @@
   opacity: 1;
 }
 
-.ss-staff-row--pending {
-  background: linear-gradient(90deg, rgba(251, 244, 227, 0.6) 0%, transparent 50%);
-}
-
 .ss-staff-row__person {
   display: flex;
   align-items: center;
@@ -317,20 +307,6 @@
   font-size: var(--fs-sm);
   color: var(--color-text);
   font-weight: var(--fw-medium);
-}
-
-.ss-staff-row__outlet {
-  font-size: var(--fs-sm);
-  color: var(--color-text);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.ss-staff-row__last-seen {
-  font-size: var(--fs-sm);
-  color: var(--color-text-muted);
-  font-variant-numeric: tabular-nums;
 }
 
 .ss-staff-row__sessions {
@@ -408,14 +384,10 @@
       minmax(120px, 1fr)
       32px;
   }
-  .ss-staff-row__outlet,
-  .ss-staff-row__last-seen,
   .ss-staff-row__sessions {
     display: none;
   }
-  .ss-staff__table-head > div:nth-child(3),
-  .ss-staff__table-head > div:nth-child(5),
-  .ss-staff__table-head > div:nth-child(6) {
+  .ss-staff__table-head > div:nth-child(4) {
     display: none;
   }
 }
@@ -424,7 +396,6 @@
   .ss-staff__stats { grid-template-columns: 1fr 1fr; }
   .ss-staff__toolbar { flex-direction: column; align-items: stretch; }
   .ss-staff__toolbar-filters { flex-direction: column; align-items: stretch; }
-  .ss-staff__search,
-  .ss-staff__outlet { max-width: none; flex: 1; }
+  .ss-staff__search { max-width: none; flex: 1; }
   .ss-staff__status-rail { overflow-x: auto; flex-wrap: nowrap; }
 }

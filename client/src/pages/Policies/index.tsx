@@ -6,9 +6,15 @@ import {
   policySections,
   usePolicies,
   type PolicySectionKey,
-  type StandardPolicies,
 } from '@/lib/mock/policies';
+import { useOrientationSource } from '@/lib/mock/orientationSource';
+import { useToast } from '@/lib/toast';
 import { fadeUp, stagger, transitions } from '@/lib/motion';
+import {
+  OrientationReplaceDrawer,
+  OrientationSourceBanner,
+  OrientationUpload,
+} from '@/components/orientation';
 import { PolicyNav } from './PolicyNav';
 import { OperatingTimingsSection } from './sections/OperatingTimings';
 import {
@@ -22,62 +28,39 @@ import {
 import './Policies.css';
 
 export const PoliciesPage = () => {
-  const { policies, update } = usePolicies();
+  const { policies } = usePolicies();
+  const { source, uploadSource, clearSource, meta } = useOrientationSource('policies');
+  const { notify } = useToast();
   const [active, setActive] = useState<PolicySectionKey>('operatingTimings');
+  const [replaceOpen, setReplaceOpen] = useState(false);
+
+  const handleRemove = () => {
+    clearSource();
+    notify({
+      tone: 'info',
+      title: 'Policy document removed',
+      description: 'Upload a new PDF to populate this section.',
+    });
+  };
 
   const sectionMeta = policySections.find((s) => s.key === active)!;
 
   function renderSection() {
     switch (active) {
       case 'operatingTimings':
-        return (
-          <OperatingTimingsSection
-            value={policies.operatingTimings}
-            onChange={(p) => update('operatingTimings', p)}
-          />
-        );
+        return <OperatingTimingsSection value={policies.operatingTimings} />;
       case 'waitingPolicy':
-        return (
-          <WaitingPolicySection
-            value={policies.waitingPolicy}
-            onChange={(p) => update('waitingPolicy', p)}
-          />
-        );
+        return <WaitingPolicySection value={policies.waitingPolicy} />;
       case 'reservationPolicy':
-        return (
-          <ReservationPolicySection
-            value={policies.reservationPolicy}
-            onChange={(p) => update('reservationPolicy', p)}
-          />
-        );
+        return <ReservationPolicySection value={policies.reservationPolicy} />;
       case 'tableHolding':
-        return (
-          <TableHoldingSection
-            value={policies.tableHolding}
-            onChange={(p) => update('tableHolding', p)}
-          />
-        );
+        return <TableHoldingSection value={policies.tableHolding} />;
       case 'diningRules':
-        return (
-          <DiningRulesSection
-            value={policies.diningRules}
-            onChange={(p) => update('diningRules', p)}
-          />
-        );
+        return <DiningRulesSection value={policies.diningRules} />;
       case 'guestAccommodation':
-        return (
-          <GuestAccommodationSection
-            value={policies.guestAccommodation}
-            onChange={(p) => update('guestAccommodation', p)}
-          />
-        );
+        return <GuestAccommodationSection value={policies.guestAccommodation} />;
       case 'payments':
-        return (
-          <PaymentsSection
-            value={policies.payments}
-            onChange={(p) => update('payments', p)}
-          />
-        );
+        return <PaymentsSection value={policies.payments} />;
     }
   }
 
@@ -90,11 +73,11 @@ export const PoliciesPage = () => {
     >
       <motion.header className="ss-policies__page-header" variants={fadeUp}>
         <div>
-          <span className="eyebrow">Orientation · §3.1</span>
+          <span className="eyebrow">Orientation · {meta.sowRef}</span>
           <h1>Standard Policies</h1>
           <p className="ss-policies__lede">
-            Define the service rules every member of staff and the AI assistant should follow.
-            These policies become the single source of truth referenced during live conversations.
+            The service rules every staff member and the AI assistant follow. Content is parsed
+            from the policy PDF you uploaded — replace the document to update.
           </p>
         </div>
         <Badge tone="warning" subtle dot>
@@ -102,47 +85,53 @@ export const PoliciesPage = () => {
         </Badge>
       </motion.header>
 
-      <motion.div className="ss-policies__shell" variants={fadeUp}>
-        <PolicyNav policies={policies} active={active} onSelect={setActive} />
+      {source ? (
+        <>
+          <OrientationSourceBanner
+            source={source}
+            onReplace={() => setReplaceOpen(true)}
+            onRemove={handleRemove}
+          />
 
-        <main className="ss-policies__content">
-          <Card padding="lg">
-            <header className="ss-policies__section-header">
-              <h2>{sectionMeta.title}</h2>
-              <p className="ss-policies__section-desc">{sectionMeta.description}</p>
-            </header>
+          <motion.div className="ss-policies__shell" variants={fadeUp}>
+            <PolicyNav active={active} onSelect={setActive} />
 
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={active}
-                initial={{ opacity: 0, x: 12 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -8 }}
-                transition={transitions.base}
-              >
-                {renderSection()}
-              </motion.div>
-            </AnimatePresence>
-          </Card>
+            <main className="ss-policies__content">
+              <Card padding="lg">
+                <header className="ss-policies__section-header">
+                  <h2>{sectionMeta.title}</h2>
+                  <p className="ss-policies__section-desc">{sectionMeta.description}</p>
+                </header>
 
-          <SaveHint policies={policies} active={active} />
-        </main>
-      </motion.div>
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={active}
+                    initial={{ opacity: 0, x: 12 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -8 }}
+                    transition={transitions.base}
+                  >
+                    {renderSection()}
+                  </motion.div>
+                </AnimatePresence>
+              </Card>
+            </main>
+          </motion.div>
+        </>
+      ) : (
+        <motion.div variants={fadeUp}>
+          <OrientationUpload module={meta} onComplete={uploadSource} />
+        </motion.div>
+      )}
+
+      <OrientationReplaceDrawer
+        open={replaceOpen}
+        onClose={() => setReplaceOpen(false)}
+        module={meta}
+        onComplete={uploadSource}
+      />
     </motion.div>
   );
 };
-
-const SaveHint = ({ policies: _policies, active }: { policies: StandardPolicies; active: PolicySectionKey }) => (
-  <motion.div
-    className="ss-policies__save-hint"
-    key={active}
-    initial={{ opacity: 0, y: 4 }}
-    animate={{ opacity: 1, y: 0 }}
-    transition={{ delay: 0.2 }}
-  >
-    <span className="ss-policies__save-dot" aria-hidden="true" />
-    Changes are saved automatically. The AI uses these rules on its next live session.
-  </motion.div>
-);
 
 export default PoliciesPage;

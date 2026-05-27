@@ -73,32 +73,6 @@
   text-transform: uppercase;
 }
 
-/* --- Invite-pending banner --------------------------------------------- */
-.ss-staff-form__banner {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--sp-3);
-  padding: var(--sp-3) var(--sp-4);
-  border-radius: var(--radius-md);
-  border: 1px solid var(--ss-gold-300);
-  background:
-    radial-gradient(ellipse 80% 60% at 0% 0%, rgba(232, 199, 123, 0.25), transparent 70%),
-    var(--ss-gold-50);
-}
-
-.ss-staff-form__banner-text {
-  font-size: var(--fs-sm);
-  color: var(--ss-gold-700);
-  font-weight: var(--fw-muted);
-  line-height: var(--lh-relaxed);
-}
-
-.ss-staff-form__banner-text strong {
-  font-weight: var(--fw-semibold);
-  margin-right: var(--sp-1);
-}
-
 /* --- Performance preview tiles ---------------------------------------- */
 .ss-staff-form__perf {
   display: flex;
@@ -161,5 +135,4 @@
 @media (max-width: 640px) {
   .ss-staff-form__row { grid-template-columns: 1fr; }
   .ss-staff-form__perf-tiles { grid-template-columns: 1fr 1fr; }
-  .ss-staff-form__banner { flex-direction: column; align-items: stretch; }
 }

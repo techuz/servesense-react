@@ -226,35 +226,6 @@
   opacity: 1;
 }
 
-/* Invisible click-target covering the card so the whole card edits.
-   Switch & edit-hint sit above via z-index. */
-.ss-goal-card__hit {
-  position: absolute;
-  inset: 0;
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  z-index: 1;
-  border-radius: var(--radius-lg);
-}
-
-.ss-goal-card__hit:focus-visible {
-  outline: 2px solid var(--ss-green-500);
-  outline-offset: -3px;
-}
-
-.ss-goal-card > *:not(.ss-goal-card__hit) {
-  position: relative;
-  z-index: 2;
-  pointer-events: none;
-}
-
-/* Re-enable pointer events on the things that need clicking */
-.ss-goal-card__switch,
-.ss-goal-card__switch * {
-  pointer-events: auto;
-}
-
 /* --- Card head --------------------------------------------------------- */
 .ss-goal-card__head {
   display: flex;
@@ -419,29 +390,6 @@
   font-weight: var(--fw-muted);
   letter-spacing: var(--tracking-wide);
   font-variant-numeric: tabular-nums;
-}
-
-/* --- Edit hint --------------------------------------------------------- */
-.ss-goal-card__edit-hint {
-  position: absolute;
-  bottom: var(--sp-3);
-  right: var(--sp-5);
-  font-size: var(--fs-xs);
-  color: var(--ss-green-700);
-  font-weight: var(--fw-semibold);
-  opacity: 0;
-  transform: translateX(-4px);
-  transition:
-    opacity var(--duration-base) var(--ease-out),
-    transform var(--duration-base) var(--ease-out);
-  pointer-events: none;
-  background: linear-gradient(90deg, transparent, var(--color-surface) 30%);
-  padding-left: var(--sp-4);
-}
-
-.ss-goal-card:hover .ss-goal-card__edit-hint {
-  opacity: 1;
-  transform: translateX(0);
 }
 
 /* --- Footer note (matches Excellence) ---------------------------------- */

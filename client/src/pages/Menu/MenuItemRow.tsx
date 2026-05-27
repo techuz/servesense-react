@@ -1,6 +1,5 @@
 import { motion } from 'framer-motion';
 import { Badge } from '@/components/primitives/Badge';
-import { Switch } from '@/components/primitives/Switch';
 import {
   allergenLabels,
   dishTypeLabels,
@@ -15,23 +14,16 @@ import { DishMark, SpiceMeter } from './MenuIcons';
 interface Props {
   item: MenuItem;
   currency: string;
-  onEdit: () => void;
-  onToggleAvailability: () => void;
 }
 
-export const MenuItemRow = ({ item, currency, onEdit, onToggleAvailability }: Props) => {
+export const MenuItemRow = ({ item, currency }: Props) => {
   return (
     <motion.li
       className={cn('ss-menu-row', !item.isAvailable && 'ss-menu-row--off')}
       variants={fadeUp}
       layout
     >
-      <button
-        type="button"
-        className="ss-menu-row__btn"
-        onClick={onEdit}
-        aria-label={`Edit ${item.name}`}
-      >
+      <div className="ss-menu-row__inner">
         <div className="ss-menu-row__lead">
           <DishMark type={item.dishType} size={16} />
         </div>
@@ -91,22 +83,7 @@ export const MenuItemRow = ({ item, currency, onEdit, onToggleAvailability }: Pr
             <span className="ss-menu-row__currency">{currency}</span>
             <span className="ss-menu-row__amount">{item.price.toLocaleString()}</span>
           </div>
-          <div className="ss-menu-row__chev" aria-hidden="true">
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-              <path
-                d="M5 3l4 4-4 4"
-                stroke="currentColor"
-                strokeWidth="1.4"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </div>
         </div>
-      </button>
-
-      <div className="ss-menu-row__toggle" onClick={(e) => e.stopPropagation()}>
-        <Switch checked={item.isAvailable} onChange={onToggleAvailability} size="sm" />
       </div>
     </motion.li>
   );

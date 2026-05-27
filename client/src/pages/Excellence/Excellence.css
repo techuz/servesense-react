@@ -70,18 +70,8 @@
   color: var(--ss-gold-700);
 }
 
-/* Subtle inline-edit field, large serif italic — this is the hero quote */
-.ss-principle__field .ss-field__control {
-  background-color: transparent;
-  border-color: transparent;
-}
-
-.ss-principle__field .ss-field__control:focus-within {
-  background-color: var(--color-surface);
-  border-color: var(--ss-gold-300);
-}
-
-.ss-principle__field .ss-field__input {
+/* Hero quote — large serif italic */
+.ss-principle__quote {
   font-family: var(--font-serif);
   font-style: italic;
   font-size: clamp(1.25rem, 2vw, 1.6rem);
@@ -89,8 +79,17 @@
   letter-spacing: -0.01em;
   line-height: 1.35;
   color: var(--ss-green-900);
-  padding: var(--sp-2);
-  min-height: auto;
+  margin: 0;
+}
+
+.ss-area__standard {
+  font-size: var(--fs-sm);
+  color: var(--color-text);
+  line-height: var(--lh-relaxed);
+  font-weight: var(--fw-prose, 300);
+  margin: 0;
+  padding: var(--sp-2) 0;
+  border-top: 1px solid var(--color-border);
 }
 
 .ss-principle__helper {

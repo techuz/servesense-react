@@ -382,18 +382,20 @@ Code-first design system. All primitives live in `client/src/components/primitiv
 | **M0** | Foundation: design tokens, layout shell, primitives, routing, DB schema, auth scaffold | — | ✅ Complete | — |
 | **M1** | Auth — Animated login (mock auth, awwwards-level) | §2.1 | ✅ Complete | `/login` |
 | **M2** | Restaurant Profile & Outlets setup | §2.3 | ✅ Complete | `/restaurant` |
-| **M3** | Orientation › Standard Policies (MANDATORY) | §3.1 | ✅ Complete | `/orientation/policies` |
-| **M4** | Orientation › Menu Knowledge + PDF upload (MANDATORY) | §3.2 | ✅ Complete | `/orientation/menu` |
-| **M5** | Orientation › Service SOP — 10-step flow (MANDATORY) | §3.3 | ✅ Complete | `/orientation/sop` |
-| **M6** | Orientation › Communication & Tone (MANDATORY) | §3.4 | ✅ Complete | `/orientation/tone` |
-| **M7** | Orientation › Best Practices & Excellence (ADVANCED) | §3.5 | ✅ Complete | `/orientation/excellence` |
-| **M8** | Orientation › Sales Goals & Campaigns | §3.6 | ✅ Complete | `/orientation/goals` |
+| **M3** | Orientation › Standard Policies (MANDATORY, PDF-fed) | §3.1 | ✅ Complete | `/orientation/policies` |
+| **M4** | Orientation › Menu Knowledge (MANDATORY, PDF-fed) | §3.2 | ✅ Complete | `/orientation/menu` |
+| **M5** | Orientation › Service SOP — 10-step flow (MANDATORY, PDF-fed) | §3.3 | ✅ Complete | `/orientation/sop` |
+| **M6** | Orientation › Communication & Tone (MANDATORY, PDF-fed) | §3.4 | ✅ Complete | `/orientation/tone` |
+| **M7** | Orientation › Best Practices & Excellence (ADVANCED, PDF-fed) | §3.5 | ✅ Complete | `/orientation/excellence` |
+| **M8** | Orientation › Sales Goals & Campaigns (PDF-fed) | §3.6 | ✅ Complete | `/orientation/goals` |
 | **M9** | Staff Management (create waiter, invite, active/inactive) | §2.2 | ✅ Complete | `/staff` |
 | **M10** | Knowledge & Coaching Management | §2.6 | ✅ Complete | `/coaching` |
 | **M11** | Manager Dashboard (ROI + Revenue & Sales Analytics) | §2.4 | ✅ Complete | `/dashboard` |
 | **M12** | Staff Performance List & Drill-Down | §2.5 | ✅ Complete | `/performance` + `/performance/:staffId` |
 
 All Phase-1 modules are now wired against mock data. M11 and M12 consume metrics the AI engines (Epic 4) will eventually produce — views render today against seeded data shaped to the final API contract, so swapping each hook for a real `fetch` is a one-line change per page.
+
+**Orientation modules (M3–M8) are PDF-fed.** Per the SOW (§3 — "Manager feeds and maintains all operational data"), each orientation module page shows a `OrientationSourceBanner` with the active PDF's filename + upload timestamp + page count, plus a "Replace PDF" action that opens an upload drawer. When no PDF has been uploaded for a module, the page renders a full-bleed drop-zone empty state. No editable fields anywhere across M3–M8 — content is strictly read-only display of what was extracted from the uploaded document. In mock-data mode the seed data is always shown as "extracted from" a plausibly-named seed PDF.
 
 ---
 
@@ -405,16 +407,25 @@ All primitives live in `client/src/components/primitives/`. They use design toke
 |---|---|---|
 | **Button** | `Button.tsx` | Everywhere — 5 variants (primary, secondary, ghost, danger, link) × 3 sizes; framer-motion `whileHover` lift + `whileTap` press; loading spinner state |
 | **Input** | `Input.tsx` | Forms — label / hint / error states; 4px focus ring; brand-green label shift on focus; Chrome autofill override (inset shadow trick) |
-| **Textarea** | `Textarea.tsx` | M2, M3, M5, M6, M7 — same focus system as Input |
-| **Select** | `Select.tsx` | M2, M4, M6 — native select with custom chevron + matching focus ring |
-| **Checkbox** | `Checkbox.tsx` | M3, M4, M6 — spring-animated check icon (scale 0.4→1 on toggle); label + description |
-| **Switch** | `Switch.tsx` | M2, M3, M4, M5, M6 — spring-glided thumb (layout animation), label + description, sm/md sizes |
+| **Textarea** | `Textarea.tsx` | M2 — same focus system as Input. (Orientation modules M3–M8 are read-only and no longer use this primitive.) |
+| **Select** | `Select.tsx` | M2, M9 — native select with custom chevron + matching focus ring |
+| **Checkbox** | `Checkbox.tsx` | (Reserved for primitives library; orientation modules are now read-only) |
+| **Switch** | `Switch.tsx` | M2, M9 — spring-glided thumb (layout animation), label + description, sm/md sizes |
 | **Card** | `Card.tsx` + `Header/Title/Description/Body/Footer` | M2, M3, etc. — sans semibold title (post-M2 typography polish) |
 | **Badge** | `Badge.tsx` | Status indicators — 7 tones (neutral, brand, gold, success, warning, danger, info) × subtle / solid |
-| **Drawer** | `Drawer.tsx` | M2 outlet form, M4 menu item + PDF upload — right-side spring slide, overlay blur, ESC + click-outside, body scroll lock |
-| **EmptyState** | `EmptyState.tsx` | M2 outlets, M4 menu, M6 situations — dashed card with gradient icon tile + CTA slot |
-| **TimePicker** | `TimePicker.tsx` | M3 operating timings — **portal-rendered** popover (escapes ancestor `overflow: hidden`); flips above when no room below; preset quick-times grid + stepper editor + AM/PM sliding toggle |
-| **PhraseList** | `PhraseList.tsx` | M5, M6, M7 — editable list of phrases with three visual tones: do (green) / avoid (red) / quote (gold) |
+| **Drawer** | `Drawer.tsx` | M2 outlet form, M9 staff form, M10 lesson form, plus the shared `OrientationReplaceDrawer` — right-side spring slide, overlay blur, ESC + click-outside, body scroll lock |
+| **EmptyState** | `EmptyState.tsx` | M2 outlets, M4 menu filters, M6 situations, M8 goals — dashed card with gradient icon tile + CTA slot |
+| **TimePicker** | `TimePicker.tsx` | (Reserved for primitives library; M3 operating timings now read-only) — **portal-rendered** popover (escapes ancestor `overflow: hidden`); flips above when no room below; preset quick-times grid + stepper editor + AM/PM sliding toggle |
+| **PhraseList** | `PhraseList.tsx` | M5, M6, M7 — list of phrases with three visual tones: do (green) / avoid (red) / quote (gold). Gained a `readOnly` prop in the orientation refactor — same chips, no input row, no remove buttons. |
+| **DateFilterControl** | `DateFilterControl.tsx` | M12 — Notion-style preset list (Today / Yesterday / Last 7 days / Last 30 days / This month / Last month / This year / Last year / All time) + an inline-expanding **Custom range** with two date inputs. Portal-rendered popover, flips above the trigger when there's no room below. Solid white background (`--ss-cream-0`, not the translucent `--color-card`). |
+
+### Orientation primitives (PDF-fed pattern)
+| Component | File | Purpose |
+|---|---|---|
+| **OrientationSourceBanner** | `components/orientation/OrientationSourceBanner.tsx` | The thin pill at the top of every orientation module page: PDF icon + filename + "Uploaded N ago · N pages parsed" + "Replace PDF" CTA. |
+| **OrientationUpload** | `components/orientation/OrientationUpload.tsx` | Drop-zone card with simulated extraction animation (spinning ring + animated SVG document strokes + staggered "scanning… detecting… structuring…" steps). Used inline as the empty state and inside the replace drawer. |
+| **OrientationReplaceDrawer** | `components/orientation/OrientationReplaceDrawer.tsx` | Drawer wrapper around OrientationUpload — opens from the banner's Replace CTA. |
+| **Policies Display.tsx** | `pages/Policies/Display.tsx` | Read-only display primitives — `Fact` / `FactGrid` (label-above-value), `BoolPill` (green check / muted X), `BoolGrid`, `RulesBlock` (gold-left-rule editorial blockquote). Module-local but reusable pattern. |
 
 ### Visual / motion primitives
 | Helper | File | Purpose |
@@ -450,6 +461,7 @@ and follow the exact shape the future REST endpoints will return.
 | `useLessons()` | `mock/coaching.ts` | `ss_mock_lessons` | `{ lessons, upsert, remove, toggleActive, stats }` |
 | `useDashboardMetrics(period)` | `mock/dashboard.ts` | (computed) | Period-scoped ROI / KPIs / category revenue / top items / service errors |
 | `useAllStaffPerformance()` / `useStaffSessions(id)` / `useSession(id)` | `mock/performance.ts` | `ss_mock_performance` | Aggregated KPIs + per-session data with deterministic baselines per staff |
+| `useOrientationSource(moduleKey)` | `mock/orientationSource.ts` | `ss_mock_orientation_source_<module>` | `{ source, uploadSource, clearSource, meta }` — per-module PDF metadata for M3–M8. Six independent storage keys so each module's source PDF is tracked separately. Seeded with plausible filenames (`lumiere_standard_policies_2026.pdf`, `lumiere_menu_q2_2026.pdf`, etc.) so the default state already renders as parsed content. |
 
 Seed data is realistic (Lumière Bistro brand, two outlets, full menu, full SOP scripts, six difficult-situation playbook scenarios, 8 sales campaigns, 10 staff across both outlets with mixed roles + invite states, 7 KPI-mapped video lessons with per-staff assignment + completion %, and ~60 generated sessions with profile-tied KPI baselines) so every page reads as a populated working state out of the box.
 
@@ -582,6 +594,97 @@ Seed data is realistic (Lumière Bistro brand, two outlets, full menu, full SOP 
   - "Maps to → KPI" chip removed per user request (felt redundant — KPI is configured in the drawer)
 
 - **Performance card hover effect**: top accent stripe animates 3px → 5px, soft radial halo in the staff's tier color fades in, name shifts to accent color — synchronized transitions on `--duration-base` ease-out
+
+### Day 5 — Iteration on top of orientation refactor
+
+A long polish + feature day layered on the new PDF-fed orientation structure. Most of these were driven by stakeholder feedback against the in-browser build (drawer felt cramped, filters felt heavy, multi-outlet was premature, staff invite flow wasn't going to ship Phase 1).
+
+**Upload card padding — uncovered an undefined-token bug**
+- The Replace PDF drawer's drop card was visually flush against the drawer header and footer. First fix was outer breathing room on `.ss-orient-upload--replace` (`padding: var(--sp-3) 0 var(--sp-4)`).
+- That exposed the real issue: the inner card had `padding: var(--sp-9) var(--sp-6)` but `--sp-9` was never defined in `tokens.css` — same with `--sp-7` used in the replace override. Both fell back to `0`, so the cards had been rendering with **zero vertical padding** all along.
+- Fixed by switching to defined tokens: `--sp-10` (40px) for both empty-state and processing variants, `--sp-8` (32px) for the compact replace overrides.
+- Also added `.ss-orient-upload--empty { padding: var(--sp-4) 0 var(--sp-6) }` so the inline page-level empty state has its own breathing room from the page header above.
+
+**Menu — dropped dish-type filter rail**
+- Removed the All / Veg / Vegan / Non-veg / Seafood / Egg pill rail and ~60 lines of related CSS. The grouped category list + search are enough for at-scale management on a single outlet.
+
+**Orientation flow — empty state first + delete action**
+- Source PDF seeds in `useOrientationSource` flipped from populated metadata → `null` for all 6 modules so a fresh visit lands on the upload empty state.
+- Added `clearSource` to the hook; surfaced as a small trash-icon button on `OrientationSourceBanner` (new `onRemove` prop). Each of the 6 orientation pages wires `handleRemove` with a confirmation toast.
+- One-time migration (`STORAGE_VERSION = 2`) wipes the previously-seeded source keys from existing browsers so the empty-first flow lands on every device, not just incognito.
+
+**Single outlet per manager**
+- Phase 1 ships with one outlet; multi-outlet is deferred. Data model preserved (`outletId` stays on staff + sessions) so this isn't a breaking change for the future.
+- `mock/restaurant.ts`: trimmed seed to one outlet, exported `PRIMARY_OUTLET_ID` constant, added `usePrimaryOutlet()` (returns the single outlet + an `updateOutlet(patch)`). `useOutlets()` kept for sessions/staff lookups, auto-migrates any stored multi-outlet array down to the primary. Dropped `upsertOutlet` / `removeOutlet` / `toggleOutletStatus` / `newOutletId`.
+- **Restaurant page**: replaced multi-outlet grid + drawer with one inline outlet card (view ↔ edit toggle mirroring the profile section above it). Header copy updated, "Single outlet · Phase 1" badge.
+- **Staff page**: dropped the outlet `Select` filter and the Outlet column. Grid template `staff | role | outlet | status | last seen | sessions | chev` → `staff | role | status | sessions | chev`.
+- **StaffDrawer**: dropped the Outlet `Select` field, the `outlets` prop, and the outlet error. New staff auto-assigned to `PRIMARY_OUTLET_ID`.
+- **Performance list**: dropped outlet filter; PerfCard sub-line no longer shows outlet name.
+- **StaffDetail**: dropped outlet from the hero eyebrow.
+- **Layout copy**: Sidebar + Topbar "Restaurant & Outlets" → "Restaurant". Dashboard lede + Login marketing copy desaturated of multi-outlet language.
+- Mock seed: all 10 staff and ~60 sessions migrated to `outlet_001`.
+- Deleted `OutletCard.tsx` and `OutletDrawer.tsx`.
+
+**Performance period filter — three iterations to land on Notion-style**
+1. **First**: Monthly / Yearly / Overall sliding-pill picker mirrored from the Dashboard. Required re-spreading the session seed over the last 18 months with a `pow(t, 2.2)` recency-biased curve and bumping count from 6–10 → 24–36 per staff so the three options had visibly distinct totals. Storage bumped to `ss_mock_performance_v2`.
+2. **Second**: replaced with a custom filter — a popover with four mode tabs (Range / Month / Year / All) and mode-specific inputs. Worked but stakeholder feedback said it was "very confusing." Tabs forced you to think about WHICH mode before you could pick a date.
+3. **Final**: rebuilt as a Notion-style preset list. One scannable column of named presets (`today` / `yesterday` / `last_7_days` / `last_30_days` / `this_month` / `last_month` / `this_year` / `last_year` / `all_time`), each row commits the filter immediately on click. Selected row gets a green-50 background + green-700 checkmark. **Custom range…** is the last item, separated by a divider — clicking it expands two date inputs (From / To) inline via framer-motion `height: 'auto'`.
+- Data layer simplified to a 2-variant union: `{ kind: 'preset'; preset: DatePreset }` | `{ kind: 'custom'; from: string; to: string }`. A single `presetBounds()` helper compiles every preset down to `[start, end)` Date pairs so the filtering pipeline stays uniform.
+- `describeDateFilter()` produces the trigger label ("Last 30 days", "May 1, 2026 – May 27, 2026", or "May 5, 2026" when from === to).
+- Solid white background — the project's `--color-card` is `#ffffffe6` translucent (Arivex card system) so the page bled through the popover. Swapped to `--ss-cream-0` (`#ffffff`).
+- Both pages default to `Last 30 days`.
+
+**Removed Last seen column** from the staff table (and the matching grid template column + responsive media-query rule).
+
+**Removed invite scenario from Staff Management**
+- Schema lost `inviteStatus`, `invitedAt`, `lastLoginAt`, `InviteStatus`, `inviteStatusLabels`. Renamed the timestamp `invitedAt` → `joinedAt`. Storage key bumped to `ss_mock_staff_v2`. Two seed records previously marked `pending` converted to active accounts.
+- `useStaff` lost `resendInvite`. Stats `{ total, active, pending, inactive }` → `{ total, active, inactive }`.
+- Staff page: status filter rail is now `all / active / inactive` (3 chips, no Pending). Stats strip shrunk 4 → 3 tiles. Header badge updated. Empty-state copy moved from "invite first waiter" to "add first waiter".
+- StaffRow: removed the "Invite sent" gold badge branch.
+- StaffDrawer: removed the gold pending banner + Resend invite button. Title `Invite staff` → `Add staff`. Footer `Send invite` → `Add staff`. Performance preview gated only on `sessionCount > 0`.
+- CSS: dropped `.ss-staff-row--pending` (gold gradient) and `.ss-staff-form__banner*` rules.
+
+**Net file change**
+- 3 files deleted across the session: `MenuItemDrawer`, `UploadDrawer`, `GoalDrawer` (Day 4) + `OutletCard`, `OutletDrawer` (Day 5).
+- 1 file added: `client/src/components/primitives/DateFilterControl.tsx` (+ .css).
+- Production bundle (Day 5 end): 543 kB / 166 kB gzipped — roughly flat with Day 4 despite all the new features, since the deleted drawers cancelled out the new DateFilterControl + period filter logic.
+- Typecheck and production build clean throughout.
+
+---
+
+### Day 4 — Orientation refactored to PDF-fed read-only (SOW alignment)
+
+The previous build treated every orientation module (M3–M8) as a CRUD surface — managers added items, edited descriptions, toggled steps on/off, etc. Re-reading the SOW (§2.3, §3) made the mismatch obvious: *"Manager feeds and maintains all operational data"* via uploaded documents (menu PDF, SOP, policies). The portal is the read-side; uploads are the only write. Day 4 made the codebase match.
+
+**Shared infrastructure (new)**
+- `components/orientation/OrientationSourceBanner` — top-of-page pill showing the active PDF's filename, relative upload time, page count, and a `Replace PDF` button. Forest-gradient subtle background, gold-ish PDF icon tile.
+- `components/orientation/OrientationUpload` — drop-zone empty state and the body of the replace flow. Reuses the M4 PDF upload animation language (spinning ring + animated SVG document strokes + staggered "scanning… detecting… structuring…" lines), now generic over module label and hint.
+- `components/orientation/OrientationReplaceDrawer` — thin Drawer wrapper.
+- `lib/mock/orientationSource.ts` — `useOrientationSource(moduleKey)` hook. Six independent localStorage keys (`ss_mock_orientation_source_policies` etc.) so each module's source PDF is tracked separately. Seeded with plausible filenames so the default state already reads as a parsed document, not an empty page. `meta` lookup table provides per-module label, hint, and SOW reference (§3.1–§3.6) so the page eyebrow and upload copy stay in sync.
+
+**Per-module conversion (M3–M8)**
+
+- **M3 Policies** — Removed every Input/Textarea/Switch/Checkbox/TimePicker editor from the 7 policy sections. New `pages/Policies/Display.tsx` introduces a small set of read-only display primitives:
+  - `Fact` / `FactGrid` — uppercase label above serif value, wrapped in a cream-background card with subtle border
+  - `BoolPill` — green check pill when on, muted neutral X when off
+  - `BoolGrid` — wrap-flex container for service-mode/restriction/accessibility/payment-method bool sets
+  - `RulesBlock` — gold-left-rule blockquote pattern for multiline rules text (the "Reservation rules", "House rules", "Payment notes" fields)
+  - The week-schedule grid kept its layout but TimePicker cells became formatted `12:00 PM` text; closed days get a "Closed" tag and muted column
+  - Left nav lost its progress bar + per-section completion dots (completion was an editing concept; with PDF-fed content the doc either has a section or it doesn't)
+- **M4 Menu** — Deleted `MenuItemDrawer.tsx` (add/edit form) and `UploadDrawer.tsx` (its bespoke phase 'drop → processing → review' flow is now the generic OrientationUpload). `MenuItemRow` lost its button-wrapping anchor, hover chevron, and the inline Switch toggling `isAvailable`. Header lost the `+ Add item` and `Upload PDF` buttons (the source banner's Replace CTA is the only entry path now). The rich grouped list view, allergy detection, spice meter, dish-type filters, category chip rail — all kept.
+- **M5 SOP** — `SopStepCard` Textarea for description → plain `<p class="ss-sop-step__description">`. Switch (enabled/skipped) removed; disabled steps still dim and show a "Not in document" neutral badge. PhraseLists wrapped in `{phrases.length > 0 && …}` so unused step subsections are hidden cleanly. The expand/collapse toggle only renders when there *is* expanded content. Header bottom strip dropped the "% live" progress bar.
+- **M6 Communication** — `AspectCard` Textarea → static paragraph; all three PhraseLists become `readOnly`. `SituationCard` lost the Input/Textarea/Select editors and the Remove button — title is a serif h3, context is a quiet bordered paragraph, the two PhraseLists are read-only. Header lost the `+ Add scenario` button; empty filter state now reads as "switch filter back to All".
+- **M7 Excellence** — Brand-principle hero card's Textarea → static serif-italic `<p class="ss-principle__quote">` keeping the same fluid clamp size. AreaCard's standard Textarea → bordered paragraph; three PhraseLists per area become `readOnly` (and gated on `length > 0`).
+- **M8 Sales Goals** — Deleted `GoalDrawer.tsx`. GoalCard lost the absolute-positioned invisible click hit-target, the `Switch` for pause/resume, the hover-revealed "Edit →" hint, and all the z-index gymnastics that made the whole card a button. The card is now a passive `<article>` with one inline `Paused in document` badge when disabled. Header lost the `+ New goal` button.
+
+**Shared primitive change**
+- **PhraseList** gained an optional `readOnly` boolean. When true, the input row at the bottom and the per-chip `×` remove buttons are skipped, but the chip rendering (with tone-coloured backgrounds, icons, layout animation) stays identical. This kept SOP/Communication/Excellence on a single source of truth instead of forking a display-only variant.
+
+**Net code change**
+- 3 files deleted (`MenuItemDrawer.tsx`, `UploadDrawer.tsx`, `GoalDrawer.tsx`)
+- 5 files added (the four orientation components + the source mock hook + Policies/Display.tsx)
+- Production bundle dropped from 569.86 kB → 542.85 kB (gzipped 173.48 → 166.47) — entirely from removing the editor-side forms and their drawer wrappers.
+- Every typecheck pass clean; all 6 module pages render against their existing seed data with no shape changes — only display-side rewrites.
 
 ### Day 3 — Dashboard hover polish
 

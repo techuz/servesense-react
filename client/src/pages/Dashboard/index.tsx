@@ -105,8 +105,8 @@ export const DashboardPage = () => {
           <span className="eyebrow">Manager · §2.4</span>
           <h1>Welcome back, {firstName}.</h1>
           <p className="ss-dash__lede">
-            ROI, revenue, and service quality across all outlets — refreshed every shift, scoped
-            to the window you choose.
+            ROI, revenue, and service quality at your outlet — refreshed every shift, scoped to
+            the window you choose.
           </p>
         </div>
         <div className="ss-dash__header-actions">

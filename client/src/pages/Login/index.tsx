@@ -127,7 +127,7 @@ export const LoginPage = () => {
             </motion.li>
             <motion.li variants={fadeUp}>
               <span className="ss-login__highlight-num">03</span>
-              <span>ROI, upsell, and tone analytics across every outlet.</span>
+              <span>ROI, upsell, and tone analytics for every shift.</span>
             </motion.li>
           </motion.ul>
         </motion.div>
