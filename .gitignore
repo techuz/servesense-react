@@ -19,3 +19,8 @@ client/dist/
 server/dist/
 uploads/
 tmp/
+
+# TS composite build artifacts
+*.tsbuildinfo
+client/vite.config.js
+client/vite.config.d.ts
