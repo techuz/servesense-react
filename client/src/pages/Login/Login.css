@@ -1,0 +1,274 @@
+.ss-login {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  background-color: var(--color-bg);
+}
+
+.ss-login__panel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--sp-12);
+  position: relative;
+}
+
+/* ============================================================================
+   Brand panel (left)
+   ============================================================================ */
+.ss-login__panel--brand {
+  background:
+    linear-gradient(160deg, var(--ss-green-900) 0%, var(--ss-green-800) 55%, var(--ss-green-700) 100%);
+  color: var(--ss-cream-50);
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.ss-login__backdrop {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 0;
+}
+
+.ss-login__blob {
+  position: absolute;
+  width: 720px;
+  height: 720px;
+  border-radius: 50%;
+  filter: blur(120px);
+  opacity: 0.5;
+  will-change: transform;
+}
+
+.ss-login__blob--gold {
+  background: radial-gradient(circle at center, rgba(232, 199, 123, 0.55), transparent 60%);
+  top: -240px;
+  right: -160px;
+}
+
+.ss-login__blob--green {
+  background: radial-gradient(circle at center, rgba(90, 154, 110, 0.50), transparent 60%);
+  bottom: -260px;
+  left: -200px;
+}
+
+.ss-login__dots {
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(circle at 1px 1px, rgba(255, 255, 255, 0.06) 1px, transparent 0);
+  background-size: 28px 28px;
+  opacity: 0.5;
+  mask-image: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.9), transparent 75%);
+}
+
+.ss-login__grain {
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='200' height='200' filter='url(%23n)' opacity='0.35'/></svg>");
+  opacity: 0.06;
+  mix-blend-mode: overlay;
+  pointer-events: none;
+}
+
+.ss-login__brand-content {
+  position: relative;
+  z-index: 1;
+  max-width: 500px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-5);
+}
+
+.ss-login__eyebrow {
+  color: var(--ss-gold-300);
+}
+
+.ss-login__headline {
+  color: var(--ss-cream-0);
+  font-size: clamp(var(--fs-3xl), 4.2vw, 3.6rem);
+  letter-spacing: -0.025em;
+  line-height: 1.05;
+}
+
+.ss-login__headline-accent {
+  display: block;
+  color: var(--ss-gold-300);
+  font-style: italic;
+  margin-top: 0.15em;
+}
+
+/* Text reveal masks */
+.ss-text-reveal {
+  display: inline-block;
+}
+.ss-text-reveal__mask {
+  display: inline-block;
+  overflow: hidden;
+  vertical-align: bottom;
+  line-height: 1.05;
+  padding-bottom: 0.06em;
+}
+.ss-text-reveal__word {
+  display: inline-block;
+  white-space: pre;
+  will-change: transform;
+}
+
+.ss-login__lede {
+  color: rgba(255, 255, 255, 0.78);
+  font-size: var(--fs-md);
+  font-weight: var(--fw-muted);
+  line-height: var(--lh-relaxed);
+  max-width: 44ch;
+}
+
+.ss-login__highlights {
+  list-style: none;
+  padding: 0;
+  margin: var(--sp-6) 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  padding-top: var(--sp-6);
+}
+
+.ss-login__highlights li {
+  display: grid;
+  grid-template-columns: 32px 1fr;
+  align-items: baseline;
+  gap: var(--sp-4);
+  color: rgba(255, 255, 255, 0.82);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-muted);
+  line-height: var(--lh-relaxed);
+}
+
+.ss-login__highlight-num {
+  font-family: var(--font-serif);
+  color: var(--ss-gold-300);
+  font-size: var(--fs-md);
+  line-height: 1;
+  letter-spacing: var(--tracking-tight);
+  /* Nudge the serif numeral so its visual centre lines up with the first
+     line of body text. DM Serif Display sits high in its box. */
+  transform: translateY(0.08em);
+}
+
+/* ============================================================================
+   Form panel (right)
+   ============================================================================ */
+.ss-login__panel--form {
+  background-color: var(--color-bg);
+}
+
+.ss-login__form {
+  width: 100%;
+  max-width: 420px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-5);
+}
+
+.ss-login__logo-mark {
+  width: 56px;
+  height: 56px;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(135deg, var(--ss-green-700), var(--ss-green-500));
+  color: var(--ss-cream-0);
+  font-family: var(--font-serif);
+  font-size: var(--fs-2xl);
+  border-radius: var(--radius-lg);
+  letter-spacing: -0.04em;
+  box-shadow:
+    0 16px 32px -8px rgba(58, 107, 76, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  margin-bottom: var(--sp-2);
+}
+
+.ss-login__form-header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.ss-login__form-header h2 {
+  font-size: var(--fs-3xl);
+}
+
+.ss-login__form-header p {
+  color: var(--color-text-muted);
+}
+
+.ss-login__form-error {
+  padding: var(--sp-3) var(--sp-4);
+  background-color: var(--ss-danger-50);
+  color: var(--ss-danger-500);
+  border-radius: var(--radius-md);
+  font-size: var(--fs-sm);
+  border-left: 3px solid var(--ss-danger-500);
+}
+
+.ss-login__help {
+  color: var(--color-text-muted);
+  text-align: center;
+  margin-top: var(--sp-2);
+}
+
+.ss-login__hint {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  align-self: center;
+  padding: var(--sp-2) var(--sp-3);
+  background-color: var(--ss-gold-50);
+  border: 1px dashed var(--ss-gold-300);
+  border-radius: var(--radius-pill);
+  color: var(--ss-gold-700);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-medium);
+}
+
+.ss-login__hint-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--ss-gold-500);
+  animation: ss-pulse 2s ease-in-out infinite;
+}
+
+@keyframes ss-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.55; transform: scale(0.8); }
+}
+
+/* ============================================================================
+   Responsive
+   ============================================================================ */
+@media (max-width: 1024px) {
+  .ss-login__panel {
+    padding: var(--sp-10);
+  }
+  .ss-login__highlights { display: none; }
+}
+
+@media (max-width: 900px) {
+  .ss-login {
+    grid-template-columns: 1fr;
+  }
+  .ss-login__panel--brand {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ss-login__blob,
+  .ss-text-reveal__word,
+  .ss-login__hint-dot {
+    animation: none !important;
+    transition: none !important;
+  }
+}

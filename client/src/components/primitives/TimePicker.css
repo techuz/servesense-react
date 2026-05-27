@@ -1,0 +1,312 @@
+/* ============================================================================
+   TimePicker — preset-first, stepper-based custom edit, sliding AM/PM toggle.
+   ============================================================================ */
+.ss-time {
+  position: relative;
+  display: inline-block;
+  width: 100%;
+}
+
+.ss-time--disabled { opacity: 0.55; }
+
+/* --- Trigger ------------------------------------------------------------- */
+.ss-time__trigger {
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
+  min-height: 38px;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-family: var(--font-sans);
+  font-size: var(--fs-sm);
+  color: var(--color-text);
+  cursor: pointer;
+  text-align: left;
+  transition:
+    border-color var(--duration-base) var(--ease-out),
+    box-shadow var(--duration-base) var(--ease-out),
+    background-color var(--duration-base) var(--ease-out);
+}
+
+.ss-time__trigger:hover:not(:disabled):not(.ss-time__trigger--open) {
+  border-color: var(--ss-warm-gray-300);
+}
+
+.ss-time__trigger--open,
+.ss-time__trigger:focus-visible {
+  border-color: var(--color-brand);
+  box-shadow:
+    0 0 0 4px rgba(58, 107, 76, 0.12),
+    0 1px 2px rgba(15, 26, 18, 0.04);
+  outline: 0;
+}
+
+.ss-time__trigger--empty .ss-time__value { color: var(--color-text-muted); }
+.ss-time__trigger:disabled {
+  cursor: not-allowed;
+  background-color: var(--ss-cream-50);
+  color: var(--color-text-muted);
+}
+
+.ss-time__value { font-variant-numeric: tabular-nums; }
+.ss-time__icon {
+  color: var(--color-text-muted);
+  flex-shrink: 0;
+  transition: color var(--duration-fast) var(--ease-out);
+}
+
+.ss-time__trigger--open .ss-time__icon { color: var(--color-brand); }
+
+/* --- Popover (portal-rendered, viewport-positioned) ---------------------- */
+.ss-time__pop {
+  /* position + top + left + transform + width are applied inline by the
+     component so the popover can escape ancestor overflow:hidden and flip
+     above the trigger when there isn't room below. */
+  z-index: var(--z-modal);
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  padding: var(--sp-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.ss-time__section-label {
+  font-size: var(--fs-xs);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+  color: var(--color-text-muted);
+  font-weight: var(--fw-semibold);
+}
+
+/* --- Quick presets ------------------------------------------------------- */
+.ss-time__quick {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--sp-2);
+}
+
+.ss-time__quick-btn {
+  padding: var(--sp-2) var(--sp-3);
+  background-color: var(--ss-cream-50);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-family: var(--font-sans);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text);
+  cursor: pointer;
+  transition:
+    background-color var(--duration-fast) var(--ease-out),
+    border-color var(--duration-fast) var(--ease-out),
+    color var(--duration-fast) var(--ease-out),
+    transform var(--duration-fast) var(--ease-out);
+}
+
+.ss-time__quick-btn:hover:not(.ss-time__quick-btn--on) {
+  border-color: var(--ss-green-500);
+  background-color: var(--ss-green-50);
+  color: var(--ss-green-700);
+}
+
+.ss-time__quick-btn:active { transform: scale(0.97); }
+
+.ss-time__quick-btn--on {
+  background-color: var(--ss-green-700);
+  border-color: var(--ss-green-700);
+  color: var(--ss-cream-0);
+}
+
+/* --- Divider ------------------------------------------------------------- */
+.ss-time__divider {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  color: var(--color-text-muted);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-muted);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+  margin-top: var(--sp-1);
+}
+
+.ss-time__divider::before,
+.ss-time__divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background-color: var(--color-border);
+}
+
+/* --- Custom editor ------------------------------------------------------- */
+.ss-time__editor {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+}
+
+.ss-time__colon {
+  font-family: var(--font-serif);
+  font-size: 1.75rem;
+  color: var(--color-text-muted);
+  line-height: 1;
+  margin: 0 2px;
+}
+
+/* --- Stepper ------------------------------------------------------------- */
+.ss-time-step {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  background-color: var(--ss-cream-50);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  width: 64px;
+  transition:
+    border-color var(--duration-base) var(--ease-out),
+    box-shadow var(--duration-base) var(--ease-out);
+}
+
+.ss-time-step:focus-within {
+  border-color: var(--color-brand);
+  box-shadow: 0 0 0 3px rgba(58, 107, 76, 0.12);
+}
+
+.ss-time-step__btn {
+  display: grid;
+  place-items: center;
+  height: 22px;
+  background: transparent;
+  border: 0;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition:
+    background-color var(--duration-fast) var(--ease-out),
+    color var(--duration-fast) var(--ease-out);
+}
+
+.ss-time-step__btn:hover {
+  background-color: rgba(58, 107, 76, 0.08);
+  color: var(--ss-green-700);
+}
+
+.ss-time-step__btn:active {
+  background-color: rgba(58, 107, 76, 0.15);
+}
+
+.ss-time-step__input {
+  width: 100%;
+  border: 0;
+  background-color: var(--color-surface);
+  text-align: center;
+  font-family: var(--font-serif);
+  font-size: 1.5rem;
+  color: var(--color-text);
+  padding: var(--sp-1) 0;
+  outline: 0;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+  min-width: 0;
+}
+
+.ss-time-step__input::-webkit-outer-spin-button,
+.ss-time-step__input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* --- AM/PM sliding toggle ----------------------------------------------- */
+.ss-time-period {
+  position: relative;
+  display: inline-flex;
+  background-color: var(--ss-cream-50);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 3px;
+  margin-left: var(--sp-3);
+  width: 110px;
+  isolation: isolate;
+}
+
+.ss-time-period__slider {
+  position: absolute;
+  top: 3px;
+  bottom: 3px;
+  width: calc(50% - 3px);
+  background-color: var(--ss-green-700);
+  border-radius: calc(var(--radius-md) - 3px);
+  box-shadow: 0 2px 6px -1px rgba(58, 107, 76, 0.4);
+  z-index: 0;
+}
+
+.ss-time-period__slider[data-side="AM"] { left: 3px; }
+.ss-time-period__slider[data-side="PM"] { left: calc(50%); }
+
+.ss-time-period__btn {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  padding: var(--sp-2) 0;
+  border: 0;
+  background: transparent;
+  font-family: var(--font-sans);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: color var(--duration-base) var(--ease-out);
+  letter-spacing: 0.02em;
+}
+
+.ss-time-period__btn--on {
+  color: var(--ss-cream-0);
+}
+
+/* --- Footer -------------------------------------------------------------- */
+.ss-time__footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: var(--sp-2);
+  border-top: 1px solid var(--color-border);
+  margin-top: var(--sp-1);
+}
+
+.ss-time__shortcut,
+.ss-time__done {
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--radius-md);
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  font-size: var(--fs-sm);
+  font-family: var(--font-sans);
+  font-weight: var(--fw-medium);
+  transition: background-color var(--duration-fast) var(--ease-out);
+}
+
+.ss-time__shortcut {
+  color: var(--color-text-muted);
+}
+.ss-time__shortcut:hover {
+  color: var(--color-text);
+  background-color: var(--ss-cream-50);
+}
+
+.ss-time__done {
+  background-color: var(--ss-green-700);
+  color: var(--ss-cream-0);
+  padding-inline: var(--sp-4);
+}
+.ss-time__done:hover {
+  background-color: var(--ss-green-600);
+}

@@ -1,0 +1,431 @@
+/* ============================================================================
+   M2 — Restaurant Profile & Outlets
+   ============================================================================ */
+.ss-restaurant {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-8);
+}
+
+.ss-restaurant__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: var(--sp-6);
+  flex-wrap: wrap;
+}
+
+.ss-restaurant__header h1 {
+  margin-top: var(--sp-2);
+}
+
+.ss-restaurant__lede {
+  color: var(--color-text-muted);
+  font-size: var(--fs-md);
+  font-weight: var(--fw-muted);
+  line-height: var(--lh-relaxed);
+  max-width: 56ch;
+  margin-top: var(--sp-3);
+}
+
+.ss-restaurant__header-actions {
+  display: flex;
+  gap: var(--sp-3);
+}
+
+/* ============================================================================
+   Profile card
+   ============================================================================ */
+.ss-restaurant__profile {
+  position: relative;
+}
+
+/* --- View mode ------------------------------------------------------------ */
+.ss-profile-view {
+  display: grid;
+  grid-template-columns: 132px 1fr auto;
+  gap: var(--sp-8);
+  align-items: flex-start;
+  position: relative;
+  z-index: 1;
+}
+
+.ss-profile-view__content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-5);
+}
+
+.ss-profile-view__brand h2 {
+  font-family: var(--font-serif);
+  font-size: clamp(1.75rem, 2.8vw, 2.5rem);
+  font-weight: var(--fw-regular);
+  letter-spacing: var(--tracking-tighter);
+  line-height: 1.12;
+  margin-top: var(--sp-2);
+}
+
+.ss-profile-view__tagline {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: var(--fs-md);
+  color: var(--ss-green-700);
+  margin-top: var(--sp-2);
+  line-height: 1.35;
+}
+
+.ss-profile-view__description {
+  color: var(--color-text-muted);
+  font-weight: var(--fw-muted);
+  line-height: var(--lh-relaxed);
+  max-width: 60ch;
+}
+
+.ss-profile-view__meta {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sp-4) var(--sp-6);
+  padding-top: var(--sp-4);
+  border-top: 1px solid var(--color-border);
+  margin: 0;
+}
+
+.ss-profile-view__meta div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ss-profile-view__meta dt {
+  font-size: var(--fs-xs);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+  color: var(--color-text-muted);
+  font-weight: var(--fw-medium);
+}
+
+.ss-profile-view__meta dd {
+  font-size: var(--fs-sm);
+  color: var(--color-text);
+  margin: 0;
+}
+
+.ss-profile-view__edit {
+  align-self: flex-start;
+}
+
+/* --- Edit mode ----------------------------------------------------------- */
+.ss-profile-edit {
+  display: grid;
+  grid-template-columns: 132px 1fr;
+  gap: var(--sp-8);
+  position: relative;
+  z-index: 1;
+}
+
+.ss-profile-edit__logo { position: sticky; top: var(--sp-4); }
+
+.ss-profile-edit__fields {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+.ss-profile-edit__row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sp-4);
+}
+
+.ss-profile-edit__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--sp-3);
+  margin-top: var(--sp-3);
+  padding-top: var(--sp-4);
+  border-top: 1px solid var(--color-border);
+}
+
+/* ============================================================================
+   Logo (view + edit)
+   ============================================================================ */
+.ss-logo {
+  width: 132px;
+  height: 132px;
+  border-radius: var(--radius-2xl);
+  overflow: hidden;
+  background: linear-gradient(135deg, var(--ss-green-700), var(--ss-green-500));
+  display: grid;
+  place-items: center;
+  box-shadow:
+    0 16px 32px -12px rgba(58, 107, 76, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.ss-logo__img { width: 100%; height: 100%; object-fit: cover; }
+
+.ss-logo__placeholder {
+  font-family: var(--font-serif);
+  font-size: 3.6rem;
+  color: var(--ss-cream-0);
+  letter-spacing: -0.04em;
+}
+
+/* --- Drop zone (edit mode) ------------------------------------------------ */
+.ss-logo-drop {
+  width: 132px;
+  height: 132px;
+  border-radius: var(--radius-2xl);
+  border: 2px dashed var(--color-border-strong);
+  background-color: var(--ss-cream-50);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition:
+    border-color var(--duration-base) var(--ease-out),
+    background-color var(--duration-base) var(--ease-out),
+    box-shadow var(--duration-base) var(--ease-out);
+  position: relative;
+  overflow: hidden;
+}
+
+.ss-logo-drop:hover,
+.ss-logo-drop--over {
+  border-color: var(--ss-green-500);
+  background-color: var(--ss-green-50);
+  box-shadow: 0 0 0 4px rgba(58, 107, 76, 0.06);
+}
+
+.ss-logo-drop--has-image {
+  border-style: solid;
+  border-color: var(--color-border);
+  background-color: transparent;
+}
+
+.ss-logo-drop__preview {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.ss-logo-drop__content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-2);
+  color: var(--color-text-muted);
+  padding: var(--sp-3);
+  text-align: center;
+}
+
+.ss-logo-drop__icon {
+  color: var(--ss-green-700);
+}
+
+.ss-logo-drop__text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ss-logo-drop__text strong {
+  color: var(--color-text);
+  font-size: var(--fs-sm);
+}
+
+.ss-logo-drop__text span {
+  font-size: var(--fs-xs);
+}
+
+.ss-logo-drop__remove {
+  position: absolute;
+  top: var(--sp-2);
+  right: var(--sp-2);
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background-color: rgba(15, 26, 18, 0.7);
+  color: var(--ss-cream-0);
+  font-size: var(--fs-lg);
+  line-height: 1;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+
+.ss-logo-drop__remove:hover {
+  background-color: var(--ss-danger-500);
+}
+
+/* ============================================================================
+   Outlets section
+   ============================================================================ */
+.ss-restaurant__section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--sp-4);
+  margin-bottom: var(--sp-5);
+}
+
+.ss-restaurant__section-desc {
+  color: var(--color-text-muted);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-muted);
+  line-height: var(--lh-relaxed);
+  margin-top: var(--sp-2);
+  max-width: 60ch;
+}
+
+.ss-outlet-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: var(--sp-5);
+}
+
+/* --- Outlet card --------------------------------------------------------- */
+.ss-outlet-card {
+  display: flex;
+  flex-direction: column;
+  background-color: var(--color-card);
+  border: var(--border-card);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+  transition:
+    box-shadow var(--duration-base) var(--ease-out),
+    transform var(--duration-base) var(--ease-out);
+}
+
+.ss-outlet-card:hover {
+  box-shadow: var(--shadow-card-hover);
+  transform: translateY(-4px);
+}
+
+.ss-outlet-card__main {
+  text-align: left;
+  padding: var(--sp-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  flex: 1;
+  cursor: pointer;
+  background: transparent;
+  width: 100%;
+}
+
+.ss-outlet-card__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--sp-3);
+}
+
+.ss-outlet-card__title-row {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  align-items: flex-start;
+}
+
+.ss-outlet-card__title {
+  font-family: var(--font-sans);
+  font-size: var(--fs-md);
+  font-weight: var(--fw-semibold);
+  letter-spacing: -0.005em;
+  color: var(--color-text);
+  line-height: var(--lh-snug);
+}
+
+.ss-outlet-card__edit-hint {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  color: var(--ss-green-700);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+  opacity: 0;
+  transform: translateX(-4px);
+  transition:
+    opacity var(--duration-base) var(--ease-out),
+    transform var(--duration-base) var(--ease-out);
+}
+
+.ss-outlet-card:hover .ss-outlet-card__edit-hint {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.ss-outlet-card__address {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-style: normal;
+  font-size: var(--fs-sm);
+  color: var(--color-text-muted);
+  line-height: var(--lh-snug);
+}
+
+.ss-outlet-card__phone {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font-size: var(--fs-sm);
+  color: var(--color-text);
+  margin-top: auto;
+}
+
+.ss-outlet-card__phone svg {
+  color: var(--color-text-muted);
+}
+
+.ss-outlet-card__footer {
+  padding: var(--sp-3) var(--sp-5);
+  border-top: 1px solid var(--color-border);
+  background-color: var(--ss-cream-50);
+  display: flex;
+  align-items: center;
+}
+
+/* ============================================================================
+   Outlet form (in drawer)
+   ============================================================================ */
+.ss-outlet-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+.ss-outlet-form__row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sp-4);
+}
+
+.ss-outlet-form__divider {
+  height: 1px;
+  background-color: var(--color-border);
+  margin: var(--sp-2) 0;
+}
+
+/* ============================================================================
+   Responsive
+   ============================================================================ */
+@media (max-width: 900px) {
+  .ss-profile-view,
+  .ss-profile-edit {
+    grid-template-columns: 1fr;
+  }
+  .ss-profile-view__edit {
+    align-self: stretch;
+  }
+  .ss-profile-edit__row,
+  .ss-outlet-form__row {
+    grid-template-columns: 1fr;
+  }
+  .ss-profile-view__meta {
+    grid-template-columns: 1fr;
+  }
+}

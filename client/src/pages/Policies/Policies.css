@@ -1,0 +1,372 @@
+/* ============================================================================
+   M3 — Standard Policies
+   ============================================================================ */
+.ss-policies {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-8);
+}
+
+.ss-policies__page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--sp-6);
+}
+
+.ss-policies__page-header h1 {
+  margin-top: var(--sp-2);
+}
+
+.ss-policies__lede {
+  color: var(--color-text-muted);
+  font-size: var(--fs-md);
+  font-weight: var(--fw-muted);
+  line-height: var(--lh-relaxed);
+  max-width: 60ch;
+  margin-top: var(--sp-3);
+}
+
+/* ============================================================================
+   Shell: two-column layout
+   ============================================================================ */
+.ss-policies__shell {
+  display: grid;
+  grid-template-columns: 320px minmax(0, 1fr);
+  gap: var(--sp-6);
+  align-items: flex-start;
+}
+
+/* ============================================================================
+   Left nav
+   ============================================================================ */
+.ss-policies__nav {
+  position: sticky;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-5);
+  background-color: var(--color-card);
+  border: var(--border-card);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-card);
+  padding: var(--sp-5);
+  max-height: calc(100vh - var(--topbar-height) - var(--sp-16));
+  overflow-y: auto;
+}
+
+.ss-policies__nav-header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding-bottom: var(--sp-4);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.ss-policies__nav-header h2 {
+  font-size: var(--fs-lg);
+  font-family: var(--font-serif);
+  font-weight: var(--fw-regular);
+  letter-spacing: var(--tracking-tighter);
+  line-height: 1.2;
+}
+
+.ss-policies__nav-desc {
+  font-size: var(--fs-sm);
+  color: var(--color-text-muted);
+  font-weight: var(--fw-muted);
+  line-height: var(--lh-relaxed);
+  margin-top: var(--sp-1);
+}
+
+/* --- Progress bar --------------------------------------------------------- */
+.ss-policies__progress {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  margin-top: var(--sp-3);
+}
+
+.ss-policies__progress-bar {
+  height: 6px;
+  background-color: var(--ss-warm-gray-100);
+  border-radius: var(--radius-pill);
+  overflow: hidden;
+}
+
+.ss-policies__progress-fill {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, var(--ss-green-700), var(--ss-green-500));
+  border-radius: var(--radius-pill);
+}
+
+.ss-policies__progress-text {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-muted);
+  color: var(--color-text-muted);
+}
+
+.ss-policies__progress-text strong {
+  font-weight: var(--fw-semibold);
+  color: var(--color-text);
+}
+
+/* --- Nav list ------------------------------------------------------------- */
+.ss-policies__nav-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.ss-policies__nav-item {
+  position: relative;
+  width: 100%;
+  text-align: left;
+  padding: var(--sp-3);
+  border-radius: var(--radius-md);
+  background: transparent;
+  cursor: pointer;
+  transition: background-color var(--duration-fast) var(--ease-out);
+  isolation: isolate;
+}
+
+.ss-policies__nav-item:hover:not(.ss-policies__nav-item--active) {
+  background-color: var(--ss-cream-50);
+}
+
+.ss-policies__nav-pill {
+  position: absolute;
+  inset: 0;
+  background-color: var(--ss-green-50);
+  border: 1px solid var(--ss-green-300);
+  border-radius: var(--radius-md);
+  z-index: -1;
+}
+
+.ss-policies__nav-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ss-policies__nav-row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.ss-policies__nav-dot {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 1.5px solid var(--ss-warm-gray-300);
+  background-color: var(--color-surface);
+  display: grid;
+  place-items: center;
+  color: var(--ss-cream-0);
+  transition:
+    background-color var(--duration-base) var(--ease-out),
+    border-color var(--duration-base) var(--ease-out);
+  flex-shrink: 0;
+}
+
+.ss-policies__nav-dot--complete {
+  background-color: var(--ss-green-700);
+  border-color: var(--ss-green-700);
+}
+
+.ss-policies__nav-title {
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
+  color: var(--color-text);
+  letter-spacing: -0.005em;
+}
+
+.ss-policies__nav-item--active .ss-policies__nav-title {
+  color: var(--ss-green-700);
+}
+
+.ss-policies__nav-sub {
+  font-size: var(--fs-xs);
+  color: var(--color-text-muted);
+  font-weight: var(--fw-muted);
+  padding-left: 24px;
+  line-height: var(--lh-snug);
+}
+
+/* ============================================================================
+   Right content
+   ============================================================================ */
+.ss-policies__content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+.ss-policies__section-header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding-bottom: var(--sp-5);
+  margin-bottom: var(--sp-5);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.ss-policies__section-header h2 {
+  font-size: clamp(1.5rem, 2vw, 1.875rem);
+  letter-spacing: var(--tracking-tighter);
+}
+
+.ss-policies__section-desc {
+  color: var(--color-text-muted);
+  font-weight: var(--fw-muted);
+  line-height: var(--lh-relaxed);
+  max-width: 64ch;
+}
+
+.ss-policies__save-hint {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  color: var(--color-text-muted);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-muted);
+  align-self: flex-end;
+  padding: var(--sp-2) var(--sp-3);
+  background-color: var(--ss-green-50);
+  border-radius: var(--radius-pill);
+}
+
+.ss-policies__save-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--ss-green-700);
+  box-shadow: 0 0 0 4px rgba(58, 107, 76, 0.15);
+}
+
+/* ============================================================================
+   Section form layouts
+   ============================================================================ */
+.ss-policy-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-5);
+}
+
+.ss-policy-form__row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sp-4);
+}
+
+.ss-policy-form__label {
+  display: block;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  color: var(--color-text);
+  margin-bottom: var(--sp-3);
+}
+
+.ss-policy-form__check-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--sp-3);
+  padding: var(--sp-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background-color: var(--ss-cream-50);
+}
+
+/* ============================================================================
+   Operating Timings — week schedule grid
+   ============================================================================ */
+.ss-week-schedule {
+  border: var(--border-card);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+  background-color: var(--color-card);
+}
+
+.ss-week-schedule__head,
+.ss-week-schedule__row {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr 1fr 1fr;
+  gap: var(--sp-3);
+  align-items: center;
+  padding: var(--sp-3) var(--sp-4);
+}
+
+.ss-week-schedule__head {
+  background-color: var(--ss-cream-50);
+  border-bottom: 1px solid var(--color-border);
+  font-size: var(--fs-xs);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+  font-weight: var(--fw-semibold);
+  color: var(--color-text-muted);
+}
+
+.ss-week-schedule__row {
+  border-bottom: 1px solid var(--color-border);
+  transition: background-color var(--duration-fast) var(--ease-out);
+}
+
+.ss-week-schedule__row:last-child {
+  border-bottom: 0;
+}
+
+.ss-week-schedule__row:hover {
+  background-color: var(--ss-cream-50);
+}
+
+.ss-week-schedule__row--closed {
+  opacity: 0.6;
+}
+
+.ss-week-schedule__day {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+}
+
+/* Time inputs in the schedule grid now use the TimePicker primitive — its own
+   styles live in TimePicker.css. */
+
+/* ============================================================================
+   Responsive
+   ============================================================================ */
+@media (max-width: 1024px) {
+  .ss-policies__shell {
+    grid-template-columns: 1fr;
+  }
+  .ss-policies__nav {
+    position: static;
+    max-height: none;
+  }
+  .ss-policy-form__row {
+    grid-template-columns: 1fr;
+  }
+  .ss-week-schedule__head,
+  .ss-week-schedule__row {
+    grid-template-columns: 1.4fr 1fr 1fr 1fr;
+    font-size: var(--fs-xs);
+  }
+}
+
+@media (max-width: 640px) {
+  .ss-week-schedule__head,
+  .ss-week-schedule__row {
+    grid-template-columns: 1fr;
+    gap: var(--sp-2);
+  }
+  .ss-week-schedule__head { display: none; }
+}

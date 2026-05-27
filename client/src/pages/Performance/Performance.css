@@ -1,0 +1,385 @@
+/* ============================================================================
+   M12 — Staff Performance List (SOW §2.5)
+   ============================================================================ */
+.ss-perf {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-6);
+}
+
+/* --- Header -------------------------------------------------------------- */
+.ss-perf__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--sp-6);
+}
+
+.ss-perf__header h1 { margin-top: var(--sp-2); }
+
+.ss-perf__lede {
+  color: var(--color-text-muted);
+  font-size: var(--fs-md);
+  font-weight: var(--fw-muted);
+  line-height: var(--lh-relaxed);
+  max-width: 68ch;
+  margin-top: var(--sp-3);
+}
+
+/* --- Stats strip --------------------------------------------------------- */
+.ss-perf__stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--sp-4);
+}
+
+.ss-perf__stat {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  padding: var(--sp-5);
+  background-color: var(--color-card);
+  border: var(--border-card);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-card);
+  position: relative;
+  overflow: hidden;
+}
+
+.ss-perf__stat--accent {
+  background:
+    radial-gradient(ellipse 70% 50% at 100% 0%, rgba(232, 199, 123, 0.18), transparent 70%),
+    var(--color-card);
+}
+
+.ss-perf__stat--accent::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 3px;
+  background: var(--ss-gold-500);
+}
+
+.ss-perf__stat-label {
+  font-size: var(--fs-xs);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+  color: var(--color-text-muted);
+  font-weight: var(--fw-semibold);
+}
+
+.ss-perf__stat-value {
+  font-family: var(--font-serif);
+  font-size: var(--fs-2xl);
+  line-height: 1;
+  color: var(--ss-green-900);
+  letter-spacing: var(--tracking-tighter);
+  margin-top: var(--sp-1);
+}
+
+.ss-perf__stat-hint {
+  font-size: var(--fs-xs);
+  color: var(--color-text-muted);
+  font-weight: var(--fw-muted);
+  margin-top: var(--sp-1);
+}
+
+/* --- Toolbar ------------------------------------------------------------- */
+.ss-perf__toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--sp-4);
+  flex-wrap: wrap;
+}
+
+.ss-perf__filters {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  flex: 1;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
+.ss-perf__search { flex: 1 1 240px; max-width: 320px; }
+.ss-perf__select { flex: 0 0 200px; }
+
+.ss-perf__sort {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.ss-perf__sort-label {
+  font-size: var(--fs-xs);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+  color: var(--color-text-muted);
+  font-weight: var(--fw-semibold);
+}
+
+.ss-perf__sort-select { flex: 0 0 160px; }
+
+/* --- Card grid --------------------------------------------------------- */
+.ss-perf__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  gap: var(--sp-4);
+}
+
+.ss-perf-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  padding: var(--sp-5);
+  background: var(--color-card);
+  border: var(--border-card);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-card);
+  text-decoration: none !important; /* override default anchor underline */
+  color: inherit;
+  overflow: hidden;
+  isolation: isolate;
+  transition:
+    box-shadow var(--duration-base) var(--ease-out),
+    transform var(--duration-base) var(--ease-out);
+}
+
+/* Accent stripe along the top — animates from 3px → 5px on hover */
+.ss-perf-card::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 3px;
+  background: var(--perf-accent);
+  transition: height var(--duration-base) var(--ease-out);
+}
+
+/* Soft radial halo in the accent color that fades in on hover */
+.ss-perf-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    ellipse 80% 60% at 50% 0%,
+    color-mix(in srgb, var(--perf-accent) 8%, transparent),
+    transparent 70%
+  );
+  opacity: 0;
+  transition: opacity var(--duration-base) var(--ease-out);
+  pointer-events: none;
+  z-index: -1;
+}
+
+.ss-perf-card--green { --perf-accent: var(--ss-green-500); }
+.ss-perf-card--gold { --perf-accent: var(--ss-gold-500); }
+.ss-perf-card--danger { --perf-accent: var(--ss-danger-500); }
+
+.ss-perf-card:hover {
+  box-shadow: var(--shadow-card-hover);
+}
+
+.ss-perf-card:hover::before { height: 5px; }
+.ss-perf-card:hover::after { opacity: 1; }
+
+.ss-perf-card:hover .ss-perf-card__name {
+  color: var(--perf-accent);
+}
+
+.ss-perf-card__name {
+  transition: color var(--duration-base) var(--ease-out);
+}
+
+.ss-perf-card__top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--sp-3);
+}
+
+.ss-perf-card__identity {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  min-width: 0;
+}
+
+.ss-perf-card__avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-family: var(--font-sans);
+  font-weight: var(--fw-semibold);
+  font-size: var(--fs-sm);
+  letter-spacing: -0.02em;
+  flex-shrink: 0;
+  box-shadow: var(--shadow-xs);
+}
+
+.ss-perf-card__id-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.ss-perf-card__name {
+  font-size: var(--fs-md);
+  font-weight: var(--fw-semibold);
+  color: var(--color-text);
+  letter-spacing: var(--tracking-tight);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ss-perf-card__sub {
+  font-size: var(--fs-xs);
+  color: var(--color-text-muted);
+  font-weight: var(--fw-muted);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+}
+
+.ss-perf-card__health {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  flex-shrink: 0;
+}
+
+.ss-perf-card__health-num {
+  font-family: var(--font-serif);
+  font-size: var(--fs-3xl);
+  line-height: 1;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+}
+
+.ss-perf-card__health--green .ss-perf-card__health-num { color: var(--ss-green-700); }
+.ss-perf-card__health--gold .ss-perf-card__health-num { color: var(--ss-gold-700); }
+.ss-perf-card__health--danger .ss-perf-card__health-num { color: var(--ss-danger-500); }
+
+.ss-perf-card__health-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+  color: var(--color-text-muted);
+  font-weight: var(--fw-semibold);
+  margin-top: 2px;
+}
+
+/* --- KPI cells inside the card ----------------------------------------- */
+.ss-perf-card__kpis {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: var(--sp-3);
+  padding: var(--sp-3) 0;
+  border-top: 1px dashed var(--color-border);
+  border-bottom: 1px dashed var(--color-border);
+}
+
+.ss-perf-card__cell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.ss-perf-card__cell-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+  color: var(--ss-warm-gray-400);
+  font-weight: var(--fw-semibold);
+}
+
+.ss-perf-card__cell-value {
+  font-family: var(--font-serif);
+  font-size: var(--fs-md);
+  line-height: 1.1;
+  color: var(--ss-green-900);
+  letter-spacing: var(--tracking-tighter);
+  font-variant-numeric: tabular-nums;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 2px;
+}
+
+.ss-perf-card__cell-unit {
+  font-family: var(--font-sans);
+  font-size: 10px;
+  color: var(--ss-warm-gray-400);
+  letter-spacing: 0;
+}
+
+.ss-perf-card__foot {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--sp-2);
+}
+
+.ss-perf-card__last {
+  font-size: var(--fs-xs);
+  color: var(--color-text-muted);
+  font-weight: var(--fw-muted);
+}
+
+.ss-perf-card__cta {
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+  color: var(--ss-green-700);
+  letter-spacing: var(--tracking-tight);
+  opacity: 0;
+  transform: translateX(-4px);
+  transition:
+    opacity var(--duration-base) var(--ease-out),
+    transform var(--duration-base) var(--ease-out);
+}
+
+.ss-perf-card:hover .ss-perf-card__cta {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* --- Footer note ------------------------------------------------------- */
+.ss-perf__footer-note {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  align-self: flex-end;
+  padding: var(--sp-2) var(--sp-3);
+  background-color: var(--ss-green-50);
+  border-radius: var(--radius-pill);
+  color: var(--ss-green-700);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-muted);
+}
+
+.ss-perf__footer-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--ss-green-500);
+  box-shadow: 0 0 0 4px rgba(90, 154, 110, 0.18);
+}
+
+/* --- Responsive -------------------------------------------------------- */
+@media (max-width: 1100px) {
+  .ss-perf__stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 720px) {
+  .ss-perf-card__kpis { grid-template-columns: repeat(3, 1fr); row-gap: var(--sp-3); }
+}
+
+@media (max-width: 480px) {
+  .ss-perf__stats { grid-template-columns: 1fr; }
+  .ss-perf__toolbar { flex-direction: column; align-items: stretch; }
+  .ss-perf__filters { flex-direction: column; align-items: stretch; }
+  .ss-perf__search, .ss-perf__select { max-width: none; }
+}

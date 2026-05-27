@@ -1,0 +1,226 @@
+/* ============================================================================
+   M7 — Best Practices & Excellence (ADVANCED)
+   Visual tier: warmer gold accents (vs the green-led mandatory modules).
+   ============================================================================ */
+.ss-excellence {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-8);
+}
+
+.ss-excellence__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--sp-6);
+}
+
+.ss-excellence__heading h1 {
+  margin-top: var(--sp-2);
+}
+
+.ss-excellence__eyebrow {
+  color: var(--ss-gold-700);
+}
+
+.ss-excellence__lede {
+  color: var(--color-text-muted);
+  font-size: var(--fs-md);
+  font-weight: var(--fw-muted);
+  line-height: var(--lh-relaxed);
+  max-width: 68ch;
+  margin-top: var(--sp-3);
+}
+
+/* ============================================================================
+   Brand-principle hero
+   ============================================================================ */
+.ss-principle {
+  position: relative;
+  display: grid;
+  grid-template-columns: 88px minmax(0, 1fr);
+  gap: var(--sp-5);
+  padding: var(--sp-6);
+  border-radius: var(--radius-xl);
+  background:
+    radial-gradient(ellipse 60% 40% at 100% 0%, rgba(232, 199, 123, 0.22), transparent 70%),
+    linear-gradient(135deg, var(--ss-cream-50) 0%, var(--ss-cream-0) 60%);
+  border: 1px solid var(--ss-gold-300);
+  box-shadow: var(--shadow-xs);
+  overflow: hidden;
+}
+
+.ss-principle__corner {
+  display: grid;
+  place-items: center;
+  color: var(--ss-gold-700);
+  background-color: var(--color-surface);
+  border: 1px solid var(--ss-gold-300);
+  border-radius: var(--radius-lg);
+  height: 88px;
+}
+
+.ss-principle__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.ss-principle__body .eyebrow {
+  color: var(--ss-gold-700);
+}
+
+/* Subtle inline-edit field, large serif italic — this is the hero quote */
+.ss-principle__field .ss-field__control {
+  background-color: transparent;
+  border-color: transparent;
+}
+
+.ss-principle__field .ss-field__control:focus-within {
+  background-color: var(--color-surface);
+  border-color: var(--ss-gold-300);
+}
+
+.ss-principle__field .ss-field__input {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: clamp(1.25rem, 2vw, 1.6rem);
+  font-weight: var(--fw-regular);
+  letter-spacing: -0.01em;
+  line-height: 1.35;
+  color: var(--ss-green-900);
+  padding: var(--sp-2);
+  min-height: auto;
+}
+
+.ss-principle__helper {
+  font-size: var(--fs-xs);
+  color: var(--color-text-muted);
+  font-weight: var(--fw-muted);
+  margin-top: var(--sp-1);
+  line-height: var(--lh-relaxed);
+  max-width: 60ch;
+}
+
+/* ============================================================================
+   2×2 area grid
+   ============================================================================ */
+.ss-excellence__areas {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sp-5);
+}
+
+.ss-area {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  padding: var(--sp-5);
+  background-color: var(--color-card);
+  border: var(--border-card);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-card);
+  transition:
+    box-shadow var(--duration-base) var(--ease-out),
+    transform var(--duration-base) var(--ease-out);
+}
+
+.ss-area:hover {
+  box-shadow: var(--shadow-card-hover);
+  transform: translateY(-4px);
+}
+
+.ss-area__head {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+  padding-bottom: var(--sp-3);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.ss-area__icon {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-md);
+  background: linear-gradient(135deg, var(--ss-gold-100), var(--ss-cream-0));
+  color: var(--ss-gold-700);
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  box-shadow:
+    var(--shadow-xs),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+.ss-area__title-block {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.ss-area__focus {
+  font-size: var(--fs-xs);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+  color: var(--ss-gold-700);
+  font-weight: var(--fw-semibold);
+}
+
+.ss-area__name {
+  font-family: var(--font-serif);
+  font-size: var(--fs-xl);
+  font-weight: var(--fw-regular);
+  letter-spacing: var(--tracking-tighter);
+  line-height: 1.2;
+  color: var(--color-text);
+}
+
+.ss-area__principle {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: var(--fs-sm);
+  color: var(--ss-green-700);
+  margin-top: 2px;
+}
+
+/* ============================================================================
+   Footer note
+   ============================================================================ */
+.ss-excellence__footer-note {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  align-self: flex-end;
+  padding: var(--sp-2) var(--sp-3);
+  background-color: var(--ss-gold-50);
+  border-radius: var(--radius-pill);
+  color: var(--ss-gold-700);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-muted);
+}
+
+.ss-excellence__footer-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--ss-gold-500);
+  box-shadow: 0 0 0 4px rgba(201, 149, 60, 0.15);
+}
+
+/* ============================================================================
+   Responsive
+   ============================================================================ */
+@media (max-width: 1100px) {
+  .ss-excellence__areas { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 720px) {
+  .ss-principle {
+    grid-template-columns: 1fr;
+  }
+  .ss-principle__corner {
+    height: 64px;
+    width: 64px;
+  }
+}

@@ -1,0 +1,610 @@
+/* ============================================================================
+   M10 — Coaching & Lessons (SOW §2.6)
+   Knowledge tier: green-led page, accent color comes from each lesson's
+   category (set via --lesson-accent on each card).
+   ============================================================================ */
+.ss-coaching {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-6);
+}
+
+/* --- Header -------------------------------------------------------------- */
+.ss-coaching__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--sp-6);
+}
+
+.ss-coaching__header h1 { margin-top: var(--sp-2); }
+
+.ss-coaching__lede {
+  color: var(--color-text-muted);
+  font-size: var(--fs-md);
+  font-weight: var(--fw-muted);
+  line-height: var(--lh-relaxed);
+  max-width: 68ch;
+  margin-top: var(--sp-3);
+}
+
+/* --- Stats strip --------------------------------------------------------- */
+.ss-coaching__stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--sp-4);
+}
+
+.ss-coaching__stat {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  padding: var(--sp-5);
+  background-color: var(--color-card);
+  border: var(--border-card);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-card);
+  position: relative;
+  overflow: hidden;
+  transition: box-shadow var(--duration-base) var(--ease-out);
+}
+
+.ss-coaching__stat::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 3px;
+  background: var(--ss-green-300);
+  opacity: 0;
+  transition: opacity var(--duration-base) var(--ease-out);
+}
+
+.ss-coaching__stat:hover { box-shadow: var(--shadow-card-hover); }
+
+.ss-coaching__stat--accent {
+  background:
+    radial-gradient(ellipse 70% 50% at 100% 0%, rgba(232, 199, 123, 0.18), transparent 70%),
+    var(--color-card);
+}
+
+.ss-coaching__stat--accent::before {
+  background: var(--ss-gold-500);
+  opacity: 1;
+}
+
+.ss-coaching__stat-label {
+  font-size: var(--fs-xs);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+  color: var(--color-text-muted);
+  font-weight: var(--fw-semibold);
+}
+
+.ss-coaching__stat-value {
+  font-family: var(--font-serif);
+  font-size: var(--fs-2xl);
+  line-height: 1;
+  color: var(--ss-green-900);
+  letter-spacing: var(--tracking-tighter);
+  margin-top: var(--sp-1);
+}
+
+.ss-coaching__stat-hint {
+  font-size: var(--fs-xs);
+  color: var(--color-text-muted);
+  font-weight: var(--fw-muted);
+  margin-top: var(--sp-1);
+}
+
+/* --- Toolbar ------------------------------------------------------------- */
+.ss-coaching__toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--sp-4);
+  flex-wrap: wrap;
+}
+
+.ss-coaching__toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+}
+
+.ss-coaching__search {
+  flex: 1 1 220px;
+  max-width: 320px;
+}
+
+.ss-coaching__filter-rail {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  padding: var(--sp-1);
+  background: var(--ss-warm-gray-100);
+  border-radius: var(--radius-pill);
+  flex-wrap: wrap;
+}
+
+.ss-coaching__chip {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-4);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--ss-warm-gray-600);
+  font-family: var(--font-sans);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  border-radius: var(--radius-pill);
+  transition: color var(--duration-base) var(--ease-out);
+}
+
+.ss-coaching__chip:hover { color: var(--ss-green-900); }
+.ss-coaching__chip--on { color: var(--ss-cream-0); }
+
+.ss-coaching__chip-pill {
+  position: absolute;
+  inset: 0;
+  background: var(--ss-green-700);
+  border-radius: var(--radius-pill);
+  box-shadow: var(--shadow-sm);
+  z-index: 0;
+}
+
+.ss-coaching__chip-label,
+.ss-coaching__chip-count {
+  position: relative;
+  z-index: 1;
+}
+
+.ss-coaching__chip-count {
+  font-variant-numeric: tabular-nums;
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+  padding: 1px var(--sp-2);
+  border-radius: var(--radius-pill);
+  background: rgba(15, 26, 18, 0.06);
+}
+
+.ss-coaching__chip--on .ss-coaching__chip-count {
+  background: rgba(255, 255, 255, 0.18);
+  color: var(--ss-cream-0);
+}
+
+/* --- Grid --------------------------------------------------------------- */
+.ss-coaching__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sp-5);
+}
+
+/* ============================================================================
+   Lesson card — compact horizontal layout
+   --lesson-accent set inline per category
+   Small thumb anchors the header (like an avatar) so the video doesn't
+   dominate; content leads the card.
+   ============================================================================ */
+.ss-lesson {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--color-card);
+  border: var(--border-card);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+  transition:
+    box-shadow var(--duration-base) var(--ease-out),
+    transform var(--duration-base) var(--ease-out);
+}
+
+.ss-lesson:hover {
+  box-shadow: var(--shadow-card-hover);
+}
+
+.ss-lesson--archived { opacity: 0.62; }
+.ss-lesson--archived:hover { opacity: 1; }
+
+/* Left accent stripe — category color */
+.ss-lesson::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 3px;
+  background: var(--lesson-accent);
+  z-index: 3;
+  border-radius: var(--radius-lg) 0 0 var(--radius-lg);
+}
+
+/* Click-anywhere hit zone — covers everything except the 52px action bar */
+.ss-lesson__hit {
+  position: absolute;
+  inset: 0 0 52px 0;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  z-index: 1;
+}
+
+.ss-lesson__hit:focus-visible {
+  outline: 2px solid var(--lesson-accent);
+  outline-offset: -3px;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+}
+
+.ss-lesson > *:not(.ss-lesson__hit) {
+  position: relative;
+  z-index: 2;
+}
+
+.ss-lesson__actions,
+.ss-lesson__actions * { pointer-events: auto; }
+
+/* --- Header: small thumb + title block -------------------------------- */
+.ss-lesson__header {
+  display: grid;
+  grid-template-columns: 110px 1fr;
+  gap: var(--sp-4);
+  padding: var(--sp-5) var(--sp-5) var(--sp-3) calc(var(--sp-5) + 3px);
+  align-items: flex-start;
+}
+
+.ss-lesson__thumb {
+  position: relative;
+  width: 110px;
+  aspect-ratio: 16 / 9;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background: linear-gradient(135deg, var(--ss-warm-gray-100), var(--ss-cream-100));
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  box-shadow: var(--shadow-xs);
+}
+
+.ss-lesson__thumb-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform var(--duration-slow) var(--ease-out);
+}
+
+.ss-lesson:hover .ss-lesson__thumb-img { transform: scale(1.08); }
+
+.ss-lesson__thumb-fallback {
+  color: var(--ss-warm-gray-400);
+}
+
+.ss-lesson__thumb-overlay {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: rgba(15, 26, 18, 0.45);
+  opacity: 0;
+  transition: opacity var(--duration-base) var(--ease-out);
+}
+
+.ss-lesson:hover .ss-lesson__thumb-overlay { opacity: 1; }
+
+.ss-lesson__play {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--ss-cream-0);
+  color: var(--lesson-accent);
+  display: grid;
+  place-items: center;
+  box-shadow: var(--shadow-md);
+  transform: scale(0.85);
+  transition: transform var(--duration-base) var(--ease-out);
+}
+
+.ss-lesson:hover .ss-lesson__play { transform: scale(1); }
+
+/* --- Header text -------------------------------------------------------- */
+.ss-lesson__head-text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  min-width: 0;
+}
+
+.ss-lesson__meta {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font-size: var(--fs-xs);
+  letter-spacing: var(--tracking-wide);
+}
+
+.ss-lesson__cat {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  text-transform: uppercase;
+  font-weight: var(--fw-semibold);
+}
+
+.ss-lesson__cat-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.ss-lesson__meta-sep {
+  color: var(--ss-warm-gray-300);
+}
+
+.ss-lesson__duration {
+  color: var(--ss-warm-gray-500);
+  font-weight: var(--fw-medium);
+  font-variant-numeric: tabular-nums;
+}
+
+.ss-lesson__title {
+  font-family: var(--font-sans);
+  font-size: var(--fs-md);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--tracking-tight);
+  color: var(--color-text);
+  line-height: 1.3;
+  margin-top: 2px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.ss-lesson__desc {
+  font-size: var(--fs-sm);
+  color: var(--color-text-muted);
+  font-weight: var(--fw-muted);
+  line-height: var(--lh-relaxed);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin-top: 2px;
+}
+
+/* --- Stats row (avatars + progress) ----------------------------------- */
+.ss-lesson__stats {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--sp-4);
+  padding: var(--sp-3) var(--sp-5) var(--sp-3) calc(var(--sp-5) + 3px);
+  margin-top: var(--sp-2);
+}
+
+.ss-lesson__assignees {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-width: 0;
+  flex-shrink: 0;
+}
+
+.ss-lesson__assignees-empty {
+  font-size: var(--fs-xs);
+  color: var(--ss-warm-gray-400);
+  font-style: italic;
+}
+
+.ss-lesson__avatars {
+  display: inline-flex;
+}
+
+.ss-lesson__avatar {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-family: var(--font-sans);
+  font-size: 10px;
+  font-weight: var(--fw-semibold);
+  letter-spacing: -0.02em;
+  margin-left: -7px;
+  border: 2px solid var(--color-surface);
+  box-shadow: var(--shadow-xs);
+}
+
+.ss-lesson__avatar:first-child { margin-left: 0; }
+
+.ss-lesson__avatar--more {
+  background: var(--ss-warm-gray-200);
+  color: var(--ss-warm-gray-700);
+  font-size: 10px;
+}
+
+.ss-lesson__assignee-count {
+  font-size: var(--fs-xs);
+  color: var(--color-text-muted);
+  font-weight: var(--fw-medium);
+  font-variant-numeric: tabular-nums;
+  margin-left: var(--sp-1);
+}
+
+.ss-lesson__assignee-count strong {
+  color: var(--ss-green-900);
+  font-family: var(--font-serif);
+  font-weight: var(--fw-regular);
+  font-size: var(--fs-sm);
+  letter-spacing: var(--tracking-tighter);
+}
+
+.ss-lesson__assignee-count-sep {
+  color: var(--ss-warm-gray-300);
+  margin: 0 2px;
+}
+
+.ss-lesson__progress {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  flex: 1;
+  min-width: 100px;
+  max-width: 180px;
+}
+
+.ss-lesson__progress-track {
+  flex: 1;
+  height: 6px;
+  background: var(--ss-warm-gray-100);
+  border-radius: var(--radius-pill);
+  overflow: hidden;
+}
+
+.ss-lesson__progress-fill {
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    var(--ss-green-500) 0%,
+    var(--ss-green-700) 60%,
+    var(--ss-gold-500) 100%
+  );
+  border-radius: inherit;
+  box-shadow: 0 0 8px rgba(58, 107, 76, 0.25);
+}
+
+.ss-lesson__progress-pct {
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+  color: var(--ss-green-700);
+  font-variant-numeric: tabular-nums;
+  min-width: 32px;
+  text-align: right;
+}
+
+/* --- Action bar -------------------------------------------------------- */
+.ss-lesson__actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-2) var(--sp-4) var(--sp-2) calc(var(--sp-5) + 3px);
+  border-top: 1px solid var(--color-border);
+  background: var(--ss-cream-50);
+  height: 52px;
+  flex-shrink: 0;
+}
+
+.ss-lesson__status {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-3);
+}
+
+.ss-lesson__status-label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+}
+
+.ss-lesson__status-label--on { color: var(--ss-green-700); }
+.ss-lesson__status-label--off { color: var(--ss-warm-gray-500); }
+
+.ss-lesson__status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.ss-lesson__status-label--on .ss-lesson__status-dot {
+  background: var(--ss-green-500);
+  box-shadow: 0 0 0 3px rgba(90, 154, 110, 0.2);
+}
+
+.ss-lesson__status-label--off .ss-lesson__status-dot {
+  background: var(--ss-warm-gray-400);
+}
+
+.ss-lesson__edit-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  padding: var(--sp-2) var(--sp-3);
+  border: none;
+  background: transparent;
+  color: var(--ss-warm-gray-500);
+  font-family: var(--font-sans);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--tracking-tight);
+  cursor: pointer;
+  border-radius: var(--radius-md);
+  transition:
+    color var(--duration-base) var(--ease-out),
+    background var(--duration-base) var(--ease-out),
+    transform var(--duration-base) var(--ease-out);
+}
+
+.ss-lesson__edit-btn svg {
+  transition: transform var(--duration-base) var(--ease-out);
+}
+
+.ss-lesson__edit-btn:hover {
+  color: var(--lesson-accent);
+  background: var(--color-surface);
+}
+
+.ss-lesson__edit-btn:hover svg {
+  transform: translateX(3px);
+}
+
+.ss-lesson:hover .ss-lesson__edit-btn {
+  color: var(--lesson-accent);
+}
+
+/* --- Footer note ------------------------------------------------------ */
+.ss-coaching__footer-note {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  align-self: flex-end;
+  padding: var(--sp-2) var(--sp-3);
+  background-color: var(--ss-green-50);
+  border-radius: var(--radius-pill);
+  color: var(--ss-green-700);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-muted);
+}
+
+.ss-coaching__footer-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--ss-green-500);
+  box-shadow: 0 0 0 4px rgba(90, 154, 110, 0.18);
+}
+
+/* --- Responsive ------------------------------------------------------- */
+@media (max-width: 1100px) {
+  .ss-coaching__stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 900px) {
+  .ss-coaching__grid { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 600px) {
+  .ss-coaching__stats { grid-template-columns: 1fr; }
+  .ss-coaching__toolbar { flex-direction: column; align-items: stretch; }
+  .ss-coaching__filter-rail { overflow-x: auto; flex-wrap: nowrap; }
+  .ss-coaching__toolbar-right { flex-direction: column; align-items: stretch; }
+  .ss-coaching__search { max-width: none; }
+  .ss-lesson__stats { flex-direction: column; align-items: stretch; gap: var(--sp-3); }
+  .ss-lesson__progress { max-width: none; }
+}

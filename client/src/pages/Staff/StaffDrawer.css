@@ -1,0 +1,165 @@
+/* ============================================================================
+   M9 — Staff invite/edit drawer
+   ============================================================================ */
+.ss-staff-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-5);
+}
+
+.ss-staff-form__row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sp-4);
+}
+
+.ss-staff-form__divider {
+  height: 1px;
+  background: var(--color-border);
+  margin: var(--sp-1) 0;
+}
+
+/* --- Identity preview --------------------------------------------------- */
+.ss-staff-form__identity {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-4);
+  background: var(--ss-cream-50);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+}
+
+.ss-staff-form__avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-family: var(--font-sans);
+  font-weight: var(--fw-semibold);
+  font-size: var(--fs-lg);
+  letter-spacing: -0.02em;
+  flex-shrink: 0;
+  box-shadow:
+    var(--shadow-xs),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  transition: background-color var(--duration-base) var(--ease-out);
+}
+
+.ss-staff-form__identity-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.ss-staff-form__identity-name {
+  font-family: var(--font-sans);
+  font-size: var(--fs-md);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--tracking-tight);
+  color: var(--color-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ss-staff-form__identity-sub {
+  font-size: var(--fs-xs);
+  color: var(--color-text-muted);
+  font-weight: var(--fw-muted);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+}
+
+/* --- Invite-pending banner --------------------------------------------- */
+.ss-staff-form__banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--ss-gold-300);
+  background:
+    radial-gradient(ellipse 80% 60% at 0% 0%, rgba(232, 199, 123, 0.25), transparent 70%),
+    var(--ss-gold-50);
+}
+
+.ss-staff-form__banner-text {
+  font-size: var(--fs-sm);
+  color: var(--ss-gold-700);
+  font-weight: var(--fw-muted);
+  line-height: var(--lh-relaxed);
+}
+
+.ss-staff-form__banner-text strong {
+  font-weight: var(--fw-semibold);
+  margin-right: var(--sp-1);
+}
+
+/* --- Performance preview tiles ---------------------------------------- */
+.ss-staff-form__perf {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding: var(--sp-4);
+  background: var(--ss-green-50);
+  border: 1px solid var(--ss-green-100);
+  border-radius: var(--radius-md);
+}
+
+.ss-staff-form__perf-label {
+  font-size: var(--fs-xs);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+  color: var(--ss-green-700);
+  font-weight: var(--fw-semibold);
+}
+
+.ss-staff-form__perf-tiles {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--sp-3);
+}
+
+.ss-staff-form__perf-tile {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  padding: var(--sp-3);
+  background: var(--color-surface);
+  border-radius: var(--radius-sm);
+}
+
+.ss-staff-form__perf-tile-label {
+  font-size: var(--fs-xs);
+  color: var(--color-text-muted);
+  font-weight: var(--fw-semibold);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+}
+
+.ss-staff-form__perf-tile-value {
+  font-family: var(--font-serif);
+  font-size: var(--fs-lg);
+  color: var(--ss-green-900);
+  letter-spacing: var(--tracking-tighter);
+  font-variant-numeric: tabular-nums;
+}
+
+.ss-staff-form__perf-tile-suffix {
+  font-size: var(--fs-xs);
+  color: var(--ss-warm-gray-400);
+  margin-left: 2px;
+  font-family: var(--font-sans);
+  letter-spacing: 0;
+}
+
+/* --- Responsive -------------------------------------------------------- */
+@media (max-width: 640px) {
+  .ss-staff-form__row { grid-template-columns: 1fr; }
+  .ss-staff-form__perf-tiles { grid-template-columns: 1fr 1fr; }
+  .ss-staff-form__banner { flex-direction: column; align-items: stretch; }
+}

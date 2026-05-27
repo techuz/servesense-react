@@ -1,0 +1,175 @@
+.ss-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.ss-field__label {
+  font-family: var(--font-sans);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  color: var(--color-text);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: color var(--duration-base) var(--ease-out);
+}
+
+.ss-field__required {
+  color: var(--ss-danger-500);
+}
+
+.ss-field__control {
+  position: relative;
+  display: flex;
+  align-items: center;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  transition:
+    border-color var(--duration-base) var(--ease-out),
+    box-shadow var(--duration-base) var(--ease-out),
+    background-color var(--duration-base) var(--ease-out);
+  /* Required so child input's background never spills past the rounded corners */
+  overflow: hidden;
+}
+
+.ss-field__control:hover:not(:focus-within) {
+  border-color: var(--ss-warm-gray-300);
+}
+
+.ss-field__control:focus-within {
+  border-color: var(--color-brand);
+  box-shadow:
+    0 0 0 4px rgba(58, 107, 76, 0.12),
+    0 1px 2px rgba(15, 26, 18, 0.04);
+}
+
+/* Lift the label colour to brand green on focus */
+.ss-field:focus-within .ss-field__label {
+  color: var(--color-brand);
+}
+
+.ss-field--error .ss-field__control {
+  border-color: var(--ss-danger-500);
+}
+.ss-field--error .ss-field__control:focus-within {
+  box-shadow: 0 0 0 4px rgba(181, 74, 59, 0.12);
+}
+.ss-field--error:focus-within .ss-field__label {
+  color: var(--ss-danger-500);
+}
+
+.ss-field__input {
+  flex: 1;
+  width: 100%;
+  border: 0;
+  background: transparent;
+  /* Inherit so even browser autofill paints rounded corners */
+  border-radius: inherit;
+  outline: 0;
+  font-family: var(--font-sans);
+  font-size: var(--fs-base);
+  color: var(--color-text);
+  padding: var(--sp-3) var(--sp-4);
+  min-height: 44px;
+  transition: color var(--duration-base) var(--ease-out);
+}
+
+.ss-field__input::placeholder {
+  color: var(--color-text-muted);
+  transition: opacity var(--duration-base) var(--ease-out);
+}
+
+.ss-field__input:focus::placeholder {
+  opacity: 0.6;
+}
+
+.ss-field__input:disabled {
+  cursor: not-allowed;
+  color: var(--color-text-muted);
+}
+
+/* --- Browser autofill override ------------------------------------------ */
+/* Chrome/Safari paints its own background on autofill, which ignores the
+   wrapper's border-radius and creates the "cut corner" artifact. Mask it
+   with an inset shadow that matches the surface, and keep the radius. */
+.ss-field__input:-webkit-autofill,
+.ss-field__input:-webkit-autofill:hover,
+.ss-field__input:-webkit-autofill:focus,
+.ss-field__input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px var(--color-surface) inset;
+  box-shadow: 0 0 0 1000px var(--color-surface) inset;
+  -webkit-text-fill-color: var(--color-text);
+  caret-color: var(--color-text);
+  border-radius: inherit;
+  /* Halt the slow autofill colour-fade Chrome runs */
+  transition: background-color 9999s ease-in-out 0s;
+}
+
+.ss-field__icon {
+  display: inline-flex;
+  align-items: center;
+  color: var(--color-text-muted);
+  padding-inline: var(--sp-3);
+  transition: color var(--duration-base) var(--ease-out);
+}
+
+.ss-field:focus-within .ss-field__icon {
+  color: var(--color-brand);
+}
+
+.ss-field__icon--leading + .ss-field__input { padding-left: 0; }
+.ss-field__icon--trailing { padding-right: var(--sp-3); }
+
+/* --- Multiline (textarea) variant ---------------------------------------- */
+.ss-field__control--multiline {
+  align-items: stretch;
+}
+
+.ss-field__input--textarea {
+  resize: vertical;
+  min-height: 96px;
+  line-height: var(--lh-relaxed);
+}
+
+/* --- Select variant ------------------------------------------------------- */
+.ss-field__control--select {
+  cursor: pointer;
+}
+
+.ss-field__input--select {
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: none;
+  padding-right: 0;
+  cursor: pointer;
+}
+
+.ss-field__input--select:disabled {
+  cursor: not-allowed;
+}
+
+.ss-field__select-chev {
+  position: absolute;
+  right: var(--sp-4);
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--color-text-muted);
+  pointer-events: none;
+  transition: color var(--duration-base) var(--ease-out), transform var(--duration-base) var(--ease-out);
+}
+
+.ss-field__control--select:focus-within .ss-field__select-chev {
+  color: var(--color-brand);
+}
+
+.ss-field__hint {
+  font-size: var(--fs-xs);
+  color: var(--color-text-muted);
+}
+
+.ss-field__error {
+  font-size: var(--fs-xs);
+  color: var(--ss-danger-500);
+}

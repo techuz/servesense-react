@@ -1,0 +1,76 @@
+.ss-check {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  cursor: pointer;
+  user-select: none;
+  padding: var(--sp-1) 0;
+}
+
+.ss-check--disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.ss-check__input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+  width: 0;
+  height: 0;
+}
+
+.ss-check__box {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  margin-top: 1px;
+  border-radius: var(--radius-sm);
+  border: 1.5px solid var(--ss-warm-gray-300);
+  background-color: var(--color-surface);
+  color: var(--ss-cream-0);
+  display: grid;
+  place-items: center;
+  transition:
+    background-color var(--duration-base) var(--ease-out),
+    border-color var(--duration-base) var(--ease-out),
+    box-shadow var(--duration-base) var(--ease-out);
+}
+
+.ss-check:hover:not(.ss-check--disabled) .ss-check__box {
+  border-color: var(--ss-green-500);
+}
+
+.ss-check--on .ss-check__box {
+  background-color: var(--ss-green-700);
+  border-color: var(--ss-green-700);
+}
+
+.ss-check--on:hover:not(.ss-check--disabled) .ss-check__box {
+  background-color: var(--ss-green-600);
+  border-color: var(--ss-green-600);
+}
+
+.ss-check__input:focus-visible + .ss-check__box {
+  box-shadow: 0 0 0 4px rgba(58, 107, 76, 0.18);
+}
+
+.ss-check__text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ss-check__label {
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  color: var(--color-text);
+  line-height: var(--lh-snug);
+}
+
+.ss-check__desc {
+  font-size: var(--fs-xs);
+  color: var(--color-text-muted);
+  font-weight: var(--fw-muted);
+  line-height: var(--lh-relaxed);
+}

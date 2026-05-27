@@ -1,0 +1,327 @@
+/* ============================================================================
+   M5 — Service SOP / Flow of Service
+   ============================================================================ */
+.ss-sop {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-6);
+}
+
+.ss-sop__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--sp-6);
+}
+
+.ss-sop__heading h1 {
+  margin-top: var(--sp-2);
+}
+
+.ss-sop__lede {
+  color: var(--color-text-muted);
+  font-size: var(--fs-md);
+  font-weight: var(--fw-muted);
+  line-height: var(--lh-relaxed);
+  max-width: 68ch;
+  margin-top: var(--sp-3);
+}
+
+/* ============================================================================
+   Overview row
+   ============================================================================ */
+.ss-sop__overview {
+  display: grid;
+  grid-template-columns: 1.6fr 1fr;
+  gap: var(--sp-5);
+  background-color: var(--color-card);
+  border: var(--border-card);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-card);
+  padding: var(--sp-5);
+  align-items: center;
+}
+
+.ss-sop__overview-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--sp-5);
+}
+
+.ss-sop__stat {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+
+.ss-sop__stat-label {
+  font-size: var(--fs-xs);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+  color: var(--color-text-muted);
+  font-weight: var(--fw-semibold);
+}
+
+.ss-sop__stat-value {
+  font-family: var(--font-serif);
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-2);
+  line-height: 1;
+}
+
+.ss-sop__stat-big {
+  font-size: var(--fs-3xl);
+  letter-spacing: var(--tracking-tight);
+  color: var(--color-text);
+}
+
+.ss-sop__stat-sub {
+  font-family: var(--font-sans);
+  font-size: var(--fs-xs);
+  color: var(--color-text-muted);
+  font-weight: var(--fw-muted);
+}
+
+.ss-sop__progress {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding-left: var(--sp-5);
+  border-left: 1px solid var(--color-border);
+}
+
+.ss-sop__progress-track {
+  height: 8px;
+  background-color: var(--ss-warm-gray-100);
+  border-radius: var(--radius-pill);
+  overflow: hidden;
+}
+
+.ss-sop__progress-fill {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, var(--ss-green-700), var(--ss-green-500));
+  border-radius: var(--radius-pill);
+}
+
+.ss-sop__progress-text {
+  font-size: var(--fs-xs);
+  color: var(--color-text-muted);
+  font-weight: var(--fw-muted);
+}
+
+.ss-sop__progress-text strong {
+  font-weight: var(--fw-semibold);
+  color: var(--color-text);
+}
+
+/* ============================================================================
+   Step list (timeline)
+   ============================================================================ */
+.ss-sop__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.ss-sop-step {
+  display: grid;
+  grid-template-columns: 80px minmax(0, 1fr);
+  gap: var(--sp-5);
+  position: relative;
+  transition: opacity var(--duration-base) var(--ease-out);
+}
+
+.ss-sop-step--off { opacity: 0.55; }
+
+/* --- Rail (left column) -------------------------------------------------- */
+.ss-sop-step__rail {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: var(--sp-2);
+}
+
+.ss-sop-step__num {
+  position: relative;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background-color: var(--ss-cream-0);
+  border: 1px solid var(--color-border);
+  color: var(--ss-warm-gray-500);
+  font-family: var(--font-serif);
+  font-size: 1.5rem;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  z-index: 1;
+  transition:
+    background-color var(--duration-base) var(--ease-out),
+    color var(--duration-base) var(--ease-out),
+    border-color var(--duration-base) var(--ease-out),
+    box-shadow var(--duration-base) var(--ease-out);
+}
+
+.ss-sop-step__num--on {
+  background: linear-gradient(135deg, var(--ss-green-700), var(--ss-green-500));
+  color: var(--ss-cream-0);
+  border-color: var(--ss-green-700);
+  box-shadow:
+    0 8px 16px -6px rgba(58, 107, 76, 0.32),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18);
+}
+
+.ss-sop-step__connector {
+  flex: 1;
+  width: 2px;
+  background: linear-gradient(180deg, var(--color-border) 0%, var(--color-border) 50%, transparent 100%);
+  margin-top: var(--sp-2);
+  margin-bottom: var(--sp-2);
+  border-radius: 2px;
+}
+
+/* --- Body (right column) ------------------------------------------------- */
+.ss-sop-step__body {
+  background-color: var(--color-card);
+  border: var(--border-card);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-card);
+  padding: var(--sp-5);
+  margin-bottom: var(--sp-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  transition: box-shadow var(--duration-base) var(--ease-out);
+}
+
+.ss-sop-step--expanded .ss-sop-step__body {
+  box-shadow: var(--shadow-card-hover);
+}
+
+.ss-sop-step__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--sp-4);
+}
+
+.ss-sop-step__title-block {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  min-width: 0;
+}
+
+.ss-sop-step__title-row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+}
+
+.ss-sop-step__name {
+  font-family: var(--font-serif);
+  font-size: var(--fs-xl);
+  font-weight: var(--fw-regular);
+  letter-spacing: var(--tracking-tighter);
+  line-height: 1.2;
+  color: var(--color-text);
+}
+
+.ss-sop-step__principle {
+  font-size: var(--fs-xs);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+  color: var(--ss-green-700);
+  font-weight: var(--fw-semibold);
+}
+
+.ss-sop-step__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+}
+
+.ss-sop-step__toggle {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: var(--color-text-muted);
+  background-color: var(--ss-cream-50);
+  border: 1px solid var(--color-border);
+  cursor: pointer;
+  transition:
+    background-color var(--duration-fast) var(--ease-out),
+    color var(--duration-fast) var(--ease-out),
+    border-color var(--duration-fast) var(--ease-out);
+}
+
+.ss-sop-step__toggle:hover {
+  background-color: var(--ss-green-50);
+  color: var(--ss-green-700);
+  border-color: var(--ss-green-300);
+}
+
+.ss-sop-step__expanded {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+.ss-sop-step__lists {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sp-4);
+}
+
+/* PhraseList styles now live in components/primitives/PhraseList.css */
+
+/* ============================================================================
+   Footer note
+   ============================================================================ */
+.ss-sop__footer-note {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  align-self: flex-end;
+  padding: var(--sp-2) var(--sp-3);
+  background-color: var(--ss-green-50);
+  border-radius: var(--radius-pill);
+  color: var(--color-text-muted);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-muted);
+}
+
+.ss-sop__footer-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--ss-green-700);
+  box-shadow: 0 0 0 4px rgba(58, 107, 76, 0.15);
+}
+
+/* ============================================================================
+   Responsive
+   ============================================================================ */
+@media (max-width: 1024px) {
+  .ss-sop__overview { grid-template-columns: 1fr; }
+  .ss-sop__progress { border-left: 0; padding-left: 0; padding-top: var(--sp-4); border-top: 1px solid var(--color-border); }
+  .ss-sop-step__lists { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 720px) {
+  .ss-sop__overview-grid { grid-template-columns: 1fr; gap: var(--sp-3); }
+  .ss-sop-step {
+    grid-template-columns: 56px minmax(0, 1fr);
+    gap: var(--sp-3);
+  }
+  .ss-sop-step__num { width: 48px; height: 48px; font-size: var(--fs-lg); }
+}

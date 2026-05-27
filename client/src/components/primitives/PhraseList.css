@@ -1,0 +1,168 @@
+/* ============================================================================
+   PhraseList — reusable editable list of phrases with do / avoid / quote tones
+   ============================================================================ */
+.ss-phrases {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding: var(--sp-4);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background-color: var(--color-surface);
+}
+
+.ss-phrases--do {
+  border-color: var(--ss-green-100);
+  background-color: var(--ss-green-50);
+}
+
+.ss-phrases--avoid {
+  border-color: rgba(181, 74, 59, 0.18);
+  background-color: rgba(181, 74, 59, 0.04);
+}
+
+.ss-phrases--quote {
+  border-color: var(--ss-gold-300);
+  background-color: var(--ss-gold-50);
+}
+
+.ss-phrases__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-3);
+}
+
+.ss-phrases__label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font-family: var(--font-sans);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
+  color: var(--color-text);
+  letter-spacing: -0.005em;
+}
+
+.ss-phrases__icon {
+  display: inline-grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  font-size: 11px;
+  font-weight: var(--fw-bold);
+  font-family: var(--font-mono);
+  line-height: 1;
+}
+
+.ss-phrases--do .ss-phrases__icon {
+  background-color: var(--ss-green-700);
+  color: var(--ss-cream-0);
+}
+
+.ss-phrases--avoid .ss-phrases__icon {
+  background-color: var(--ss-danger-500);
+  color: var(--ss-cream-0);
+}
+
+.ss-phrases--quote .ss-phrases__icon {
+  background: transparent;
+  color: var(--ss-gold-700);
+  font-family: var(--font-serif);
+  font-size: 13px;
+  width: auto;
+}
+
+.ss-phrases__helper {
+  font-size: var(--fs-xs);
+  color: var(--color-text-muted);
+  font-weight: var(--fw-muted);
+}
+
+.ss-phrases__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+
+.ss-phrases__item {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-size: var(--fs-sm);
+  color: var(--color-text);
+  line-height: var(--lh-snug);
+}
+
+.ss-phrases__text {
+  flex: 1;
+  min-width: 0;
+}
+
+.ss-phrases--quote .ss-phrases__text {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: var(--fs-md);
+  color: var(--ss-green-900);
+  line-height: 1.4;
+}
+
+.ss-phrases__remove {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: var(--color-text-muted);
+  background-color: transparent;
+  font-size: var(--fs-base);
+  line-height: 1;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition:
+    background-color var(--duration-fast) var(--ease-out),
+    color var(--duration-fast) var(--ease-out);
+}
+
+.ss-phrases__remove:hover {
+  background-color: var(--ss-danger-50);
+  color: var(--ss-danger-500);
+}
+
+.ss-phrases__input-row {
+  display: flex;
+}
+
+.ss-phrases__input {
+  flex: 1;
+  background-color: var(--color-surface);
+  border: 1px dashed var(--color-border-strong);
+  border-radius: var(--radius-md);
+  padding: var(--sp-2) var(--sp-3);
+  font-family: var(--font-sans);
+  font-size: var(--fs-sm);
+  color: var(--color-text);
+  outline: 0;
+  transition:
+    border-color var(--duration-base) var(--ease-out),
+    box-shadow var(--duration-base) var(--ease-out);
+}
+
+.ss-phrases__input::placeholder {
+  color: var(--color-text-muted);
+}
+
+.ss-phrases__input:focus {
+  border-color: var(--color-brand);
+  border-style: solid;
+  box-shadow: 0 0 0 3px rgba(58, 107, 76, 0.12);
+}

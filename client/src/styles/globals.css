@@ -1,0 +1,286 @@
+@import './tokens.css';
+
+/* ============================================================================
+   Reset + Base
+   ============================================================================ */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+* {
+  margin: 0;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  -moz-tab-size: 4;
+  tab-size: 4;
+}
+
+body {
+  font-family: var(--font-sans);
+  font-size: var(--fs-base);
+  font-weight: var(--fw-body);
+  line-height: 1.6;
+  color: var(--color-text);
+  background-color: var(--color-bg);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: 'kern' 1, 'liga' 1, 'calt' 1;
+  /* App-shell pattern — the viewport itself never scrolls. Each scrollable
+     pane (content area, sidebar, drawer body, etc.) manages its own overflow. */
+  overflow: hidden;
+}
+
+/* ============================================================================
+   Sleek custom scrollbar, applied everywhere a scroll appears.
+   Firefox uses the simpler scrollbar-* props; WebKit gets the full treatment.
+   ============================================================================ */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--ss-warm-gray-300) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background-color: var(--ss-warm-gray-300);
+  border-radius: 999px;
+  /* Inset the thumb with a transparent border so it floats inside the track */
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  min-height: 40px;
+  transition: background-color 0.2s;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background-color: var(--ss-warm-gray-500);
+  background-clip: padding-box;
+}
+
+*::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* On dark surfaces (sidebar, login brand panel, toast region) the warm-gray
+   thumb disappears — invert to a translucent white. */
+.ss-sidebar,
+.ss-login__panel--brand {
+  scrollbar-color: rgba(255, 255, 255, 0.18) transparent;
+}
+
+.ss-sidebar::-webkit-scrollbar-thumb,
+.ss-login__panel--brand::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.18);
+}
+
+.ss-sidebar::-webkit-scrollbar-thumb:hover,
+.ss-login__panel--brand::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(255, 255, 255, 0.32);
+}
+
+img,
+picture,
+video,
+canvas,
+svg {
+  display: block;
+  max-width: 100%;
+}
+
+input,
+button,
+textarea,
+select {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
+
+a {
+  color: var(--color-link);
+  text-decoration: none;
+  transition: color var(--duration-fast) var(--ease-out);
+}
+
+a:hover {
+  color: var(--color-link-hover);
+}
+
+/* Inline text links (inside prose / descriptions) opt into the underline. */
+.text-link,
+p > a,
+.ss-card__description a {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  text-decoration-color: rgba(58, 107, 76, 0.4);
+  transition: text-decoration-color var(--duration-fast) var(--ease-out);
+}
+
+.text-link:hover,
+p > a:hover,
+.ss-card__description a:hover {
+  text-decoration-color: var(--color-link-hover);
+}
+
+p,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  overflow-wrap: break-word;
+}
+
+/* ============================================================================
+   Typography
+   ----------------------------------------------------------------------------
+   System (Arivex-aligned):
+   - Serif (DM Serif Display) is a *display* face — reserved for hero (.display),
+     page title (h1), section title (h2). It is never used below ~1.5rem.
+   - Sub-headings and card titles use Outfit at carefully chosen sizes/weights
+     so multi-card grids stay calm and readable.
+   - Body & muted copy use Outfit at weight 300 (light) per Arivex, with relaxed
+     line-height (1.7) for comfortable scanning.
+   ============================================================================ */
+.font-serif {
+  font-family: var(--font-serif);
+}
+.font-sans {
+  font-family: var(--font-sans);
+}
+
+p {
+  line-height: var(--lh-relaxed);
+}
+
+/* Display sizes use the serif.
+   Headings inherit color from their context — body sets the default dark
+   text colour, dark panels (login brand, sidebar) set their own light colour. */
+.display,
+h1,
+h2 {
+  font-family: var(--font-serif);
+  font-weight: var(--fw-regular);
+  /* Subtle optical weight reduction for the high-contrast serif */
+  font-feature-settings: 'kern' 1, 'liga' 1;
+  text-rendering: optimizeLegibility;
+}
+
+.display {
+  font-size: var(--fs-hero);
+  letter-spacing: var(--tracking-tighter);
+  line-height: var(--lh-display);
+}
+
+h1 {
+  font-size: var(--fs-page-title);
+  letter-spacing: var(--tracking-tighter);
+  line-height: var(--lh-tight);
+}
+
+h2 {
+  font-size: var(--fs-section);
+  letter-spacing: var(--tracking-tight);
+  line-height: 1.2;
+}
+
+/* h3+ switch to sans — at this size the serif looks spiky and cluttered. */
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-sans);
+  font-weight: var(--fw-semibold);
+  letter-spacing: -0.005em;
+  line-height: var(--lh-snug);
+  color: var(--color-text);
+}
+
+h3 { font-size: var(--fs-card-title); }   /* 1.125rem */
+h4 { font-size: var(--fs-base); }
+h5 { font-size: var(--fs-sm); text-transform: uppercase; letter-spacing: var(--tracking-wide); }
+h6 { font-size: var(--fs-xs); text-transform: uppercase; letter-spacing: var(--tracking-wide); color: var(--color-text-muted); }
+
+small {
+  font-size: var(--fs-sm);
+  color: var(--color-text-muted);
+  font-weight: var(--fw-muted);
+}
+
+.eyebrow {
+  font-family: var(--font-sans);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  color: var(--color-accent-hover);
+}
+
+/* Description / muted body — soft prose weight, generous line-height.
+   Use --fw-prose (300) for long descriptive paragraphs that should feel
+   editorial; use --fw-muted (400) for shorter helper/hint text that needs
+   to stay readable at small sizes. */
+.lede,
+.muted-body {
+  color: var(--color-text-muted);
+  font-weight: var(--fw-prose);
+  line-height: var(--lh-relaxed);
+}
+
+/* ============================================================================
+   Utilities
+   ============================================================================ */
+.container {
+  width: 100%;
+  margin-inline: auto;
+  padding-inline: var(--sp-6);
+  max-width: var(--container-xl);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+::selection {
+  background: var(--ss-gold-300);
+  color: var(--ss-green-900);
+}
+
+:focus-visible {
+  outline: 2px solid var(--ss-green-600);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
