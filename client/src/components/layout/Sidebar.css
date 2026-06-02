@@ -2,11 +2,44 @@
   display: flex;
   flex-direction: column;
   width: var(--sidebar-width);
-  background-color: var(--ss-green-900);
+  /* Atmospheric forest base — same recipe as the login brand panel, distilled
+     into tokens so the two dark surfaces share one voice. */
+  background: var(--atmosphere-dark);
   color: var(--ss-cream-50);
   padding: var(--sp-6) var(--sp-4);
   height: 100vh;
   overflow-y: auto;
+  position: relative;
+  isolation: isolate;   /* contain the atmosphere layers to this surface */
+}
+
+/* Layer 1 — a single sage glow rising from the base over a whisper-faint
+   dotted lattice. (No gold pool up top — it tinted the brand lockup.) */
+.ss-sidebar::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image: var(--glow-green), var(--dot-grid-dark);
+  background-position:
+    bottom -220px left -160px,
+    0 0;
+  background-size: 520px 520px, 26px 26px;
+  background-repeat: no-repeat, repeat;
+}
+
+/* Layer 2 — fine grain, blended so it grips the gradient like film stock. */
+.ss-sidebar::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image: var(--tex-grain);
+  background-size: 220px 220px;
+  opacity: var(--tex-grain-opacity);
+  mix-blend-mode: overlay;
 }
 
 .ss-sidebar__brand {

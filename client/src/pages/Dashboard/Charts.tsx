@@ -53,86 +53,79 @@ export const Sparkline = ({
   const min = Math.min(...data);
   const max = Math.max(...data);
   const range = max - min || 1;
-  const padX = 8;
-  const padY = 18;
-  const innerW = VBW - padX * 2;
-  const innerH = VBH - padY * 2;
+  // No horizontal padding — the line/fill bleed to both card edges so there's
+  // no gap. A tiny right inset leaves just enough room for the endpoint dot to
+  // sit fully inside the card rather than being clipped at the edge.
+  const rightInset = 12;
+  const innerW = VBW - rightInset;
+  // Keep the whole trend in the lower-middle band of the card. The endpoint is
+  // always the peak, so generous top headroom stops it from climbing into the
+  // dark top vignette (where the line+dot connection would be lost in shadow).
+  const yTop = 72;            // where the max value sits
+  const yBottom = VBH - 14;   // where the min value sits
 
   const points = data.map((v, i) => {
-    const x = padX + (i / (data.length - 1 || 1)) * innerW;
-    const y = padY + innerH - ((v - min) / range) * innerH;
+    const x = (i / (data.length - 1 || 1)) * innerW;
+    const y = yBottom - ((v - min) / range) * (yBottom - yTop);
     return [x, y] as const;
   });
 
   const linePath = smoothPath(points);
   const last = points[points.length - 1];
-  const first = points[0];
-  const areaPath = `${linePath} L ${last[0]} ${VBH} L ${first[0]} ${VBH} Z`;
+  // Extend the fill flat to the right edge so the card has no empty sliver,
+  // while the visible stroke still ends precisely at the endpoint dot.
+  const areaPath = `${linePath} L ${VBW} ${last[1].toFixed(2)} L ${VBW} ${VBH} L 0 ${VBH} Z`;
+
+  const dotX = (last[0] / VBW) * 100;
+  const dotY = (last[1] / VBH) * 100;
 
   return (
-    <svg
-      width="100%"
-      height="100%"
-      viewBox={`0 0 ${VBW} ${VBH}`}
-      preserveAspectRatio="none"
-      role="img"
-      aria-label="Revenue trend sparkline"
-      style={{ display: 'block' }}
-    >
-      <defs>
-        <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor={fill} stopOpacity="0.55" />
-          <stop offset="100%" stopColor={fill} stopOpacity="0" />
-        </linearGradient>
-      </defs>
-      <motion.path
-        d={areaPath}
-        fill={`url(#${gradId})`}
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-      />
-      <motion.path
-        d={linePath}
-        stroke={stroke}
-        strokeWidth="2"
-        fill="none"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        vectorEffect="non-scaling-stroke"
-        initial={{ pathLength: 0 }}
-        animate={{ pathLength: 1 }}
-        transition={{ duration: 1.1, ease: [0.16, 1, 0.3, 1] }}
-      />
+    <div className="ss-spark">
+      <svg
+        width="100%"
+        height="100%"
+        viewBox={`0 0 ${VBW} ${VBH}`}
+        preserveAspectRatio="none"
+        role="img"
+        aria-label="Revenue trend sparkline"
+        style={{ display: 'block' }}
+      >
+        <defs>
+          <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={fill} stopOpacity="0.55" />
+            <stop offset="100%" stopColor={fill} stopOpacity="0" />
+          </linearGradient>
+        </defs>
+        <motion.path
+          d={areaPath}
+          fill={`url(#${gradId})`}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+        />
+        <motion.path
+          d={linePath}
+          stroke={stroke}
+          strokeWidth="2.5"
+          fill="none"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          vectorEffect="non-scaling-stroke"
+          initial={{ pathLength: 0 }}
+          animate={{ pathLength: 1 }}
+          transition={{ duration: 1.1, ease: [0.16, 1, 0.3, 1] }}
+        />
+      </svg>
       {showEndpoint && (
-        <>
-          <motion.circle
-            cx={last[0]}
-            cy={last[1]}
-            r="14"
-            fill={stroke}
-            opacity="0.18"
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ delay: 0.9, type: 'spring', stiffness: 200, damping: 20 }}
-            style={{ transformOrigin: `${last[0]}px ${last[1]}px` }}
-          />
-          <motion.circle
-            cx={last[0]}
-            cy={last[1]}
-            r="6"
-            fill={stroke}
-            stroke="var(--ss-cream-0)"
-            strokeWidth="2"
-            vectorEffect="non-scaling-stroke"
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ delay: 1.0, type: 'spring', stiffness: 400, damping: 22 }}
-            style={{ transformOrigin: `${last[0]}px ${last[1]}px` }}
-          />
-        </>
+        <motion.span
+          className="ss-spark__dot"
+          style={{ left: `${dotX}%`, top: `${dotY}%`, background: stroke }}
+          initial={{ scale: 0, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ delay: 1.0, type: 'spring', stiffness: 360, damping: 22 }}
+        />
       )}
-    </svg>
+    </div>
   );
 };
 
@@ -143,6 +136,8 @@ interface BarRow {
   label: string;
   value: number;
   valueText: string;
+  /** Optional secondary metric shown muted under the label (e.g. units sold). */
+  subText?: string;
 }
 
 interface BarRowChartProps {
@@ -176,7 +171,10 @@ export const BarRowChart = ({ rows, accent = 'green' }: BarRowChartProps) => {
                 )}
                 <span className="ss-bars__label">{row.label}</span>
               </div>
-              <span className="ss-bars__value">{row.valueText}</span>
+              <div className="ss-bars__value-block">
+                <span className="ss-bars__value">{row.valueText}</span>
+                {row.subText && <span className="ss-bars__sub">{row.subText}</span>}
+              </div>
             </div>
             <div className="ss-bars__track">
               <motion.div
@@ -214,10 +212,11 @@ export const BeforeAfterBar = ({
   unit,
 }: BeforeAfterProps) => {
   const max = Math.max(before, after) || 1;
-  const beforePct = (before / max) * 100;
-  const afterPct = (after / max) * 100;
+  const improved = after >= before;
+  const baselinePct = (Math.min(before, after) / max) * 100;
+  const liftPct = (Math.abs(after - before) / max) * 100;
   const deltaPct = before === 0 ? 0 : ((after - before) / before) * 100;
-  const improved = after > before;
+  const unitStr = unit ? unit : '';
 
   return (
     <div className="ss-ba">
@@ -236,37 +235,39 @@ export const BeforeAfterBar = ({
           {Math.abs(deltaPct).toFixed(0)}%
         </span>
       </div>
-      <div className="ss-ba__row">
-        <div className="ss-ba__tier ss-ba__tier--before">
-          <span className="ss-ba__tier-tag">Before</span>
-          <span className="ss-ba__tier-value">
+
+      {/* One bar telling the story: green baseline + gold ServeSense lift. */}
+      <div className="ss-ba__track">
+        <motion.div
+          className="ss-ba__seg ss-ba__seg--base"
+          initial={{ width: 0 }}
+          animate={{ width: `${baselinePct}%` }}
+          transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+        />
+        <motion.div
+          className="ss-ba__seg ss-ba__seg--lift"
+          initial={{ width: 0 }}
+          animate={{ width: `${liftPct}%` }}
+          transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1], delay: 0.25 }}
+        />
+      </div>
+
+      <div className="ss-ba__readout">
+        <span className="ss-ba__point ss-ba__point--before">
+          <span className="ss-ba__point-tag">Before</span>
+          <span className="ss-ba__point-value">
             {format(before)}
-            {unit && <span className="ss-ba__tier-unit">{unit}</span>}
+            {unitStr}
           </span>
-          <div className="ss-ba__bar">
-            <motion.div
-              className="ss-ba__bar-fill ss-ba__bar-fill--before"
-              initial={{ width: 0 }}
-              animate={{ width: `${beforePct}%` }}
-              transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-            />
-          </div>
-        </div>
-        <div className="ss-ba__tier ss-ba__tier--after">
-          <span className="ss-ba__tier-tag">After ServeSense</span>
-          <span className="ss-ba__tier-value">
+        </span>
+        <span className="ss-ba__arrow" aria-hidden="true">→</span>
+        <span className="ss-ba__point ss-ba__point--after">
+          <span className="ss-ba__point-tag">After ServeSense</span>
+          <span className="ss-ba__point-value">
             {format(after)}
-            {unit && <span className="ss-ba__tier-unit">{unit}</span>}
+            {unitStr}
           </span>
-          <div className="ss-ba__bar">
-            <motion.div
-              className="ss-ba__bar-fill ss-ba__bar-fill--after"
-              initial={{ width: 0 }}
-              animate={{ width: `${afterPct}%` }}
-              transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1], delay: 0.15 }}
-            />
-          </div>
-        </div>
+        </span>
       </div>
     </div>
   );
@@ -294,9 +295,11 @@ export const CategoryDonut = ({
   const hovered = hoveredLabel !== undefined ? hoveredLabel : internalHover;
 
   const total = slices.reduce((s, v) => s + v.value, 0) || 1;
-  const size = 200;
-  const stroke = 24;
-  const r = size / 2 - stroke / 2;
+  const size = 210;
+  const stroke = 20;          // resting ring thickness
+  const hoverStroke = 27;     // hovered slice swells
+  const gap = 6;              // px of track showing between segments
+  const r = size / 2 - hoverStroke / 2;   // reserve room so the swell never clips
   const circ = 2 * Math.PI * r;
   let accumulated = 0;
 
@@ -306,11 +309,7 @@ export const CategoryDonut = ({
   };
 
   const activeSlice = slices.find((s) => s.label === hovered);
-  const displayedLabel = activeSlice
-    ? activeSlice.label.split('·')[0].trim()
-    : centerLabel === 'Top'
-      ? 'Top'
-      : centerLabel;
+  const displayedLabel = activeSlice ? 'Share' : centerLabel;
   const displayedValue = activeSlice
     ? `${Math.round((activeSlice.value / total) * 100)}%`
     : centerValue;
@@ -324,6 +323,7 @@ export const CategoryDonut = ({
         viewBox={`0 0 ${size} ${size}`}
         onMouseLeave={() => setHover(null)}
       >
+        {/* Track groove behind the segments */}
         <circle
           cx={size / 2}
           cy={size / 2}
@@ -331,13 +331,15 @@ export const CategoryDonut = ({
           fill="none"
           stroke="var(--ss-warm-gray-100)"
           strokeWidth={stroke}
+          opacity={0.7}
         />
         {slices.map((s, i) => {
           const frac = s.value / total;
-          const dashLen = frac * circ;
+          const dashLen = Math.max(frac * circ - gap, 1);
           const dashOffset = -accumulated * circ;
           accumulated += frac;
           const isHovered = hovered === s.label;
+          const isDimmed = hovered !== null && !isHovered;
           return (
             <motion.circle
               key={s.label}
@@ -346,20 +348,22 @@ export const CategoryDonut = ({
               r={r}
               fill="none"
               stroke={s.color}
-              strokeWidth={stroke}
+              strokeLinecap="round"
               strokeDasharray={`${dashLen} ${circ - dashLen}`}
               strokeDashoffset={dashOffset}
               transform={`rotate(-90 ${size / 2} ${size / 2})`}
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
+              initial={{ opacity: 0, strokeWidth: 0 }}
+              animate={{
+                opacity: isDimmed ? 0.4 : 1,
+                strokeWidth: isHovered ? hoverStroke : stroke,
+              }}
               transition={{
-                duration: 0.4,
-                ease: [0.16, 1, 0.3, 1],
-                delay: i * 0.08,
+                opacity: { duration: 0.4, ease: [0.16, 1, 0.3, 1], delay: hovered ? 0 : i * 0.07 },
+                strokeWidth: { duration: 0.3, ease: [0.16, 1, 0.3, 1] },
               }}
               style={{
                 cursor: 'pointer',
-                filter: isHovered ? `drop-shadow(0 0 8px ${s.color})` : 'none',
+                filter: isHovered ? `drop-shadow(0 1px 6px ${s.color})` : 'none',
                 transition: 'filter 240ms cubic-bezier(0.16, 1, 0.3, 1)',
               }}
               onMouseEnter={() => setHover(s.label)}
@@ -368,25 +372,25 @@ export const CategoryDonut = ({
         })}
         <text
           x="50%"
-          y={displayedSub ? '42%' : '48%'}
+          y={displayedSub ? '42%' : '47%'}
           textAnchor="middle"
           dominantBaseline="middle"
           fontFamily="var(--font-sans)"
-          fontSize="11"
+          fontSize="10.5"
           fill="var(--ss-warm-gray-500)"
           fontWeight="600"
-          letterSpacing="0.04em"
+          letterSpacing="0.08em"
           style={{ textTransform: 'uppercase' }}
         >
-          {displayedSub ? 'Share' : displayedLabel}
+          {displayedLabel}
         </text>
         <text
           x="50%"
-          y={displayedSub ? '56%' : '60%'}
+          y={displayedSub ? '55%' : '58%'}
           textAnchor="middle"
           dominantBaseline="middle"
           fontFamily="var(--font-serif)"
-          fontSize="26"
+          fontSize={activeSlice ? '30' : '26'}
           fill="var(--ss-green-900)"
           letterSpacing="-0.03em"
         >
@@ -395,7 +399,7 @@ export const CategoryDonut = ({
         {displayedSub && (
           <text
             x="50%"
-            y="68%"
+            y="67%"
             textAnchor="middle"
             dominantBaseline="middle"
             fontFamily="var(--font-sans)"
