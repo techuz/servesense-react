@@ -173,6 +173,13 @@ export const DashboardPage = () => {
 
           {/* Before/After comparisons */}
           <div className="ss-dash__before-after">
+            <div className="ss-dash__ba-head">
+              <h3>Before vs after ServeSense</h3>
+              <div className="ss-dash__ba-legend" aria-hidden="true">
+                <span className="ss-dash__ba-key ss-dash__ba-key--base">Baseline</span>
+                <span className="ss-dash__ba-key ss-dash__ba-key--lift">Lift</span>
+              </div>
+            </div>
             <BeforeAfterBar
               label="Upsell rate"
               before={metrics.upsellRate.before * 100}
@@ -225,8 +232,11 @@ export const DashboardPage = () => {
                   value: c.revenue,
                   color: categoryColors[i % categoryColors.length],
                 }))}
-                centerLabel="Top"
-                centerValue={metrics.categoryRevenue[0]?.categoryName.split('·')[0].trim() ?? ''}
+                centerLabel="Total"
+                centerValue={formatINR(
+                  metrics.categoryRevenue.reduce((s, c) => s + c.revenue, 0),
+                  true,
+                )}
                 hoveredLabel={hoveredCategory}
                 onHover={setHoveredCategory}
               />
@@ -281,6 +291,7 @@ export const DashboardPage = () => {
                 label: item.itemName,
                 value: item.revenue,
                 valueText: formatINR(item.revenue, true),
+                subText: `${item.units.toLocaleString('en-IN')} sold`,
               }))}
             />
           </div>
@@ -373,11 +384,24 @@ const KpiCard = ({ tile }: { tile: KpiTile }) => {
   const pct = tile.previous === 0 ? 0 : Math.abs(delta / tile.previous);
   const accent = kpiAccents[tile.key];
 
+  // Mini progress viz: a track showing where we were (previous tick) and where
+  // we are now (accent fill). Scaled per unit so every tile reads on its own.
+  const scaleMax =
+    tile.unit === 'pct'
+      ? 100
+      : tile.unit === 'rating'
+        ? 5
+        : Math.max(tile.current, tile.previous) * 1.3;
+  const clamp = (n: number) => Math.max(0, Math.min(100, n));
+  const fillPct = clamp((tile.current / scaleMax) * 100);
+  const tickPct = clamp((tile.previous / scaleMax) * 100);
+
   return (
     <motion.div
       className={cn('ss-kpi', `ss-kpi--${accent.tone}`)}
       variants={fadeUp}
-      whileHover={{ y: -2 }}
+      whileHover={{ y: -4 }}
+      transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
     >
       <div className="ss-kpi__top">
         <div className="ss-kpi__icon" aria-hidden="true">
@@ -403,8 +427,24 @@ const KpiCard = ({ tile }: { tile: KpiTile }) => {
       </div>
       <span className="ss-kpi__label">{tile.label}</span>
       <div className="ss-kpi__value">{formatKpi(tile, tile.current)}</div>
+
+      <div className="ss-kpi__progress" aria-hidden="true">
+        <motion.span
+          className="ss-kpi__progress-fill"
+          initial={{ width: 0 }}
+          animate={{ width: `${fillPct}%` }}
+          transition={{ duration: 0.85, ease: [0.16, 1, 0.3, 1], delay: 0.15 }}
+        />
+        <span
+          className="ss-kpi__progress-tick"
+          style={{ left: `${tickPct}%` }}
+          title={`Previous: ${formatKpi(tile, tile.previous)}`}
+        />
+      </div>
+
       <div className="ss-kpi__meta">
         <span className="ss-kpi__prev">
+          <span className="ss-kpi__prev-dot" aria-hidden="true" />
           From {formatKpi(tile, tile.previous)}
         </span>
         <span className="ss-kpi__helper">{tile.helper}</span>

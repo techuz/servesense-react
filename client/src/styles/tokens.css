@@ -158,6 +158,41 @@
      read as "lifted off the page" instead of stark white blocks. */
   --color-card:         #ffffffe6;
 
+  /* --- Atmosphere & texture ------------------------------------------------ */
+  /* The login brand panel pioneered grain + gradient-wash + radial glow. These
+     tokens lift that language into the system so every surface can share it.
+     Restraint is the whole point — this is luxury hospitality, so everything
+     here lives at single-digit opacity and reads as "warm light on linen",
+     never as decoration you'd consciously notice. */
+
+  /* Fine fractal-noise grain, encoded as an inline SVG. Two tunings:
+     --tex-grain      → for dark surfaces (light noise, blends with `overlay`)
+     --tex-grain-dark → for light surfaces (dark noise, blends with `multiply`) */
+  --tex-grain: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/></filter><rect width='220' height='220' filter='url(%23n)'/></svg>");
+  --tex-grain-opacity:      0.05;   /* on dark surfaces */
+  --tex-grain-opacity-soft: 0.035;  /* on light surfaces */
+
+  /* Warm light pooling across the cream page — a lighter wash from the top-left,
+     a whisper of gold warmth top-right, a breath of sage rising from the base.
+     Layered over --color-bg so the page feels lit, not painted flat. */
+  --atmosphere-page:
+    radial-gradient(125% 85% at 12% -5%, #fcf9f3 0%, transparent 52%),
+    radial-gradient(95% 80% at 102% 0%, rgba(232, 199, 123, 0.08) 0%, transparent 48%),
+    radial-gradient(120% 95% at 50% 112%, rgba(58, 107, 76, 0.05) 0%, transparent 55%);
+
+  /* Atmospheric base + glows for dark surfaces (sidebar, brand panels) — the
+     same recipe the login brand panel uses, distilled into reusable tokens. */
+  --atmosphere-dark:
+    linear-gradient(165deg, var(--ss-green-900) 0%, var(--ss-green-800) 58%, #234430 100%);
+  --glow-gold:  radial-gradient(circle at center, rgba(232, 199, 123, 0.45), transparent 62%);
+  --glow-green: radial-gradient(circle at center, rgba(90, 154, 110, 0.42), transparent 62%);
+  --dot-grid-dark: radial-gradient(circle at 1px 1px, rgba(255, 255, 255, 0.05) 1px, transparent 0);
+
+  /* Inner top-edge highlight that lifts a card off the page — a 1px sheen of
+     light catching the upper border, plus a faint warm wash down the surface.
+     Applied as a box-shadow inset so it composes with the card's drop shadow. */
+  --sheen-card: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+
   /* --- Layout -------------------------------------------------------------- */
   --container-sm:   640px;
   --container-md:   768px;

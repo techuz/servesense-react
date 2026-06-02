@@ -358,6 +358,13 @@ The viewport itself never scrolls — `body { overflow: hidden }`. Each pane (`.
 ### Sleek scrollbar
 Applied globally via `*::-webkit-scrollbar` and Firefox `scrollbar-*` props — 10px width, transparent track, warm-gray-300 pill thumb with 2px inset, darkens to warm-gray-500 on hover. Dark surfaces (sidebar, login brand panel) get an inverted translucent-white variant.
 
+### Atmosphere & texture (system-wide)
+Depth is tokenized (`tokens.css` → "Atmosphere & texture") and applied app-wide at single-digit opacity — the upscale-hospitality "warm light on linen" feel, never noticeable decoration. The login brand panel pioneered the language; it now lives in tokens so every surface shares it.
+- `--tex-grain` (inline SVG fractal noise) + `--tex-grain-opacity` (dark) / `--tex-grain-opacity-soft` (light)
+- `--atmosphere-page` — warm gradient wash on the content pane (over `--color-bg`); grain rides behind content at z-index 0 so text stays crisp
+- `--atmosphere-dark` / `--glow-green` / `--dot-grid-dark` — dark-surface recipe (sidebar + login). **No gold glow on the sidebar** (it tinted the brand lockup)
+- `--sheen-card` — top-edge inner highlight composed into every card's `box-shadow` so surfaces read as lifted, not flat white
+
 ### Component Approach
 Code-first design system. All primitives live in `client/src/components/primitives/`, all design tokens in `client/src/styles/tokens.css`. No third-party UI library — we ship our own. See §13 for the full primitive inventory.
 
@@ -594,6 +601,37 @@ Seed data is realistic (Lumière Bistro brand, two outlets, full menu, full SOP 
   - "Maps to → KPI" chip removed per user request (felt redundant — KPI is configured in the drawer)
 
 - **Performance card hover effect**: top accent stripe animates 3px → 5px, soft radial halo in the staff's tier color fades in, name shifts to accent color — synchronized transitions on `--duration-base` ease-out
+
+### Day 6 — Atmosphere & texture pass + dashboard graph overhaul (2026-06-02)
+
+A design-system refinement day focused on **atmosphere & texture** (keeping the DM Serif + Outfit pairing as-is), followed by a dashboard UI/graph enhancement pass driven by stakeholder feedback against the in-browser build.
+
+**Atmosphere & texture — promoted from login-only into the token system**
+The login brand panel was the only surface with real depth (grain + gradient wash + radial glows); every dashboard page sat on flat cream. Lifted that language into reusable tokens and applied it app-wide with luxury-grade restraint (everything at single-digit opacity — "warm light on linen", not noticeable decoration).
+- New tokens in `tokens.css` under an **Atmosphere & texture** section:
+  - `--tex-grain` (inline SVG fractal-noise data-URI) + `--tex-grain-opacity` (0.05, dark surfaces) / `--tex-grain-opacity-soft` (0.035, light surfaces)
+  - `--atmosphere-page` — layered warm wash (lighter pool top-left, gold whisper top-right, sage breath rising from base)
+  - `--atmosphere-dark`, `--glow-gold`, `--glow-green`, `--dot-grid-dark` — the dark-surface recipe distilled from the login panel
+  - `--sheen-card` — `inset 0 1px 0 rgba(255,255,255,.7)` top-edge highlight
+- **App shell** (`AppShell.css`): `.ss-shell__main` now carries `var(--atmosphere-page)` over `--color-bg`; a `::before` grain layer sits at **z-index 0 behind content** so surfaces feel like warm stock while text stays crisp. `.ss-shell__content` lifted to z-index 1; `.ss-topbar` given `position: relative` to activate its existing (previously inert, because static) `z-index` and sit above the grain.
+- **Card primitive** (`Card.css`): every card composes `--sheen-card` into its `box-shadow` (all elevation variants + interactive hover) so cards read as lifted physical surfaces, not flat white blocks.
+- **Sidebar** (`Sidebar.css`): flat `green-900` → `var(--atmosphere-dark)` with `isolation: isolate`; two `z-index: -1` pseudo-layers (glow + dot grid on `::before`, grain on `::after`) — no nav markup touched. Unifies the sidebar's voice with the login brand panel.
+- **Follow-up fix**: removed the `--glow-gold` layer from the sidebar `::before` — the gold pool up top was tinting the "ServeSense / MANAGER" brand lockup. Sidebar now keeps only the sage glow + dot lattice.
+
+**Dashboard (M11) — UI / layout / graph / interaction enhancement (data unchanged)**
+All numbers stay sourced from `useDashboardMetrics`; only presentation changed.
+- **Revenue-by-category donut** (`Charts.tsx` `CategoryDonut`): rebuilt as a modern **segmented ring** — slice gaps (6px), rounded caps, recessed track groove. Hover **swells the slice thickness** (20 → 27px, animated) and dims others to 0.4 with a soft colored halo; entrance animates `strokeWidth` from 0. Center now defaults to **Total ₹-value** and swaps to the hovered slice's **share %** + name. `r` reserves room for the swell so it never clips. Center props in `index.tsx` changed from "Top / category name" → Total revenue.
+- **CoreVista KPI tiles** (`index.tsx` `KpiCard`): added a **previous→current mini progress viz** — accent-toned fill (`color-mix` with white → accent) to the current value over a track, with a `green-900` baseline **tick** marking the previous value. Scale per unit (pct→100, rating→5, rupees/count→relative). Footer "From X" gained a marker dot; hover lift deepened to -4.
+- **Before/After** (`Charts.tsx` `BeforeAfterBar` + `index.tsx`): replaced the two stacked sub-cards with **one grouped panel** ("Before vs after ServeSense" header + Baseline/Lift legend). Each metric is now a single split bar telling a story: **green baseline segment + gold "lift" segment** = the jump ServeSense added, with a `Before → After` readout beneath and a gold-toned delta pill. CSS fully rewritten (`.ss-ba__track` / `.ss-ba__seg--base|--lift` / `.ss-ba__readout` / `.ss-ba__point`), old `.ss-ba__row|__tier|__bar` rules removed; obsolete 720px `.ss-ba__row` media rule cleaned.
+- **Top-selling items** (`BarRowChart`): surfaced the existing-but-hidden `units` field as a muted "N sold" second line under each revenue figure (new optional `subText` on `BarRow`; `.ss-bars__value-block` / `.ss-bars__sub`). Bars kept static (honoring the Day 3 "quiet ranked list" decision).
+
+**Revenue hero sparkline — three reported defects fixed** (`Charts.tsx` `Sparkline` + CSS)
+Root cause of the oval dot + edge gap: the SVG uses `preserveAspectRatio="none"`, which stretches the viewBox non-uniformly (squashing an in-SVG `<circle>` into an oval) and the old 8px horizontal padding left a gap at the card edge.
+- **Oval dot → true circle**: endpoint dot moved out of the distorted SVG into a **screen-space `<span>`** (`.ss-spark__dot`, fixed 11px, `border-radius:50%`, concentric `box-shadow` halo replacing the old in-SVG glow circle). Positioned via `left/top %` matching the line's last-point fraction, so it lands exactly on the stroke end. `Sparkline` now returns a `.ss-spark` wrapper (relative) holding the svg + dot.
+- **Right-edge gap**: dropped horizontal padding; line/fill bleed full-width. Area path extends flat to the right edge (`L VBW lastY …`) so there's no empty sliver, while a 12px `rightInset` keeps the dot fully inside the rounded card.
+- **"Line not touching the dot"**: diagnosed (via a node calc of the seeded data) as a **contrast** issue, not misalignment — the final point is always the max, so the curve climbed to `y≈8%` straight into the dark top vignette, hiding the rise while the bright dot floated clear. Fixed by **compressing the trend into the lower-middle lit band** (`yTop=72 … yBottom=186`, peak now ~36% down), softening the top vignette (lit plateau 42–60% in `.ss-dash__revenue-glow`), and thickening the line 2 → 2.5px.
+
+**Net**: tokens.css, globals/AppShell/Sidebar/Topbar/Card CSS, Dashboard `index.tsx` + `Charts.tsx` + `Dashboard.css`. No new files, no deps. Typecheck + production build clean throughout (bundle ~544 kB JS / 158 kB CSS).
 
 ### Day 5 — Iteration on top of orientation refactor
 

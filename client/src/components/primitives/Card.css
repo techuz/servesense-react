@@ -2,17 +2,20 @@
   background-color: var(--color-card);
   border: var(--border-card);
   border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-card);
+  /* Drop shadow + a 1px inner top-edge sheen — light catches the upper border
+     so the card reads as a physical surface lifted off the warm page, not a
+     flat white rectangle. */
+  box-shadow: var(--shadow-card), var(--sheen-card);
   transition:
     box-shadow var(--duration-base) var(--ease-out),
     transform var(--duration-fast) var(--ease-out);
 }
 
-/* Elevation overrides */
-.ss-card--elev-flat   { box-shadow: none; }
-.ss-card--elev-low    { box-shadow: var(--shadow-card); }
-.ss-card--elev-medium { box-shadow: var(--shadow-card); }
-.ss-card--elev-high   { box-shadow: var(--shadow-card-hover); }
+/* Elevation overrides — each keeps the sheen so depth stays consistent. */
+.ss-card--elev-flat   { box-shadow: var(--sheen-card); }
+.ss-card--elev-low    { box-shadow: var(--shadow-card), var(--sheen-card); }
+.ss-card--elev-medium { box-shadow: var(--shadow-card), var(--sheen-card); }
+.ss-card--elev-high   { box-shadow: var(--shadow-card-hover), var(--sheen-card); }
 
 /* Padding */
 .ss-card--p-none { padding: 0; }
@@ -25,7 +28,7 @@
   cursor: pointer;
 }
 .ss-card--interactive:hover {
-  box-shadow: var(--shadow-card-hover);
+  box-shadow: var(--shadow-card-hover), var(--sheen-card);
   transform: translateY(-4px);
 }
 

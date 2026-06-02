@@ -12,6 +12,26 @@
   min-width: 0;
   height: 100vh;
   overflow: hidden;
+  /* Warm light pooling across the cream page, layered over the flat bg. */
+  background: var(--atmosphere-page), var(--color-bg);
+  position: relative;
+  isolation: isolate;
+}
+
+/* Fine paper grain over the page background only — sits behind the content
+   (z-index 0) so surfaces gain a tactile linen quality while text stays crisp.
+   Translucent cards let ~9% of this texture read through, so they feel printed
+   on warm stock rather than pasted on as stark white blocks. */
+.ss-shell__main::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image: var(--tex-grain);
+  background-size: 220px 220px;
+  opacity: var(--tex-grain-opacity-soft);
+  mix-blend-mode: multiply;
 }
 
 .ss-shell__content {
@@ -21,6 +41,7 @@
   overflow-y: auto;
   overflow-x: hidden;
   position: relative;
+  z-index: 1;           /* Above the page grain layer */
   scroll-behavior: smooth;
 }
 
