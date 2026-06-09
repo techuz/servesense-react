@@ -2,6 +2,7 @@ import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { AppShell } from '@/components/layout/AppShell';
 import { ProtectedRoute, PublicOnlyRoute } from '@/components/ProtectedRoute';
 import { LoginPage } from '@/pages/Login';
+import { SignUpPage } from '@/pages/SignUp';
 import { DashboardPage } from '@/pages/Dashboard';
 import { RestaurantPage } from '@/pages/Restaurant';
 import { PoliciesPage } from '@/pages/Policies';
@@ -21,6 +22,14 @@ export const router = createBrowserRouter([
     element: (
       <PublicOnlyRoute>
         <LoginPage />
+      </PublicOnlyRoute>
+    ),
+  },
+  {
+    path: '/signup',
+    element: (
+      <PublicOnlyRoute>
+        <SignUpPage />
       </PublicOnlyRoute>
     ),
   },

@@ -110,8 +110,40 @@
   margin: 0;
 }
 
+.ss-profile-view__address {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  font-style: normal;
+  font-size: var(--fs-sm);
+  color: var(--color-text);
+  line-height: var(--lh-relaxed);
+}
+
 .ss-profile-view__edit {
   align-self: flex-start;
+}
+
+.ss-profile-edit__divider {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  margin-top: var(--sp-2);
+}
+
+.ss-profile-edit__divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--color-border);
+}
+
+.ss-profile-edit__divider span {
+  font-size: var(--fs-xs);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+  color: var(--color-text-muted);
+  font-weight: var(--fw-medium);
 }
 
 /* --- Edit mode ----------------------------------------------------------- */
@@ -258,86 +290,6 @@
 }
 
 /* ============================================================================
-   Outlets section
-   ============================================================================ */
-.ss-restaurant__section-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: var(--sp-4);
-  margin-bottom: var(--sp-5);
-}
-
-.ss-restaurant__section-desc {
-  color: var(--color-text-muted);
-  font-size: var(--fs-sm);
-  font-weight: var(--fw-muted);
-  line-height: var(--lh-relaxed);
-  margin-top: var(--sp-2);
-  max-width: 60ch;
-}
-
-/* ============================================================================
-   Single-outlet inline view + edit
-   ============================================================================ */
-.ss-outlet-view {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-3);
-}
-
-.ss-outlet-view__title-row {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-3);
-  flex-wrap: wrap;
-}
-
-.ss-outlet-view__name {
-  font-family: var(--font-sans);
-  font-size: var(--fs-lg);
-  font-weight: var(--fw-semibold);
-  color: var(--color-text);
-  letter-spacing: var(--tracking-tight);
-  margin: 0;
-}
-
-.ss-outlet-view__address {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  font-style: normal;
-  font-size: var(--fs-sm);
-  color: var(--color-text-muted);
-  line-height: var(--lh-relaxed);
-}
-
-.ss-outlet-view__phone {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--sp-2);
-  font-size: var(--fs-sm);
-  color: var(--color-text);
-  margin-top: var(--sp-2);
-}
-
-.ss-outlet-view__phone svg {
-  color: var(--color-text-muted);
-}
-
-.ss-outlet-edit {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-4);
-}
-
-.ss-outlet-edit__row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--sp-4);
-}
-
-/* ============================================================================
    Responsive
    ============================================================================ */
 @media (max-width: 900px) {
@@ -348,8 +300,7 @@
   .ss-profile-view__edit {
     align-self: stretch;
   }
-  .ss-profile-edit__row,
-  .ss-outlet-edit__row {
+  .ss-profile-edit__row {
     grid-template-columns: 1fr;
   }
   .ss-profile-view__meta {

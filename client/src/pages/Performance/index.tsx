@@ -8,7 +8,7 @@ import { EmptyState } from '@/components/primitives/EmptyState';
 import { DateFilterControl } from '@/components/primitives/DateFilterControl';
 import { useStaff } from '@/lib/mock/staff';
 import {
-  healthScoreTone,
+  overallScoreTone,
   useAllStaffPerformance,
   type DateFilter,
   type StaffPerformance,
@@ -18,10 +18,10 @@ import { fadeUp, stagger } from '@/lib/motion';
 import { cn } from '@/lib/cn';
 import './Performance.css';
 
-type SortKey = 'health' | 'sessions' | 'upsell' | 'rating' | 'tone';
+type SortKey = 'overall' | 'sessions' | 'upsell' | 'rating' | 'tone';
 
 const sortLabels: Record<SortKey, string> = {
-  health: 'Health score',
+  overall: 'Overall score',
   sessions: 'Sessions',
   upsell: 'Upsell rate',
   rating: 'Guest rating',
@@ -37,7 +37,7 @@ export const PerformancePage = () => {
   const performance = useAllStaffPerformance(dateFilter);
 
   const [search, setSearch] = useState('');
-  const [sortBy, setSortBy] = useState<SortKey>('health');
+  const [sortBy, setSortBy] = useState<SortKey>('overall');
 
   const staffMap = useMemo(() => new Map(staff.map((s) => [s.id, s])), [staff]);
 
@@ -56,8 +56,8 @@ export const PerformancePage = () => {
 
     return joined.sort((a, b) => {
       switch (sortBy) {
-        case 'health':
-          return b.perf.healthScore - a.perf.healthScore;
+        case 'overall':
+          return b.perf.overallScore - a.perf.overallScore;
         case 'sessions':
           return b.perf.totalSessions - a.perf.totalSessions;
         case 'upsell':
@@ -96,7 +96,7 @@ export const PerformancePage = () => {
     >
       <motion.header className="ss-perf__header" variants={fadeUp}>
         <div>
-          <span className="eyebrow">Performance · §2.5</span>
+          <span className="eyebrow">Performance · §5.4.3</span>
           <h1>Staff performance</h1>
           <p className="ss-perf__lede">
             Aggregated KPIs across every active session — sortable, drill-down to individual
@@ -112,7 +112,7 @@ export const PerformancePage = () => {
       </motion.header>
 
       <motion.section className="ss-perf__stats" variants={fadeUp}>
-        <StatTile label="Active staff" value={stats.active.toString()} hint="At your outlet" />
+        <StatTile label="Active staff" value={stats.active.toString()} hint="At your restaurant" />
         <StatTile
           label="Total sessions"
           value={totals.totalSessions.toString()}
@@ -195,7 +195,8 @@ export const PerformancePage = () => {
 
       <motion.div className="ss-perf__footer-note" variants={fadeUp}>
         <span className="ss-perf__footer-dot" aria-hidden="true" />
-        Health score = weighted blend of tone, empathy, menu knowledge, and confidence.
+        Overall score = weighted average of all KPIs (SOW §6.4): tone 20 · empathy 15 · menu 20 ·
+        upsell 20 · SOP 15 · rating 10.
       </motion.div>
     </motion.div>
   );
@@ -227,7 +228,7 @@ const PerfCard = ({
   member: StaffMember;
 }) => {
   const tint = avatarTintFor(member.id);
-  const tone = healthScoreTone(perf.healthScore);
+  const tone = overallScoreTone(perf.overallScore);
 
   return (
     <motion.div variants={fadeUp} whileHover={{ y: -4 }}>
@@ -257,22 +258,18 @@ const PerfCard = ({
               `ss-perf-card__health--${tone}`,
             )}
           >
-            <span className="ss-perf-card__health-num">{perf.healthScore}</span>
-            <span className="ss-perf-card__health-label">Health</span>
+            <span className="ss-perf-card__health-num">{perf.overallScore}</span>
+            <span className="ss-perf-card__health-label">Overall</span>
           </div>
         </div>
 
         <div className="ss-perf-card__kpis">
-          <KpiCell label="Sessions" value={perf.totalSessions.toString()} />
-          <KpiCell label="Upsell" value={`${Math.round(perf.upsellSuccessRate)}%`} />
-          <KpiCell label="Tone" value={`${perf.avgTone}`} unit="/100" />
+          <KpiCell label="Attempts" value={perf.totalUpsellAttempts.toString()} />
+          <KpiCell label="Upsells" value={perf.totalSuccessfulUpsells.toString()} />
+          <KpiCell label="Missed" value={perf.missedOpportunities.toString()} />
+          <KpiCell label="Confidence" value={`${perf.avgConfidence}`} unit="/100" />
           <KpiCell label="Menu" value={`${perf.avgMenuKnowledge}`} unit="%" />
-          <KpiCell
-            label="Rating"
-            value={perf.avgGuestRating != null ? perf.avgGuestRating.toFixed(1) : '—'}
-            unit={perf.avgGuestRating != null ? '/5' : ''}
-            star
-          />
+          <KpiCell label="Tone" value={`${perf.avgTone}`} unit="/100" />
         </div>
 
         <div className="ss-perf-card__foot">

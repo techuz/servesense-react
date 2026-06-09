@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { Badge } from '@/components/primitives/Badge';
 import { Button } from '@/components/primitives/Button';
 import { Input } from '@/components/primitives/Input';
+import { Select } from '@/components/primitives/Select';
 import { EmptyState } from '@/components/primitives/EmptyState';
 import {
   useStaff,
@@ -25,26 +26,49 @@ const statusFilterLabels: Record<StatusFilter, string> = {
   inactive: 'Inactive',
 };
 
+type SortKey = 'name' | 'score' | 'lastActive' | 'sessions';
+const sortOptions = [
+  { value: 'name', label: 'Name (A–Z)' },
+  { value: 'score', label: 'Overall score' },
+  { value: 'lastActive', label: 'Last active' },
+  { value: 'sessions', label: 'Sessions' },
+];
+
 export const StaffPage = () => {
   const { staff, upsert, remove, toggleStatus, stats } = useStaff();
   const { notify } = useToast();
 
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
+  const [sort, setSort] = useState<SortKey>('name');
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [editing, setEditing] = useState<StaffMember | null>(null);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    return staff.filter((s) => {
+    const list = staff.filter((s) => {
       if (q) {
-        const hay = `${s.name} ${s.email} ${s.phone}`.toLowerCase();
+        const hay = `${s.name} ${s.email}`.toLowerCase();
         if (!hay.includes(q)) return false;
       }
       if (statusFilter !== 'all' && s.status !== statusFilter) return false;
       return true;
     });
-  }, [staff, search, statusFilter]);
+    const sorted = [...list].sort((a, b) => {
+      switch (sort) {
+        case 'score':
+          return (b.avgOverallScore ?? -1) - (a.avgOverallScore ?? -1);
+        case 'sessions':
+          return b.sessionCount - a.sessionCount;
+        case 'lastActive':
+          return (b.lastActiveAt ?? '').localeCompare(a.lastActiveAt ?? '');
+        case 'name':
+        default:
+          return a.name.localeCompare(b.name);
+      }
+    });
+    return sorted;
+  }, [staff, search, statusFilter, sort]);
 
   const counts = useMemo(() => ({
     all: staff.length,
@@ -75,11 +99,12 @@ export const StaffPage = () => {
       {/* --- Header ----------------------------------------------------- */}
       <motion.header className="ss-staff__header" variants={fadeUp}>
         <div>
-          <span className="eyebrow">Setup · §2.2</span>
+          <span className="eyebrow">Setup · §5.2</span>
           <h1>Staff Management</h1>
           <p className="ss-staff__lede">
-            Add waiters, receptionists, and bartenders to ServeSense. Deactivate accounts to
-            revoke access without losing history — performance records stay intact.
+            Add waiters to ServeSense — they get an email invite with the app link and credentials.
+            Deactivate accounts to revoke access without losing history; performance records stay
+            intact.
           </p>
         </div>
         <div className="ss-staff__header-actions">
@@ -91,7 +116,7 @@ export const StaffPage = () => {
 
       {/* --- Stats strip ----------------------------------------------- */}
       <motion.section className="ss-staff__stats" variants={fadeUp}>
-        <StatTile label="Total staff" value={stats.total.toString()} hint="At your outlet" />
+        <StatTile label="Total staff" value={stats.total.toString()} hint="At your restaurant" />
         <StatTile
           label="On the floor"
           value={stats.active.toString()}
@@ -141,6 +166,14 @@ export const StaffPage = () => {
               />
             ))}
           </div>
+
+          <Select
+            aria-label="Sort staff"
+            className="ss-staff__sort"
+            value={sort}
+            onChange={(e) => setSort(e.target.value as SortKey)}
+            options={sortOptions}
+          />
         </div>
 
         <Button variant="primary" onClick={openAdd}>
@@ -181,7 +214,8 @@ export const StaffPage = () => {
             <div role="columnheader">Role</div>
             <div role="columnheader">Status</div>
             <div role="columnheader" className="ss-staff__th--right">Sessions</div>
-            <div role="columnheader" aria-label="Actions" />
+            <div role="columnheader" className="ss-staff__th--right">Overall</div>
+            <div role="columnheader">Last active</div>
           </div>
           <motion.div
             className="ss-staff__table-body"

@@ -1,0 +1,231 @@
+/* ============================================================================
+   Sign-up — two-step flow layered on the Login two-panel shell (Login.css).
+   Single-column, roomy fields so placeholders never clip; a progress bar and
+   slide transitions between steps; a step rail on the brand panel.
+   ============================================================================ */
+
+/* Lock the whole screen to the viewport so only the form panel scrolls —
+   the brand panel and page never move. (Overrides Login's min-height:100vh.) */
+.ss-signup {
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* The form panel is the single scroll surface. min-height:0 lets a grid item
+   shrink below its content so overflow-y actually engages. */
+.ss-signup__panel {
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  min-height: 0;
+  overflow-y: auto;
+  padding-top: var(--sp-8);
+  padding-bottom: var(--sp-8);
+}
+
+/* Sleek scrollbar, scoped to the form panel (cream surface). */
+.ss-signup__panel::-webkit-scrollbar {
+  width: 10px;
+}
+.ss-signup__panel::-webkit-scrollbar-track {
+  background: transparent;
+}
+.ss-signup__panel::-webkit-scrollbar-thumb {
+  background: var(--ss-warm-gray-300);
+  border-radius: var(--radius-pill);
+  border: 3px solid transparent;
+  background-clip: padding-box;
+}
+.ss-signup__panel::-webkit-scrollbar-thumb:hover {
+  background: var(--ss-warm-gray-500);
+  background-clip: padding-box;
+  border: 3px solid transparent;
+}
+.ss-signup__panel {
+  scrollbar-width: thin;
+  scrollbar-color: var(--ss-warm-gray-300) transparent;
+}
+
+.ss-signup__form {
+  width: 100%;
+  max-width: 460px;
+  gap: var(--sp-5);
+  /* Auto vertical margins centre the form when it fits, and collapse to 0 when
+     it overflows — so the top stays reachable while the panel scrolls. */
+  margin: auto 0;
+}
+
+/* --- Progress bar --------------------------------------------------------- */
+.ss-signup__progress {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+}
+
+.ss-signup__progress-track {
+  flex: 1;
+  height: 5px;
+  border-radius: var(--radius-pill);
+  background: var(--ss-warm-gray-100);
+  overflow: hidden;
+}
+
+.ss-signup__progress-fill {
+  height: 100%;
+  border-radius: var(--radius-pill);
+  background: linear-gradient(90deg, var(--ss-green-700), var(--ss-gold-500));
+}
+
+.ss-signup__progress-label {
+  font-size: var(--fs-xs);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+  color: var(--color-text-muted);
+  font-weight: var(--fw-semibold);
+  white-space: nowrap;
+}
+
+/* --- Header --------------------------------------------------------------- */
+.ss-signup__header h2 {
+  font-family: var(--font-serif);
+  font-size: var(--fs-section);
+  letter-spacing: var(--tracking-tight);
+  line-height: 1.1;
+  margin: 0;
+}
+
+.ss-signup__header p {
+  margin: var(--sp-2) 0 0;
+  font-size: var(--fs-sm);
+  color: var(--color-text-muted);
+  font-weight: var(--fw-muted);
+}
+
+/* --- Steps (each is single-column, full width) --------------------------- */
+.ss-signup__steps { position: relative; }
+
+.ss-signup__step {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+/* --- Step 2 summary chip -------------------------------------------------- */
+.ss-signup__summary {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding: var(--sp-3) var(--sp-4);
+  border-radius: var(--radius-lg);
+  background: var(--ss-cream-50);
+  border: 1px solid var(--color-border);
+}
+
+.ss-signup__summary-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  font-size: var(--fs-sm);
+}
+
+.ss-signup__summary-row span {
+  color: var(--color-text-muted);
+  font-weight: var(--fw-muted);
+}
+
+.ss-signup__summary-row strong {
+  color: var(--color-text);
+  font-weight: var(--fw-medium);
+  text-align: right;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 60%;
+}
+
+/* --- Footer actions ------------------------------------------------------- */
+.ss-signup__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+}
+
+/* Back is intrinsic width; the primary (last) button takes the rest. */
+.ss-signup__actions > .ss-btn:last-child {
+  flex: 1;
+}
+
+/* ============================================================================
+   Brand-panel step rail
+   ============================================================================ */
+.ss-signup__rail {
+  list-style: none;
+  margin: var(--sp-8) 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+.ss-signup__rail-item {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+  opacity: 0.5;
+  transition: opacity var(--duration-base) var(--ease-out);
+}
+
+.ss-signup__rail-item--active,
+.ss-signup__rail-item--done {
+  opacity: 1;
+}
+
+.ss-signup__rail-num {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  border: 1px solid rgba(232, 199, 123, 0.4);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--ss-gold-300);
+  font-family: var(--font-serif);
+  font-size: var(--fs-sm);
+  letter-spacing: var(--tracking-tight);
+  transition: all var(--duration-base) var(--ease-out);
+}
+
+.ss-signup__rail-item--active .ss-signup__rail-num {
+  background: var(--ss-gold-500);
+  border-color: var(--ss-gold-500);
+  color: var(--ss-green-900);
+}
+
+.ss-signup__rail-item--done .ss-signup__rail-num {
+  background: rgba(232, 199, 123, 0.18);
+  border-color: rgba(232, 199, 123, 0.5);
+  color: var(--ss-gold-300);
+}
+
+.ss-signup__rail-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.ss-signup__rail-text strong {
+  font-size: var(--fs-md);
+  font-weight: var(--fw-semibold);
+  color: var(--ss-cream-50);
+}
+
+.ss-signup__rail-text small {
+  font-size: var(--fs-xs);
+  color: rgba(246, 242, 236, 0.62);
+}
+
+@media (max-width: 920px) {
+  .ss-signup__rail { display: none; }
+}

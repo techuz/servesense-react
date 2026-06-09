@@ -17,7 +17,6 @@ export interface SessionHighlight {
 export interface Session {
   id: string;
   staffId: string;
-  outletId: string;
   tableNumber: string;
   guestName?: string;
   serviceMode: ServiceMode;
@@ -36,6 +35,7 @@ export interface Session {
   empathyScore: number;          // 0–100
   foodSafetyAwareness: number;   // 0–100 (%)
   toneConsistency: number;       // 0–100 (%)
+  sopCompliance: number;         // 0–100 (%) — SOP steps followed
   /** 1–5 stars; null if guest didn't rate */
   guestRating: number | null;
 
@@ -58,15 +58,15 @@ export interface StaffPerformance {
   avgEmpathy: number;            // 0–100
   avgFoodSafety: number;         // 0–100
   avgToneConsistency: number;    // 0–100
+  avgSopCompliance: number;      // 0–100
   avgGuestRating: number | null; // 1–5 (or null)
   lastSessionAt: string | null;
-  /** Composite 0–100 health score — a simple weighted blend. */
-  healthScore: number;
+  /** Overall Score — weighted average of all KPIs per SOW §6.4. */
+  overallScore: number;
 }
 
-/* Bumped to v2 when the seed was re-spread over 18 months so the
-   monthly / yearly / overall filter has visibly distinct counts. */
-const STORAGE_KEY = 'ss_mock_performance_v2';
+/* Bumped to v3 when sopCompliance was added + seed re-cast to US staff/guests. */
+const STORAGE_KEY = 'ss_mock_performance_v3';
 
 /* --- Helpers -------------------------------------------------------------- */
 function isoOffsetHours(hoursAgo: number): string {
@@ -97,24 +97,28 @@ interface BaselineProfile {
   upsellRate: number;
   foodSafety: number;
   toneConsistency: number;
+  sopCompliance: number;
   ratingBias: number; // -1..1 — shifts star ratings
 }
 
+/* One profile per seeded waiter (staff_001…010 in mock/staff.ts). */
 const baselines: Record<string, BaselineProfile> = {
-  staff_001: { tone: 87, empathy: 84, menu: 90, confidence: 88, upsellRate: 0.32, foodSafety: 96, toneConsistency: 89, ratingBias: 0.5 },
-  staff_002: { tone: 91, empathy: 89, menu: 94, confidence: 92, upsellRate: 0.41, foodSafety: 97, toneConsistency: 93, ratingBias: 0.8 },
-  staff_003: { tone: 76, empathy: 72, menu: 68, confidence: 70, upsellRate: 0.19, foodSafety: 82, toneConsistency: 71, ratingBias: -0.3 },
-  staff_004: { tone: 93, empathy: 90, menu: 80, confidence: 91, upsellRate: 0.10, foodSafety: 95, toneConsistency: 92, ratingBias: 0.6 },
-  staff_005: { tone: 82, empathy: 78, menu: 88, confidence: 85, upsellRate: 0.55, foodSafety: 92, toneConsistency: 80, ratingBias: 0.3 },
-  staff_006: { tone: 88, empathy: 85, menu: 86, confidence: 86, upsellRate: 0.29, foodSafety: 93, toneConsistency: 86, ratingBias: 0.4 },
-  staff_007: { tone: 84, empathy: 81, menu: 89, confidence: 87, upsellRate: 0.36, foodSafety: 91, toneConsistency: 84, ratingBias: 0.2 },
-  staff_008: { tone: 79, empathy: 74, menu: 77, confidence: 75, upsellRate: 0.22, foodSafety: 85, toneConsistency: 76, ratingBias: -0.2 },
+  staff_001: { tone: 87, empathy: 84, menu: 90, confidence: 88, upsellRate: 0.32, foodSafety: 96, toneConsistency: 89, sopCompliance: 91, ratingBias: 0.5 },
+  staff_002: { tone: 91, empathy: 89, menu: 94, confidence: 92, upsellRate: 0.41, foodSafety: 97, toneConsistency: 93, sopCompliance: 95, ratingBias: 0.8 },
+  staff_003: { tone: 76, empathy: 72, menu: 68, confidence: 70, upsellRate: 0.19, foodSafety: 82, toneConsistency: 71, sopCompliance: 73, ratingBias: -0.3 },
+  staff_004: { tone: 93, empathy: 90, menu: 80, confidence: 91, upsellRate: 0.34, foodSafety: 95, toneConsistency: 92, sopCompliance: 90, ratingBias: 0.6 },
+  staff_005: { tone: 82, empathy: 78, menu: 88, confidence: 85, upsellRate: 0.55, foodSafety: 92, toneConsistency: 80, sopCompliance: 83, ratingBias: 0.3 },
+  staff_006: { tone: 88, empathy: 85, menu: 86, confidence: 86, upsellRate: 0.29, foodSafety: 93, toneConsistency: 86, sopCompliance: 88, ratingBias: 0.4 },
+  staff_007: { tone: 84, empathy: 81, menu: 89, confidence: 87, upsellRate: 0.36, foodSafety: 91, toneConsistency: 84, sopCompliance: 85, ratingBias: 0.2 },
+  staff_008: { tone: 79, empathy: 74, menu: 77, confidence: 75, upsellRate: 0.22, foodSafety: 85, toneConsistency: 76, sopCompliance: 78, ratingBias: -0.2 },
+  staff_009: { tone: 81, empathy: 79, menu: 83, confidence: 80, upsellRate: 0.24, foodSafety: 89, toneConsistency: 82, sopCompliance: 84, ratingBias: 0.1 },
+  staff_010: { tone: 86, empathy: 80, menu: 85, confidence: 84, upsellRate: 0.48, foodSafety: 90, toneConsistency: 83, sopCompliance: 86, ratingBias: 0.35 },
 };
 
 const guestNamePool = [
-  'Vikram Iyer', 'Anya Sethi', 'Daniel Hwang', 'Mira Roy', 'Felix Tan',
-  'Naomi Park', 'Hassan Ali', 'Sophie Bauer', 'Aditya Shah', 'Lila Owusu',
-  'Tomás García', 'Yuki Tanaka', 'Eleanor Wright', null, null, null,
+  'James Carter', 'Olivia Bennett', 'Daniel Hwang', 'Mia Russo', 'Ethan Brooks',
+  'Naomi Park', 'Lucas Reyes', 'Sophie Bauer', 'Aiden Foster', 'Lila Owusu',
+  'Tomás García', 'Grace Sullivan', 'Eleanor Wright', null, null, null,
 ];
 
 const tablePool = ['T2', 'T4', 'T7', 'T11', 'B3', 'B5', 'P1', 'P4', 'T9', 'T12'];
@@ -212,7 +216,6 @@ function buildSessionsForStaff(staffId: string): Session[] {
     sessions.push({
       id: `sess_${staffId}_${i}`,
       staffId,
-      outletId: 'outlet_001',
       tableNumber,
       guestName: guestName || undefined,
       serviceMode,
@@ -228,11 +231,12 @@ function buildSessionsForStaff(staffId: string): Session[] {
       empathyScore: jitter(rng, profile.empathy, 6),
       foodSafetyAwareness: jitter(rng, profile.foodSafety, 5),
       toneConsistency: jitter(rng, profile.toneConsistency, 6),
+      sopCompliance: jitter(rng, profile.sopCompliance, 6),
       guestRating,
       highlights,
       transcriptPreview:
         i === 0
-          ? 'Welcome to Lumière, do you have a reservation with us this evening? — Yes, under Iyer. — Perfect, follow me to your table. May I start you off with our cocktail of the week, the Smoked Old Fashioned?'
+          ? 'Welcome to Brasa — do you have a reservation with us this evening? — Yes, under Bennett. — Perfect, right this way. May I start you off with a glass of the Conde Valdemar Rioja while you look over the tapas?'
           : undefined,
     });
   }
@@ -277,10 +281,23 @@ function aggregate(staffId: string, sessions: Session[]): StaffPerformance {
   const empathy = avg(mine.map((s) => s.empathyScore));
   const menu = avg(mine.map((s) => s.menuKnowledgeAccuracy));
   const confidence = avg(mine.map((s) => s.confidenceScore));
+  const toneConsistency = avg(mine.map((s) => s.toneConsistency));
+  const sopCompliance = avg(mine.map((s) => s.sopCompliance));
+  const upsellRatePct =
+    totalUpsellAttempts === 0 ? 0 : (totalSuccessfulUpsells / totalUpsellAttempts) * 100;
+  const ratingsArr = mine.map((s) => s.guestRating).filter((r): r is number => r != null);
+  const ratingPct = ratingsArr.length === 0 ? 0 : (avg(ratingsArr) / 5) * 100;
 
-  // Composite health: weighted blend of the 4 core dimensions
-  const healthScore = Math.round(
-    tone * 0.25 + empathy * 0.25 + menu * 0.25 + confidence * 0.25,
+  /* Overall Score — weighted average of all KPIs (SOW §6.4 fixed weights):
+     Tone Consistency 20 · Empathy 15 · Menu Knowledge 20 · Upsell 20 ·
+     SOP Compliance 15 · Guest Rating 10. */
+  const overallScore = Math.round(
+    toneConsistency * 0.2 +
+      empathy * 0.15 +
+      menu * 0.2 +
+      upsellRatePct * 0.2 +
+      sopCompliance * 0.15 +
+      ratingPct * 0.1,
   );
 
   const sorted = [...mine].sort((a, b) => b.startedAt.localeCompare(a.startedAt));
@@ -298,10 +315,11 @@ function aggregate(staffId: string, sessions: Session[]): StaffPerformance {
     avgTone: Math.round(tone),
     avgEmpathy: Math.round(empathy),
     avgFoodSafety: Math.round(avg(mine.map((s) => s.foodSafetyAwareness))),
-    avgToneConsistency: Math.round(avg(mine.map((s) => s.toneConsistency))),
+    avgToneConsistency: Math.round(toneConsistency),
+    avgSopCompliance: Math.round(sopCompliance),
     avgGuestRating: ratings.length === 0 ? null : round1(avg(ratings)),
     lastSessionAt: sorted[0]?.startedAt ?? null,
-    healthScore,
+    overallScore,
   };
 }
 
@@ -506,8 +524,76 @@ export function formatSessionDate(iso: string): string {
   return `${d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}, ${time}`;
 }
 
-export function healthScoreTone(score: number): 'green' | 'gold' | 'danger' {
+export function overallScoreTone(score: number): 'green' | 'gold' | 'danger' {
   if (score >= 85) return 'green';
   if (score >= 70) return 'gold';
   return 'danger';
+}
+
+/* --- Trend series (drill-down 7/30/90-day graphs, SOW §5.4.3) ------------ */
+export type TrendMetric = 'overall' | 'tone' | 'empathy' | 'menu' | 'upsell';
+
+export interface TrendPoint {
+  label: string;       // bucket label (date)
+  value: number | null; // 0–100, null when no sessions in the bucket
+}
+
+function metricValue(s: Session, metric: TrendMetric): number {
+  switch (metric) {
+    case 'tone':
+      return s.toneScore;
+    case 'empathy':
+      return s.empathyScore;
+    case 'menu':
+      return s.menuKnowledgeAccuracy;
+    case 'upsell':
+      return s.upsellAttempts === 0 ? 0 : (s.successfulUpsells / s.upsellAttempts) * 100;
+    case 'overall':
+    default:
+      return Math.round(
+        s.toneConsistency * 0.2 +
+          s.empathyScore * 0.15 +
+          s.menuKnowledgeAccuracy * 0.2 +
+          (s.upsellAttempts === 0 ? 0 : (s.successfulUpsells / s.upsellAttempts) * 100) * 0.2 +
+          s.sopCompliance * 0.15 +
+          (s.guestRating != null ? (s.guestRating / 5) * 100 : 0) * 0.1,
+      );
+  }
+}
+
+/**
+ * Bucket a staff member's sessions over the last `days` into evenly-spaced
+ * points and average the chosen metric in each — for the drill-down trend
+ * line. `buckets` defaults to 6 points across the window.
+ */
+export function staffTrendSeries(
+  sessions: Session[],
+  metric: TrendMetric,
+  days: number,
+  buckets = 6,
+  now: Date = new Date(),
+): TrendPoint[] {
+  const end = now.getTime();
+  const start = end - days * 24 * 60 * 60 * 1000;
+  const span = end - start;
+  const acc: number[][] = Array.from({ length: buckets }, () => []);
+
+  for (const s of sessions) {
+    const t = new Date(s.startedAt).getTime();
+    if (t < start || t > end) continue;
+    let idx = Math.floor(((t - start) / span) * buckets);
+    if (idx >= buckets) idx = buckets - 1;
+    if (idx < 0) idx = 0;
+    acc[idx].push(metricValue(s, metric));
+  }
+
+  const bucketDays = days / buckets;
+  return acc.map((vals, i) => {
+    const midOffset = days - bucketDays * (i + 0.5);
+    const d = new Date(end - midOffset * 24 * 60 * 60 * 1000);
+    return {
+      label: d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+      value: vals.length === 0 ? null : Math.round(vals.reduce((a, b) => a + b, 0) / vals.length),
+    };
+  });
 }

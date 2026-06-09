@@ -1,29 +1,25 @@
 import { motion } from 'framer-motion';
 import { Badge } from '@/components/primitives/Badge';
-import {
-  allergenLabels,
-  dishTypeLabels,
-  portionLabels,
-  spiceLabels,
-  type MenuItem,
-} from '@/lib/mock/menu';
+import { allergenLabels, dishTypeLabels, portionLabels, type MenuItem } from '@/lib/mock/menu';
 import { fadeUp } from '@/lib/motion';
 import { cn } from '@/lib/cn';
-import { DishMark, SpiceMeter } from './MenuIcons';
+import { DishMark } from './MenuIcons';
 
 interface Props {
   item: MenuItem;
   currency: string;
+  onEdit: (item: MenuItem) => void;
 }
 
-export const MenuItemRow = ({ item, currency }: Props) => {
+export const MenuItemRow = ({ item, currency, onEdit }: Props) => {
+  const inactive = item.status === 'inactive';
   return (
     <motion.li
-      className={cn('ss-menu-row', !item.isAvailable && 'ss-menu-row--off')}
+      className={cn('ss-menu-row', inactive && 'ss-menu-row--off')}
       variants={fadeUp}
       layout
     >
-      <div className="ss-menu-row__inner">
+      <button type="button" className="ss-menu-row__inner" onClick={() => onEdit(item)}>
         <div className="ss-menu-row__lead">
           <DishMark type={item.dishType} size={16} />
         </div>
@@ -32,19 +28,24 @@ export const MenuItemRow = ({ item, currency }: Props) => {
           <div className="ss-menu-row__title">
             <h3 className="ss-menu-row__name">{item.name}</h3>
             <div className="ss-menu-row__badges">
-              {item.isSignature && (
+              {item.isSpecial && (
                 <Badge tone="gold" subtle>
-                  Signature
+                  Special
                 </Badge>
               )}
-              {item.isPopular && (
+              {item.isChefsPick && (
+                <Badge tone="gold" subtle={false}>
+                  Chef's Pick
+                </Badge>
+              )}
+              {item.isHighMargin && (
                 <Badge tone="brand" subtle>
-                  Popular
+                  High-margin
                 </Badge>
               )}
-              {!item.isAvailable && (
+              {inactive && (
                 <Badge tone="warning" subtle>
-                  Off menu
+                  Inactive
                 </Badge>
               )}
             </div>
@@ -55,12 +56,9 @@ export const MenuItemRow = ({ item, currency }: Props) => {
           <div className="ss-menu-row__meta">
             <span className="ss-menu-row__dishtype">{dishTypeLabels[item.dishType]}</span>
             <span className="ss-menu-row__dot" aria-hidden="true" />
-            <SpiceMeter level={item.spiceLevel} />
-            <span className="ss-menu-row__spice-label">{spiceLabels[item.spiceLevel]}</span>
-            <span className="ss-menu-row__dot" aria-hidden="true" />
             <span>{portionLabels[item.portionSize]}</span>
 
-            {item.allergens.length > 0 && (
+            {item.allergens.length > 0 ? (
               <>
                 <span className="ss-menu-row__dot" aria-hidden="true" />
                 <span className="ss-menu-row__allergens">
@@ -74,6 +72,16 @@ export const MenuItemRow = ({ item, currency }: Props) => {
                   {item.allergens.map((a) => allergenLabels[a]).join(' · ')}
                 </span>
               </>
+            ) : item.allergensConfirmed ? (
+              <>
+                <span className="ss-menu-row__dot" aria-hidden="true" />
+                <span className="ss-menu-row__no-allergens">No allergens</span>
+              </>
+            ) : (
+              <>
+                <span className="ss-menu-row__dot" aria-hidden="true" />
+                <span className="ss-menu-row__allergens-missing">Allergens not tagged</span>
+              </>
             )}
           </div>
         </div>
@@ -83,8 +91,15 @@ export const MenuItemRow = ({ item, currency }: Props) => {
             <span className="ss-menu-row__currency">{currency}</span>
             <span className="ss-menu-row__amount">{item.price.toLocaleString()}</span>
           </div>
+          <span className="ss-menu-row__edit-hint" aria-hidden="true">
+            Edit
+            <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+              <path d="M4 2.5h6.5V9" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M10.5 2.5L3 10" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+            </svg>
+          </span>
         </div>
-      </div>
+      </button>
     </motion.li>
   );
 };

@@ -1,23 +1,20 @@
 import { useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Badge } from '@/components/primitives/Badge';
+import { Button } from '@/components/primitives/Button';
 import { EmptyState } from '@/components/primitives/EmptyState';
 import {
   statusOf,
   useSalesGoals,
   type GoalStatus,
+  type SalesGoal,
 } from '@/lib/mock/goals';
-import { useMenuItems } from '@/lib/mock/menu';
-import { useOrientationSource } from '@/lib/mock/orientationSource';
+import { useMenuCategories, useMenuItems } from '@/lib/mock/menu';
 import { useToast } from '@/lib/toast';
 import { fadeUp, stagger } from '@/lib/motion';
 import { cn } from '@/lib/cn';
-import {
-  OrientationReplaceDrawer,
-  OrientationSourceBanner,
-  OrientationUpload,
-} from '@/components/orientation';
 import { GoalCard } from './GoalCard';
+import { GoalDrawer } from './GoalDrawer';
 import './Goals.css';
 
 type Filter = 'all' | GoalStatus;
@@ -31,21 +28,26 @@ const filterLabels: Record<Filter, string> = {
 };
 
 export const GoalsPage = () => {
-  const { goals, stats } = useSalesGoals();
+  const { goals, upsert, remove, stats } = useSalesGoals();
   const { items: menuItems } = useMenuItems();
-  const { source, uploadSource, clearSource, meta } = useOrientationSource('goals');
+  const { categories } = useMenuCategories();
   const { notify } = useToast();
 
   const [filter, setFilter] = useState<Filter>('all');
-  const [replaceOpen, setReplaceOpen] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [editing, setEditing] = useState<SalesGoal | null>(null);
 
-  const handleRemove = () => {
-    clearSource();
-    notify({
-      tone: 'info',
-      title: 'Campaigns document removed',
-      description: 'Upload a new PDF to publish a new campaign schedule.',
-    });
+  const openNew = () => {
+    setEditing(null);
+    setDrawerOpen(true);
+  };
+  const openEdit = (goal: SalesGoal) => {
+    setEditing(goal);
+    setDrawerOpen(true);
+  };
+  const handleDelete = (id: string) => {
+    remove(id);
+    notify({ tone: 'info', title: 'Goal removed', description: 'The campaign has been deleted.' });
   };
 
   const counts = useMemo(() => {
@@ -71,29 +73,42 @@ export const GoalsPage = () => {
       {/* --- Header ----------------------------------------------------- */}
       <motion.header className="ss-goals__header" variants={fadeUp}>
         <div>
-          <span className="eyebrow">Orientation · {meta.sowRef}</span>
+          <span className="eyebrow">Orientation · §5.3.6</span>
           <h1>Sales Goals &amp; Campaigns</h1>
           <p className="ss-goals__lede">
-            Dishes you want pushed this week — wine pairings, signature starters, the new dessert.
-            Defined in the campaign PDF; the AI biases live upsell prompts toward active goals and
-            the dashboard scores progress as orders land.
+            Dishes you want pushed — wine pairings, signature tapas, the seasonal special. The AI
+            biases live upsell prompts toward active goals and the dashboard scores progress as
+            orders land.
           </p>
         </div>
         <div className="ss-goals__header-actions">
           <Badge tone="brand" subtle dot>
             {stats.activeCount} active · {stats.upcomingCount} upcoming
           </Badge>
+          <Button variant="primary" onClick={openNew}>
+            + New goal
+          </Button>
         </div>
       </motion.header>
 
-      {source ? (
+      {goals.length === 0 ? (
+        <EmptyState
+          icon={
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
+              <path d="M4 19V6a1 1 0 011-1h4l2 2h8a1 1 0 011 1v11a1 1 0 01-1 1H5a1 1 0 01-1-1z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
+              <path d="M9 14l2.5-2.5 2 2L17 10" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          }
+          title="No sales goals yet"
+          description="Create your first campaign so the AI knows which items to push during upsell moments."
+          action={
+            <Button variant="primary" onClick={openNew}>
+              + New goal
+            </Button>
+          }
+        />
+      ) : (
         <>
-          <OrientationSourceBanner
-            source={source}
-            onReplace={() => setReplaceOpen(true)}
-            onRemove={handleRemove}
-          />
-
           {/* --- Stats strip ----------------------------------------------- */}
           <motion.section className="ss-goals__stats" variants={fadeUp}>
             <StatTile
@@ -110,7 +125,6 @@ export const GoalsPage = () => {
               label="Avg. progress"
               value={`${Math.round(stats.avgProgress * 100)}%`}
               hint={stats.activeCount === 0 ? 'No active goals' : 'Mean across active campaigns'}
-              accent
             />
             <StatTile
               label="Total goals"
@@ -139,48 +153,30 @@ export const GoalsPage = () => {
             <EmptyState
               icon={
                 <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
-                  <path
-                    d="M4 19V6a1 1 0 011-1h4l2 2h8a1 1 0 011 1v11a1 1 0 01-1 1H5a1 1 0 01-1-1z"
-                    stroke="currentColor"
-                    strokeWidth="1.6"
-                    strokeLinejoin="round"
-                  />
-                  <path
-                    d="M9 14l2.5-2.5 2 2L17 10"
-                    stroke="currentColor"
-                    strokeWidth="1.6"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
+                  <path d="M4 19V6a1 1 0 011-1h4l2 2h8a1 1 0 011 1v11a1 1 0 01-1 1H5a1 1 0 01-1-1z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
                 </svg>
               }
-              title={`No ${filter === 'all' ? '' : filterLabels[filter].toLowerCase() + ' '}goals in this document`}
-              description="Switch the filter back to All to see every campaign in the document, or replace the PDF to publish a new schedule."
+              title={`No ${filter === 'all' ? '' : filterLabels[filter].toLowerCase() + ' '}goals`}
+              description="Switch the filter back to All to see every campaign."
             />
           ) : (
-            <motion.div
-              className="ss-goals__grid"
-              variants={stagger(0.06, 0.05)}
-              initial="hidden"
-              animate="visible"
-            >
+            <motion.div className="ss-goals__grid" variants={stagger(0.06, 0.05)} initial="hidden" animate="visible">
               {filtered.map((g) => (
-                <GoalCard key={g.id} goal={g} menuItems={menuItems} />
+                <GoalCard key={g.id} goal={g} menuItems={menuItems} onEdit={openEdit} />
               ))}
             </motion.div>
           )}
         </>
-      ) : (
-        <motion.div variants={fadeUp}>
-          <OrientationUpload module={meta} onComplete={uploadSource} />
-        </motion.div>
       )}
 
-      <OrientationReplaceDrawer
-        open={replaceOpen}
-        onClose={() => setReplaceOpen(false)}
-        module={meta}
-        onComplete={uploadSource}
+      <GoalDrawer
+        open={drawerOpen}
+        goal={editing}
+        menuItems={menuItems}
+        categories={categories}
+        onClose={() => setDrawerOpen(false)}
+        onSave={upsert}
+        onDelete={handleDelete}
       />
     </motion.div>
   );

@@ -1,61 +1,34 @@
 import { motion } from 'framer-motion';
-import { PhraseList } from '@/components/primitives/PhraseList';
+import { Button } from '@/components/primitives/Button';
 import { fadeUp } from '@/lib/motion';
-import type { ExcellenceAreaData, ExcellenceAreaMeta } from '@/lib/mock/excellence';
+import type { ExcellenceArea } from '@/lib/mock/excellence';
 import { AreaIcon } from './AreaIcon';
 
 interface Props {
-  meta: ExcellenceAreaMeta;
-  data: ExcellenceAreaData;
+  area: ExcellenceArea;
+  onEdit: (area: ExcellenceArea) => void;
 }
 
-export const AreaCard = ({ meta, data }: Props) => {
+export const AreaCard = ({ area, onEdit }: Props) => {
   return (
     <motion.article className="ss-area" variants={fadeUp} layout>
       <header className="ss-area__head">
         <div className="ss-area__icon" aria-hidden="true">
-          <AreaIcon area={meta.key} />
+          <AreaIcon area={area.key} />
         </div>
         <div className="ss-area__title-block">
-          <span className="ss-area__focus">{meta.focus}</span>
-          <h3 className="ss-area__name">{meta.name}</h3>
-          <p className="ss-area__principle">{meta.principle}</p>
+          <span className="ss-area__eyebrow">Advanced</span>
+          <h3 className="ss-area__name">{area.name}</h3>
         </div>
       </header>
 
-      {data.description && (
-        <p className="ss-area__standard">{data.description}</p>
-      )}
+      <p className="ss-area__standard">{area.focus}</p>
 
-      {data.hallmarks.length > 0 && (
-        <PhraseList
-          label="Hallmarks of excellence"
-          helper="What an exceptional shift looks like — the AI rewards these patterns."
-          phrases={data.hallmarks}
-          tone="do"
-          readOnly
-        />
-      )}
-
-      {data.recognitionTriggers.length > 0 && (
-        <PhraseList
-          label="Recognition triggers"
-          helper="Signals the AI uses to score proactive service during a live session."
-          phrases={data.recognitionTriggers}
-          tone="avoid"
-          readOnly
-        />
-      )}
-
-      {data.examplePhrases.length > 0 && (
-        <PhraseList
-          label="Signature phrases"
-          helper="Lines that turn a service moment into a guest memory."
-          phrases={data.examplePhrases}
-          tone="quote"
-          readOnly
-        />
-      )}
+      <div className="ss-area__footer">
+        <Button variant="ghost" size="sm" onClick={() => onEdit(area)}>
+          Edit →
+        </Button>
+      </div>
     </motion.article>
   );
 };

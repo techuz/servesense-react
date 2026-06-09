@@ -11,14 +11,15 @@ import { cn } from '@/lib/cn';
 import {
   categoryAccent,
   categoryLabels,
+  categoryOrder,
   emptyLesson,
   kpiLabels,
   youtubeIdFromUrl,
   youtubeThumb,
-  type KPIKey,
   type Lesson,
   type LessonAssignment,
   type LessonCategory,
+  type MappedKpi,
 } from '@/lib/mock/coaching';
 import {
   avatarTintFor,
@@ -102,7 +103,6 @@ export const LessonDrawer = ({
     if (!draft.title.trim()) e.title = 'Title is required';
     if (!draft.youtubeUrl.trim()) e.youtubeUrl = 'YouTube link is required';
     else if (!ytId) e.youtubeUrl = 'Could not detect a YouTube video ID';
-    if (draft.durationMins < 1) e.durationMins = 'Must be at least 1 minute';
     return e;
   }, [draft, ytId]);
 
@@ -214,30 +214,16 @@ export const LessonDrawer = ({
 
         <div className="ss-lesson-form__row">
           <Select
-            label="Category"
+            label="Lesson type"
             value={draft.category}
             onChange={(e) => update({ category: e.target.value as LessonCategory })}
-            options={(Object.keys(categoryLabels) as LessonCategory[]).map((c) => ({
-              value: c,
-              label: categoryLabels[c],
-            }))}
+            options={categoryOrder.map((c) => ({ value: c, label: categoryLabels[c] }))}
           />
           <Select
             label="Mapped KPI"
-            value={draft.mappedKPI}
-            onChange={(e) => update({ mappedKPI: e.target.value as KPIKey })}
-            options={(Object.keys(kpiLabels) as KPIKey[]).map((k) => ({
-              value: k,
-              label: kpiLabels[k],
-            }))}
-          />
-          <Input
-            label="Duration (min)"
-            type="number"
-            min={1}
-            value={draft.durationMins}
-            onChange={(e) => update({ durationMins: Number(e.target.value) || 0 })}
-            error={errors.durationMins}
+            value={draft.mappedKpi}
+            onChange={(e) => update({ mappedKpi: e.target.value as MappedKpi })}
+            options={categoryOrder.map((k) => ({ value: k, label: kpiLabels[k] }))}
           />
         </div>
 

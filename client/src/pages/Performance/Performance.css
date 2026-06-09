@@ -282,7 +282,7 @@
 /* --- KPI cells inside the card ----------------------------------------- */
 .ss-perf-card__kpis {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: var(--sp-3);
   padding: var(--sp-3) 0;
   border-top: 1px dashed var(--color-border);

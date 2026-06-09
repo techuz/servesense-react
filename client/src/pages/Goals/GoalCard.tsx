@@ -15,6 +15,7 @@ import type { MenuItem } from '@/lib/mock/menu';
 interface GoalCardProps {
   goal: SalesGoal;
   menuItems: MenuItem[];
+  onEdit: (goal: SalesGoal) => void;
 }
 
 const fmtRange = (start: string, end: string) => {
@@ -24,7 +25,7 @@ const fmtRange = (start: string, end: string) => {
   return start === end ? s : `${s} → ${e}`;
 };
 
-export const GoalCard = ({ goal, menuItems }: GoalCardProps) => {
+export const GoalCard = ({ goal, menuItems, onEdit }: GoalCardProps) => {
   const status = statusOf(goal);
   const pct = progressOf(goal);
   const remaining = daysRemaining(goal);
@@ -40,7 +41,7 @@ export const GoalCard = ({ goal, menuItems }: GoalCardProps) => {
     ended: 'neutral',
   };
 
-  const isDimmed = !goal.isEnabled || status === 'ended';
+  const isDimmed = status === 'ended';
 
   return (
     <motion.article
@@ -68,19 +69,13 @@ export const GoalCard = ({ goal, menuItems }: GoalCardProps) => {
                   ? 'Starts soon'
                   : 'Ended'}
             </Badge>
-            {!goal.isEnabled && (
-              <Badge tone="neutral" subtle>
-                Paused in document
-              </Badge>
-            )}
           </div>
           <h3 className="ss-goal-card__name">{goal.name}</h3>
         </div>
+        <button type="button" className="ss-goal-card__edit" onClick={() => onEdit(goal)}>
+          Edit →
+        </button>
       </header>
-
-      {goal.description && (
-        <p className="ss-goal-card__desc">{goal.description}</p>
-      )}
 
       {/* --- Progress -------------------------------------------------- */}
       <div className="ss-goal-card__progress">

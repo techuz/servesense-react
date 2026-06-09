@@ -25,6 +25,12 @@
   display: inline-block;
 }
 
+.ss-topbar__profile-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
 .ss-topbar__profile {
   display: flex;
   align-items: center;

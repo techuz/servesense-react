@@ -468,6 +468,7 @@ and follow the exact shape the future REST endpoints will return.
 | `useLessons()` | `mock/coaching.ts` | `ss_mock_lessons` | `{ lessons, upsert, remove, toggleActive, stats }` |
 | `useDashboardMetrics(period)` | `mock/dashboard.ts` | (computed) | Period-scoped ROI / KPIs / category revenue / top items / service errors |
 | `useAllStaffPerformance()` / `useStaffSessions(id)` / `useSession(id)` | `mock/performance.ts` | `ss_mock_performance` | Aggregated KPIs + per-session data with deterministic baselines per staff |
+| `useNotifications()` | `mock/notifications.ts` | `ss_mock_notifications_v1` | `{ notifications, unreadCount, markRead, markAllRead, remove, clearAll }` — manager in-app feed for the 7 Dashboard-targeted events in the §7 matrix; sorted newest-first, seeded mixed read/unread with deep-links into the relevant module. |
 | `useOrientationSource(moduleKey)` | `mock/orientationSource.ts` | `ss_mock_orientation_source_<module>` | `{ source, uploadSource, clearSource, meta }` — per-module PDF metadata for M3–M8. Six independent storage keys so each module's source PDF is tracked separately. Seeded with plausible filenames (`lumiere_standard_policies_2026.pdf`, `lumiere_menu_q2_2026.pdf`, etc.) so the default state already renders as parsed content. |
 
 Seed data is realistic (Lumière Bistro brand, two outlets, full menu, full SOP scripts, six difficult-situation playbook scenarios, 8 sales campaigns, 10 staff across both outlets with mixed roles + invite states, 7 KPI-mapped video lessons with per-staff assignment + completion %, and ~60 generated sessions with profile-tied KPI baselines) so every page reads as a populated working state out of the box.
@@ -475,6 +476,54 @@ Seed data is realistic (Lumière Bistro brand, two outlets, full menu, full SOP 
 ---
 
 ## 15. Build Log
+
+### Day 8 — Module 8: in-app notification surface (2026-06-09)
+
+The last open v2 item. The §7 Notification System matrix lists 11 events; **7 target the Manager (Dashboard ✅) column** — those are the manager web app's responsibility. Built the in-app feed for exactly those 7 (push + most email are Phase 2 per the doc's "Email + in-app only for MVP" note, so out of scope here).
+
+**`lib/mock/notifications.ts` — `useNotifications()`** (storage `ss_mock_notifications_v1`, seed + localStorage pattern mirroring `useLessons`).
+- `NotificationType` union = the 7 dashboard events: `post_session_scores`, `coaching_assigned`, `waiter_created`, `waiter_deactivated`, `menu_sop_updated`, `baseline_calculated`, `weekly_summary`. Each carries `notificationMeta` (label + tone) + a `toneColor` map.
+- `AppNotification` = `{ id, type, title, body, createdAt, read, link? }`. `link` deep-links the row into the relevant module (`/performance/:staffId`, `/coaching`, `/staff`, `/orientation/menu`, `/dashboard`).
+- Returns `{ notifications (sorted newest-first), unreadCount, markRead, markAllRead, remove, clearAll }`. `timeAgo()` helper for relative stamps.
+- 9 seeded events tied to the Brasa waiter seeds, mixed read/unread, spread over the last week so the bell lands with a live unread count.
+
+**`components/layout/NotificationMenu.tsx` + `.css`** — topbar bell with spring-in unread badge (`9+` cap), `scaleIn` dropdown panel (380px, own click-outside + ESC). Each row: tone-tinted per-type icon tile (inline SVGs), title, 2-line clamped body, `label · time` meta, unread dot + green-50 wash on unread rows. Header with "N new" pill + "Mark all read"; "You're all caught up" empty state. Clicking a row marks it read and navigates to its `link`.
+
+**`Topbar.tsx`** — mounted `<NotificationMenu />` left of the profile; split the old single `menuRef` wrapper into a plain `.ss-topbar__right` flex row holding the bell + a new `.ss-topbar__profile-wrap` (relative, owns the profile-menu ref) so the two popovers have independent outside-click handling.
+
+Typecheck + production build clean. Bundle ≈ 561 kB JS / 164 kB CSS. **All v2 manager-web modules (1–8) now complete.**
+
+### Day 7 — SOW v2 restructure (2026-06-08)
+
+A new **`Servesense_BRD_SOW_v2.docx`** (Version 2.0, June 2026) superseded the old `SOW.pdf` (v1.1). Did a complete module-by-module gap analysis and restructured the manager web app to follow v2 **strictly** — removing anything not in the doc and adding what was missing. Engagement is still the **Vite + React manager dashboard with mock data** (the v2-mandated Next.js + Tailwind / NestJS / Firebase / Pinecone stack is treated as a later backend-integration concern, by decision).
+
+Key v2 deltas that drove the work: **single restaurant per account, no outlets**; **US market** (English UI, USD, NYC Spanish-tapas seed brand "Brasa Spanish Kitchen"); **self-service signup, no super-admin**; **orientation is editable CRUD again** (v2 §5.3 — the Day-4 "PDF-fed read-only" model was wrong); **§ references renumbered** (Manager modules now §5.x, AI/KPI §6.x).
+
+**Module 1 — Outlet entity removed.** Deleted `Outlet`, `useOutlets`, `usePrimaryOutlet`, `PRIMARY_OUTLET_ID`; dropped `outletId` from staff + sessions; folded the address into `RestaurantProfile` (single inline card). Seed US-ized (USD, `America/New_York`, NYC address).
+
+**Module 2 — Sign-Up page** (`/signup`, §5.1.2). Two-step flow (About you → Your restaurant) with progress bar, brand step-rail, slide transitions; all v2 fields incl. password rule (8+ / upper / number / symbol). `auth.tsx` gained `register()` (role `owner`) which seeds the restaurant name/address; login links to it and dropped the super-admin copy. Role union `manager | owner` (was `super_admin`).
+
+**Module 3 — Orientation reverted to editable CRUD** (the big one; deleted the entire PDF-fed read-only architecture: `OrientationSourceBanner` / `OrientationUpload` / `OrientationReplaceDrawer` / `useOrientationSource` / `Policies/Display.tsx` / the `PhraseList` primitive).
+- **Policies** (§5.3.1) → flat CRUD list of records (Type / Title / Description / Status) + `PolicyDrawer`. Storage `ss_mock_policies_v2`.
+- **Menu** (§5.3.2) → editable items; shared **`MenuItemForm`** used by the Add/Edit drawer *and* the upload→parse→review flow (`MenuUploadDrawer`). Dish Type = Veg/Non-Veg only, **spice level removed**, Taste = 6 options, **Allergens = 13, mandatory (blocks save)**, flags = Is Special / **Is High Margin** / **Chef's Pick** (3rd added per §4.3.4), Active/Inactive status, USD. Storage `ss_mock_menu_items_v3`.
+- **SOP** (§5.3.3) → reorderable steps (Name / Description / Expected Outcome / **Scoring Weight**) + `SopStepDrawer`; phrase lists + enabled toggle removed. `ss_mock_sop_v2`.
+- **Tone** (§5.3.4) → 3 aspects (Trained Behavior + Purpose) + `AspectDrawer`; **Difficult-Situations playbook + phrase lists removed**. `ss_mock_communication_v2`.
+- **Excellence** (§5.3.5) → 4 areas (Focus) + `AreaDrawer`; brand-principle hero + phrase lists removed. `ss_mock_excellence_v2`.
+- **Sales Goals** (§5.3.6) → rebuilt `GoalDrawer` (Name / Type / Target Items from active menu / Target Value / Validity Period); `description` + `isEnabled` removed. `ss_mock_sales_goals_v2`.
+
+**Module 4 — Staff** (§5.2). Role → **Waiter only**; list columns Name / Email / Role / Status / Sessions / **Avg Overall Score** / **Last Active** + sort (name/score/last-active/sessions); model gained `lastActiveAt` + `avgOverallScore`; 10 US waiter seeds; email-invite copy. `ss_mock_staff_v3`.
+
+**Module 5 — Coaching** (§5.5). Lesson types restricted to **Tone / Empathy / Menu Knowledge / Upselling** (Safety + SOP removed); **duration removed**; **Mapped KPI** is a real field + shown on the card; list reflects Category / Mapped KPI / Assigned Count / Avg Completion. `ss_mock_lessons_v2`.
+
+**Module 6 — Dashboard** (§5.4). Dropped the **"CoreVista"** label; 5 before/after metrics match v2 (incl. Customer Satisfaction); **CSV export** + **category/waiter filters** added (§5.4.2); currency → **USD** (`formatINR`→`formatUSD`), category/item data rebranded to the Spanish-tapas menu.
+
+**Module 7 — Performance** (§5.4.3). Composite "health score" → **Overall Score** weighted per **§6.4** (added `sopCompliance` KPI so the formula is exact); **7/30/90-day trend graphs** (`TrendChart` small-multiples) + **coaching assignments/completion** added to the drill-down; list cards surface the §5.4.3 KPI set; US guest names + baselines for all 10 waiters. `ss_mock_performance_v3`.
+
+**Cross-cutting**
+- **`PhoneField` primitive** — shared dial-code (+1 default, MX/ES/UK) + number field used in Sign-Up, Staff drawer, and Restaurant profile. Fixed a nested green focus-ring (global `:focus-visible` hit the `<select>`).
+- Sign-up scroll fix: page locked to viewport, **form panel is the only scroll surface** with a sleek scrollbar; scroll-safe `margin:auto` centering so the top never clips on errors.
+- ~~Still **pending: Module 8 — in-app notification surface (§7 matrix).**~~ Shipped Day 8 (see below).
+- Every module: typecheck + production build clean. Bundle ≈ 546 kB JS / 156 kB CSS.
 
 ### Day 1 — M0 through M7 complete
 
@@ -740,4 +789,4 @@ The previous build treated every orientation module (M3–M8) as a CRUD surface 
 ---
 
 ## Source Document
-Full SOW retained at `SOW.pdf` in the project root (27 pages, Business Requirements Specifications v1.1).
+**Authoritative spec: `Servesense_BRD_SOW_v2.docx`** in the project root (Version 2.0, June 2026 — BRD & Statement of Work). The build was realigned to v2 on Day 7 (see Build Log). The older `SOW.pdf` (v1.1) is superseded — where this file's earlier sections still cite v1.1 § numbers or describe outlets / PDF-fed orientation / INR, the Day-7 entry and the actual code are the source of truth.

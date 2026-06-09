@@ -477,3 +477,190 @@
   .ss-staff-detail__sessions-filters { flex-direction: column; align-items: stretch; }
   .ss-staff-detail__search { flex: 1; }
 }
+
+/* ============================================================================
+   Trend graphs (7/30/90 day) — SOW §5.4.3
+   ============================================================================ */
+.ss-staff-detail__trends,
+.ss-staff-detail__coaching {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+.ss-staff-detail__trend-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 3px;
+  background: var(--ss-warm-gray-100);
+  border-radius: var(--radius-pill);
+}
+
+.ss-staff-detail__trend-btn {
+  position: relative;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  padding: var(--sp-2) var(--sp-4);
+  border-radius: var(--radius-pill);
+  font: inherit;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  color: var(--ss-warm-gray-600);
+  isolation: isolate;
+}
+
+.ss-staff-detail__trend-btn--on { color: var(--ss-cream-0); }
+.ss-staff-detail__trend-btn > span { position: relative; z-index: 1; }
+
+.ss-staff-detail__trend-pill {
+  position: absolute;
+  inset: 0;
+  background: var(--ss-green-700);
+  border-radius: var(--radius-pill);
+  box-shadow: var(--shadow-sm);
+  z-index: 0;
+}
+
+.ss-staff-detail__trend-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: var(--sp-4);
+}
+
+/* --- TrendChart --- */
+.ss-trend {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding: var(--sp-4);
+  background: var(--color-card);
+  border: var(--border-card);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--sheen-card), var(--shadow-card);
+}
+
+.ss-trend__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-2);
+}
+
+.ss-trend__label {
+  font-size: var(--fs-xs);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+  color: var(--color-text-muted);
+  font-weight: var(--fw-semibold);
+}
+
+.ss-trend__value {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--sp-2);
+  font-family: var(--font-serif);
+  font-size: var(--fs-lg);
+  color: var(--color-text);
+  letter-spacing: var(--tracking-tight);
+}
+
+.ss-trend__delta {
+  font-family: var(--font-sans);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+}
+
+.ss-trend__delta--up { color: var(--ss-green-600); }
+.ss-trend__delta--down { color: var(--ss-danger-500); }
+
+.ss-trend__svg {
+  width: 100%;
+  height: 64px;
+  display: block;
+}
+
+/* ============================================================================
+   Coaching assignments + completion
+   ============================================================================ */
+.ss-staff-detail__coaching-empty {
+  font-size: var(--fs-sm);
+  color: var(--color-text-muted);
+  font-weight: var(--fw-muted);
+  line-height: var(--lh-relaxed);
+  margin: 0;
+  padding: var(--sp-4);
+  background: var(--ss-cream-50);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  max-width: 70ch;
+}
+
+.ss-coach-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.ss-coach-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-4);
+  padding: var(--sp-3) var(--sp-4);
+  background: var(--color-card);
+  border: var(--border-card);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--sheen-card), var(--shadow-card);
+}
+
+.ss-coach-row__main { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+
+.ss-coach-row__title {
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
+  color: var(--color-text);
+}
+
+.ss-coach-row__meta {
+  font-size: var(--fs-xs);
+  color: var(--color-text-muted);
+  font-weight: var(--fw-muted);
+}
+
+.ss-coach-row__progress {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  flex-shrink: 0;
+  min-width: 180px;
+  justify-content: flex-end;
+}
+
+.ss-coach-row__bar {
+  width: 110px;
+  height: 6px;
+  border-radius: var(--radius-pill);
+  background: var(--ss-warm-gray-100);
+  overflow: hidden;
+}
+
+.ss-coach-row__bar span {
+  display: block;
+  height: 100%;
+  border-radius: var(--radius-pill);
+  background: var(--ss-gold-500);
+}
+
+.ss-coach-row__bar--done { background: var(--ss-green-500); }
+
+.ss-coach-row__pct {
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+  color: var(--color-text-muted);
+  min-width: 64px;
+  text-align: right;
+}
+
+.ss-coach-row__pct--done { color: var(--ss-green-700); }

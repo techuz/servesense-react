@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 /* ============================================================================
-   Mock data for M8 — Sales Goals & Campaigns (SOW §3.6).
+   Mock data — Sales Goals & Campaigns (SOW v2 §5.3.6).
    Manager-defined push campaigns: "sell 50 wine pairings this week", etc.
-   The AI biases live upsell recommendations toward these targets and the
-   manager dashboard scores progress against them.
+   Fields per the SOW: Goal Name, Goal Type, Target Items, Target Value,
+   Validity Period. The AI biases live upsell recommendations toward active
+   goals and the dashboard scores progress against them.
    ============================================================================ */
 
 export type GoalType = 'daily' | 'weekly';
@@ -13,22 +14,19 @@ export type GoalStatus = 'active' | 'upcoming' | 'ended';
 export interface SalesGoal {
   id: string;
   name: string;
-  description: string;
   type: GoalType;
-  /** Menu-item IDs the goal counts toward. */
+  /** Menu-item IDs the goal counts toward (selected from active menu items). */
   targetItemIds: string[];
   /** Target number of orders containing any of the target items. */
   targetValue: number;
-  /** Mock progress so cards feel populated. Real data lands once sessions exist. */
+  /** System-computed progress (orders so far). Not a manager-entered field. */
   currentValue: number;
-  /** ISO date YYYY-MM-DD */
+  /** Validity period — ISO date YYYY-MM-DD. */
   startDate: string;
   endDate: string;
-  /** Manager toggle — paused goals stop biasing AI upsells. */
-  isEnabled: boolean;
 }
 
-const STORAGE_KEY = 'ss_mock_sales_goals';
+const STORAGE_KEY = 'ss_mock_sales_goals_v2';
 
 /* --- Helpers -------------------------------------------------------------- */
 function isoOffset(daysFromToday: number): string {
@@ -70,55 +68,43 @@ export const goalStatusLabels: Record<GoalStatus, string> = {
 const seed: SalesGoal[] = [
   {
     id: 'goal_wine_push',
-    name: 'Signature cocktail blitz',
-    description:
-      'Push the Smoked Old Fashioned and Truffle Burrata pairing through the dinner service. High-margin combo that lands well with the after-work crowd.',
+    name: 'Rioja & tapas pairing',
     type: 'weekly',
     targetItemIds: ['item_013', 'item_001'],
     targetValue: 80,
     currentValue: 47,
     startDate: isoOffset(-3),
     endDate: isoOffset(4),
-    isEnabled: true,
   },
   {
     id: 'goal_dessert_weekend',
     name: 'Weekend dessert push',
-    description:
-      'Move the chocolate fondant and coconut panna cotta as the post-main upsell — a small "anything sweet?" beat after the table check.',
     type: 'weekly',
     targetItemIds: ['item_010', 'item_011'],
     targetValue: 120,
     currentValue: 89,
     startDate: isoOffset(-6),
     endDate: isoOffset(1),
-    isEnabled: true,
   },
   {
     id: 'goal_signature_starter',
-    name: 'Signature starter focus',
-    description:
-      'Lift starter attach-rate on Wednesday and Thursday — Truffle Burrata, Beetroot Carpaccio, Crispy Calamari.',
+    name: 'Tapas starter focus',
     type: 'daily',
     targetItemIds: ['item_001', 'item_002', 'item_003'],
     targetValue: 30,
     currentValue: 12,
     startDate: isoOffset(0),
     endDate: isoOffset(0),
-    isEnabled: true,
   },
   {
-    id: 'goal_lamb_special',
-    name: 'Lamb Shank seasonal',
-    description:
-      'New seasonal lamb shank — a slow-mover early in the week, build awareness through a soft pitch on the recommendation prompt.',
+    id: 'goal_ibrico_special',
+    name: 'Ibérico Secreto seasonal',
     type: 'weekly',
     targetItemIds: ['item_006'],
     targetValue: 35,
     currentValue: 0,
     startDate: isoOffset(2),
     endDate: isoOffset(9),
-    isEnabled: true,
   },
 ];
 
@@ -151,14 +137,12 @@ export function emptyGoal(): SalesGoal {
   return {
     id: newGoalId(),
     name: '',
-    description: '',
     type: 'weekly',
     targetItemIds: [],
     targetValue: 10,
     currentValue: 0,
     startDate: isoOffset(0),
     endDate: isoOffset(7),
-    isEnabled: true,
   };
 }
 
@@ -184,15 +168,9 @@ export function useSalesGoals() {
     setGoals((list) => list.filter((g) => g.id !== id));
   }, []);
 
-  const toggleEnabled = useCallback((id: string) => {
-    setGoals((list) =>
-      list.map((g) => (g.id === id ? { ...g, isEnabled: !g.isEnabled } : g)),
-    );
-  }, []);
-
   const stats = useMemo(() => {
     const now = new Date();
-    const active = goals.filter((g) => g.isEnabled && statusOf(g, now) === 'active');
+    const active = goals.filter((g) => statusOf(g, now) === 'active');
     const upcoming = goals.filter((g) => statusOf(g, now) === 'upcoming');
     const totalProgress =
       active.length === 0
@@ -209,5 +187,5 @@ export function useSalesGoals() {
     };
   }, [goals]);
 
-  return { goals, upsert, remove, toggleEnabled, stats };
+  return { goals, upsert, remove, stats };
 }

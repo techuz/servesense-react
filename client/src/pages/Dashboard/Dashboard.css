@@ -1,5 +1,5 @@
 /* ============================================================================
-   M11 — Manager Dashboard (SOW §2.4)
+   Manager Dashboard (SOW v2 §5.4)
    ROI & Business Impact + Revenue & Sales Analytics
    ============================================================================ */
 .ss-dash {
@@ -95,6 +95,26 @@
   margin-top: var(--sp-2);
   font-size: var(--fs-section);
   line-height: var(--lh-tight);
+}
+
+/* §5.4.2 filter toolbar */
+.ss-dash__filters {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+}
+
+.ss-dash__filters .ss-field {
+  min-width: 150px;
+}
+
+.ss-dash__panel-empty {
+  font-size: var(--fs-sm);
+  color: var(--color-text-muted);
+  font-weight: var(--fw-muted);
+  padding: var(--sp-4) 0;
+  margin: 0;
 }
 
 .ss-dash__section-eyebrow {

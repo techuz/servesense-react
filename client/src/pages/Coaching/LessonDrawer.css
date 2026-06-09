@@ -38,8 +38,8 @@
 
 .ss-lesson-form__row {
   display: grid;
-  grid-template-columns: 1fr 1fr 100px;
-  gap: var(--sp-3);
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sp-4);
 }
 
 .ss-lesson-form__divider {

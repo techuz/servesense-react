@@ -1,135 +1,177 @@
 import { useState } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { Badge } from '@/components/primitives/Badge';
+import { Button } from '@/components/primitives/Button';
 import { Card } from '@/components/primitives/Card';
+import { EmptyState } from '@/components/primitives/EmptyState';
 import {
-  policySections,
+  policyTypeLabels,
+  policyTypeOrder,
   usePolicies,
-  type PolicySectionKey,
+  type Policy,
 } from '@/lib/mock/policies';
-import { useOrientationSource } from '@/lib/mock/orientationSource';
 import { useToast } from '@/lib/toast';
-import { fadeUp, stagger, transitions } from '@/lib/motion';
-import {
-  OrientationReplaceDrawer,
-  OrientationSourceBanner,
-  OrientationUpload,
-} from '@/components/orientation';
-import { PolicyNav } from './PolicyNav';
-import { OperatingTimingsSection } from './sections/OperatingTimings';
-import {
-  DiningRulesSection,
-  GuestAccommodationSection,
-  PaymentsSection,
-  ReservationPolicySection,
-  TableHoldingSection,
-  WaitingPolicySection,
-} from './sections';
+import { fadeUp, stagger } from '@/lib/motion';
+import { cn } from '@/lib/cn';
+import { PolicyDrawer } from './PolicyDrawer';
 import './Policies.css';
 
 export const PoliciesPage = () => {
-  const { policies } = usePolicies();
-  const { source, uploadSource, clearSource, meta } = useOrientationSource('policies');
+  const { policies, upsert, remove, toggleStatus, stats } = usePolicies();
   const { notify } = useToast();
-  const [active, setActive] = useState<PolicySectionKey>('operatingTimings');
-  const [replaceOpen, setReplaceOpen] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [editing, setEditing] = useState<Policy | null>(null);
 
-  const handleRemove = () => {
-    clearSource();
-    notify({
-      tone: 'info',
-      title: 'Policy document removed',
-      description: 'Upload a new PDF to populate this section.',
-    });
+  const openNew = () => {
+    setEditing(null);
+    setDrawerOpen(true);
+  };
+  const openEdit = (policy: Policy) => {
+    setEditing(policy);
+    setDrawerOpen(true);
   };
 
-  const sectionMeta = policySections.find((s) => s.key === active)!;
+  const handleDelete = (id: string) => {
+    remove(id);
+    notify({ tone: 'info', title: 'Policy removed', description: 'It will no longer be used during sessions.' });
+  };
 
-  function renderSection() {
-    switch (active) {
-      case 'operatingTimings':
-        return <OperatingTimingsSection value={policies.operatingTimings} />;
-      case 'waitingPolicy':
-        return <WaitingPolicySection value={policies.waitingPolicy} />;
-      case 'reservationPolicy':
-        return <ReservationPolicySection value={policies.reservationPolicy} />;
-      case 'tableHolding':
-        return <TableHoldingSection value={policies.tableHolding} />;
-      case 'diningRules':
-        return <DiningRulesSection value={policies.diningRules} />;
-      case 'guestAccommodation':
-        return <GuestAccommodationSection value={policies.guestAccommodation} />;
-      case 'payments':
-        return <PaymentsSection value={policies.payments} />;
-    }
-  }
+  // Order policies by the SOW type order, then by title.
+  const ordered = [...policies].sort(
+    (a, b) =>
+      policyTypeOrder.indexOf(a.type) - policyTypeOrder.indexOf(b.type) ||
+      a.title.localeCompare(b.title),
+  );
 
   return (
-    <motion.div
-      className="ss-policies"
-      variants={stagger(0.08, 0)}
-      initial="hidden"
-      animate="visible"
-    >
+    <motion.div className="ss-policies" variants={stagger(0.08, 0)} initial="hidden" animate="visible">
       <motion.header className="ss-policies__page-header" variants={fadeUp}>
         <div>
-          <span className="eyebrow">Orientation · {meta.sowRef}</span>
+          <span className="eyebrow">Orientation · §5.3.1</span>
           <h1>Standard Policies</h1>
           <p className="ss-policies__lede">
-            The service rules every staff member and the AI assistant follow. Content is parsed
-            from the policy PDF you uploaded — replace the document to update.
+            The service rules every staff member and the AI assistant follow. Active policies are the
+            single source of truth the AI retrieves when a guest asks a policy question.
           </p>
         </div>
-        <Badge tone="warning" subtle dot>
-          Mandatory
-        </Badge>
+        <div className="ss-policies__header-actions">
+          <Badge tone="warning" subtle dot>
+            Mandatory
+          </Badge>
+          <Button variant="primary" onClick={openNew}>
+            + Add policy
+          </Button>
+        </div>
       </motion.header>
 
-      {source ? (
-        <>
-          <OrientationSourceBanner
-            source={source}
-            onReplace={() => setReplaceOpen(true)}
-            onRemove={handleRemove}
-          />
+      <motion.section className="ss-policies__stats" variants={fadeUp}>
+        <StatTile label="Total policies" value={stats.total.toString()} hint="Across all types" />
+        <StatTile label="Active" value={stats.active.toString()} hint="Live during sessions" />
+        <StatTile
+          label="Types covered"
+          value={`${stats.typesCovered} / ${stats.typeTotal}`}
+          hint="Of the 7 standard policy types"
+        />
+      </motion.section>
 
-          <motion.div className="ss-policies__shell" variants={fadeUp}>
-            <PolicyNav active={active} onSelect={setActive} />
-
-            <main className="ss-policies__content">
-              <Card padding="lg">
-                <header className="ss-policies__section-header">
-                  <h2>{sectionMeta.title}</h2>
-                  <p className="ss-policies__section-desc">{sectionMeta.description}</p>
-                </header>
-
-                <AnimatePresence mode="wait">
-                  <motion.div
-                    key={active}
-                    initial={{ opacity: 0, x: 12 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -8 }}
-                    transition={transitions.base}
-                  >
-                    {renderSection()}
-                  </motion.div>
-                </AnimatePresence>
-              </Card>
-            </main>
-          </motion.div>
-        </>
+      {ordered.length === 0 ? (
+        <EmptyState
+          icon={
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
+              <path
+                d="M6 3h8l4 4v14a1 1 0 01-1 1H6a1 1 0 01-1-1V4a1 1 0 011-1z"
+                stroke="currentColor"
+                strokeWidth="1.6"
+                strokeLinejoin="round"
+              />
+              <path d="M13 3v5h5M9 13h6M9 17h6" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+            </svg>
+          }
+          title="No policies yet"
+          description="Add your first standard policy so the AI can answer guest questions consistently."
+          action={
+            <Button variant="primary" onClick={openNew}>
+              + Add policy
+            </Button>
+          }
+        />
       ) : (
-        <motion.div variants={fadeUp}>
-          <OrientationUpload module={meta} onComplete={uploadSource} />
+        <motion.div className="ss-policies__grid" variants={stagger(0.05, 0.05)} initial="hidden" animate="visible">
+          {ordered.map((p) => (
+            <PolicyCard
+              key={p.id}
+              policy={p}
+              onEdit={() => openEdit(p)}
+              onToggle={() => toggleStatus(p.id)}
+            />
+          ))}
         </motion.div>
       )}
 
-      <OrientationReplaceDrawer
-        open={replaceOpen}
-        onClose={() => setReplaceOpen(false)}
-        module={meta}
-        onComplete={uploadSource}
+      <PolicyDrawer
+        open={drawerOpen}
+        policy={editing}
+        onClose={() => setDrawerOpen(false)}
+        onSave={upsert}
+        onDelete={handleDelete}
       />
+    </motion.div>
+  );
+};
+
+const StatTile = ({
+  label,
+  value,
+  hint,
+  accent,
+}: {
+  label: string;
+  value: string;
+  hint?: string;
+  accent?: boolean;
+}) => (
+  <div className={cn('ss-policies__stat', accent && 'ss-policies__stat--accent')}>
+    <span className="ss-policies__stat-label">{label}</span>
+    <span className="ss-policies__stat-value">{value}</span>
+    {hint && <span className="ss-policies__stat-hint">{hint}</span>}
+  </div>
+);
+
+const PolicyCard = ({
+  policy,
+  onEdit,
+  onToggle,
+}: {
+  policy: Policy;
+  onEdit: () => void;
+  onToggle: () => void;
+}) => {
+  const inactive = policy.status === 'inactive';
+  return (
+    <motion.div variants={fadeUp}>
+      <Card padding="lg" className={cn('ss-policy-card', inactive && 'ss-policy-card--inactive')}>
+        <div className="ss-policy-card__top">
+          <Badge tone="brand" subtle>
+            {policyTypeLabels[policy.type]}
+          </Badge>
+          <button
+            type="button"
+            className={cn('ss-policy-card__status', inactive && 'ss-policy-card__status--off')}
+            onClick={onToggle}
+            title={inactive ? 'Activate policy' : 'Deactivate policy'}
+          >
+            <span className="ss-policy-card__status-dot" />
+            {inactive ? 'Inactive' : 'Active'}
+          </button>
+        </div>
+        <h3 className="ss-policy-card__title">{policy.title || 'Untitled policy'}</h3>
+        <p className="ss-policy-card__desc">{policy.description}</p>
+        <div className="ss-policy-card__footer">
+          <Button variant="ghost" size="sm" onClick={onEdit}>
+            Edit →
+          </Button>
+        </div>
+      </Card>
     </motion.div>
   );
 };

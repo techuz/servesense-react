@@ -342,10 +342,9 @@
   color: var(--ss-warm-gray-300);
 }
 
-.ss-lesson__duration {
+.ss-lesson__kpi {
   color: var(--ss-warm-gray-500);
   font-weight: var(--fw-medium);
-  font-variant-numeric: tabular-nums;
 }
 
 .ss-lesson__title {
