@@ -6,6 +6,7 @@ import { cn } from '@/lib/cn';
 import {
   categoryAccent,
   categoryLabels,
+  kpiLabels,
   lessonCompletedCount,
   lessonCompletionPct,
   youtubeThumb,
@@ -101,7 +102,7 @@ export const LessonCard = ({ lesson, staff, onEdit, onToggleActive }: LessonCard
               {categoryLabels[lesson.category]}
             </span>
             <span className="ss-lesson__meta-sep" aria-hidden="true">·</span>
-            <span className="ss-lesson__duration">{lesson.durationMins} min</span>
+            <span className="ss-lesson__kpi">KPI: {kpiLabels[lesson.mappedKpi]}</span>
           </div>
           <h3 className="ss-lesson__title">{lesson.title}</h3>
           {lesson.description && (

@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { useAuth } from '@/lib/auth';
 import { useToast } from '@/lib/toast';
 import { scaleIn, transitions } from '@/lib/motion';
+import { NotificationMenu } from './NotificationMenu';
 import './Topbar.css';
 
 const ROUTE_TITLES: Record<string, string> = {
@@ -76,7 +77,9 @@ export const Topbar = () => {
           </motion.span>
         </AnimatePresence>
       </div>
-      <div className="ss-topbar__right" ref={menuRef}>
+      <div className="ss-topbar__right">
+        <NotificationMenu />
+        <div className="ss-topbar__profile-wrap" ref={menuRef}>
         <motion.button
           className={`ss-topbar__profile ${menuOpen ? 'ss-topbar__profile--open' : ''}`}
           type="button"
@@ -144,6 +147,7 @@ export const Topbar = () => {
             </motion.div>
           )}
         </AnimatePresence>
+        </div>
       </div>
     </header>
   );

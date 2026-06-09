@@ -6,11 +6,11 @@ import { Button } from '@/components/primitives/Button';
 import { Input } from '@/components/primitives/Input';
 import { Textarea } from '@/components/primitives/Textarea';
 import { Select } from '@/components/primitives/Select';
+import { PhoneField } from '@/components/primitives/PhoneField';
 import {
   cuisineOptions,
   currencyOptions,
   timezoneOptions,
-  usePrimaryOutlet,
   useRestaurantProfile,
 } from '@/lib/mock/restaurant';
 import { useToast } from '@/lib/toast';
@@ -20,14 +20,10 @@ import './Restaurant.css';
 
 export const RestaurantPage = () => {
   const { profile, updateProfile } = useRestaurantProfile();
-  const { outlet, updateOutlet } = usePrimaryOutlet();
   const { notify } = useToast();
 
   const [editingProfile, setEditingProfile] = useState(false);
   const [profileDraft, setProfileDraft] = useState(profile);
-
-  const [editingOutlet, setEditingOutlet] = useState(false);
-  const [outletDraft, setOutletDraft] = useState(outlet);
 
   const brandInitial = profile.name.trim().charAt(0).toUpperCase() || 'S';
 
@@ -42,17 +38,6 @@ export const RestaurantPage = () => {
     notify({ tone: 'success', title: 'Profile updated', description: 'Restaurant details saved.' });
   };
 
-  const startOutletEdit = () => {
-    setOutletDraft(outlet);
-    setEditingOutlet(true);
-  };
-
-  const saveOutletEdit = () => {
-    updateOutlet(outletDraft);
-    setEditingOutlet(false);
-    notify({ tone: 'success', title: 'Outlet updated', description: outletDraft.name });
-  };
-
   return (
     <motion.div
       className="ss-restaurant"
@@ -65,13 +50,13 @@ export const RestaurantPage = () => {
           <span className="eyebrow">Setup</span>
           <h1>Restaurant</h1>
           <p className="ss-restaurant__lede">
-            Brand details, contact info, and the outlet ServeSense scopes staff, sessions, and
-            KPIs against. Multi-outlet support is coming in a later phase.
+            Brand details, contact info, and the address ServeSense scopes all staff, sessions, and
+            KPIs against.
           </p>
         </div>
         <div className="ss-restaurant__header-actions">
           <Badge tone="brand" subtle dot>
-            Single outlet · Phase 1
+            One restaurant per account
           </Badge>
         </div>
       </motion.header>
@@ -145,11 +130,10 @@ export const RestaurantPage = () => {
                       value={profileDraft.contactEmail}
                       onChange={(e) => setProfileDraft({ ...profileDraft, contactEmail: e.target.value })}
                     />
-                    <Input
+                    <PhoneField
                       label="Contact phone"
-                      type="tel"
                       value={profileDraft.contactPhone}
-                      onChange={(e) => setProfileDraft({ ...profileDraft, contactPhone: e.target.value })}
+                      onChange={(contactPhone) => setProfileDraft({ ...profileDraft, contactPhone })}
                     />
                   </div>
 
@@ -165,6 +149,50 @@ export const RestaurantPage = () => {
                       value={profileDraft.currency}
                       onChange={(e) => setProfileDraft({ ...profileDraft, currency: e.target.value })}
                       options={currencyOptions}
+                    />
+                  </div>
+
+                  <div className="ss-profile-edit__divider" role="separator">
+                    <span>Address</span>
+                  </div>
+
+                  <div className="ss-profile-edit__row">
+                    <Input
+                      label="Address line 1"
+                      value={profileDraft.addressLine1}
+                      onChange={(e) => setProfileDraft({ ...profileDraft, addressLine1: e.target.value })}
+                    />
+                    <Input
+                      label="Address line 2"
+                      value={profileDraft.addressLine2}
+                      onChange={(e) => setProfileDraft({ ...profileDraft, addressLine2: e.target.value })}
+                      placeholder="Suite, unit (optional)"
+                    />
+                  </div>
+
+                  <div className="ss-profile-edit__row">
+                    <Input
+                      label="City"
+                      value={profileDraft.city}
+                      onChange={(e) => setProfileDraft({ ...profileDraft, city: e.target.value })}
+                    />
+                    <Input
+                      label="State"
+                      value={profileDraft.state}
+                      onChange={(e) => setProfileDraft({ ...profileDraft, state: e.target.value })}
+                    />
+                  </div>
+
+                  <div className="ss-profile-edit__row">
+                    <Input
+                      label="Postal code"
+                      value={profileDraft.postalCode}
+                      onChange={(e) => setProfileDraft({ ...profileDraft, postalCode: e.target.value })}
+                    />
+                    <Input
+                      label="Country"
+                      value={profileDraft.country}
+                      onChange={(e) => setProfileDraft({ ...profileDraft, country: e.target.value })}
                     />
                   </div>
 
@@ -202,6 +230,18 @@ export const RestaurantPage = () => {
                     )}
                   </div>
                   <p className="ss-profile-view__description">{profile.description}</p>
+                  <address className="ss-profile-view__address">
+                    {[
+                      profile.addressLine1,
+                      profile.addressLine2,
+                      [profile.city, profile.state].filter(Boolean).join(', '),
+                      [profile.postalCode, profile.country].filter(Boolean).join(' · '),
+                    ]
+                      .filter(Boolean)
+                      .map((line, i) => (
+                        <span key={i}>{line}</span>
+                      ))}
+                  </address>
                   <dl className="ss-profile-view__meta">
                     <div>
                       <dt>Contact email</dt>
@@ -230,137 +270,6 @@ export const RestaurantPage = () => {
                     Edit profile
                   </Button>
                 </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </Card>
-      </motion.section>
-
-      {/* ============================================================
-          Outlet — single, inline
-          ============================================================ */}
-      <motion.section className="ss-restaurant__outlets" variants={fadeUp}>
-        <div className="ss-restaurant__section-header">
-          <div>
-            <h2>Outlet location</h2>
-            <p className="ss-restaurant__section-desc">
-              Address and contact for the location your team operates from.
-            </p>
-          </div>
-          {!editingOutlet && (
-            <Button variant="secondary" onClick={startOutletEdit}>
-              Edit outlet
-            </Button>
-          )}
-        </div>
-
-        <Card padding="lg" elevation="low">
-          <AnimatePresence mode="wait" initial={false}>
-            {editingOutlet ? (
-              <motion.div
-                key="outlet-edit"
-                className="ss-outlet-edit"
-                initial={{ opacity: 0, y: 6 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -4 }}
-                transition={transitions.base}
-              >
-                <Input
-                  label="Outlet name"
-                  value={outletDraft.name}
-                  onChange={(e) => setOutletDraft({ ...outletDraft, name: e.target.value })}
-                  required
-                />
-                <div className="ss-outlet-edit__row">
-                  <Input
-                    label="Address line 1"
-                    value={outletDraft.addressLine1}
-                    onChange={(e) => setOutletDraft({ ...outletDraft, addressLine1: e.target.value })}
-                  />
-                  <Input
-                    label="Address line 2"
-                    value={outletDraft.addressLine2}
-                    onChange={(e) => setOutletDraft({ ...outletDraft, addressLine2: e.target.value })}
-                  />
-                </div>
-                <div className="ss-outlet-edit__row">
-                  <Input
-                    label="City"
-                    value={outletDraft.city}
-                    onChange={(e) => setOutletDraft({ ...outletDraft, city: e.target.value })}
-                  />
-                  <Input
-                    label="State"
-                    value={outletDraft.state}
-                    onChange={(e) => setOutletDraft({ ...outletDraft, state: e.target.value })}
-                  />
-                </div>
-                <div className="ss-outlet-edit__row">
-                  <Input
-                    label="Postal code"
-                    value={outletDraft.postalCode}
-                    onChange={(e) => setOutletDraft({ ...outletDraft, postalCode: e.target.value })}
-                  />
-                  <Input
-                    label="Country"
-                    value={outletDraft.country}
-                    onChange={(e) => setOutletDraft({ ...outletDraft, country: e.target.value })}
-                  />
-                </div>
-                <Input
-                  label="Outlet phone"
-                  type="tel"
-                  value={outletDraft.contactPhone}
-                  onChange={(e) => setOutletDraft({ ...outletDraft, contactPhone: e.target.value })}
-                />
-                <div className="ss-profile-edit__actions">
-                  <Button variant="ghost" onClick={() => setEditingOutlet(false)}>
-                    Cancel
-                  </Button>
-                  <Button variant="primary" onClick={saveOutletEdit}>
-                    Save outlet
-                  </Button>
-                </div>
-              </motion.div>
-            ) : (
-              <motion.div
-                key="outlet-view"
-                className="ss-outlet-view"
-                initial={{ opacity: 0, y: 6 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -4 }}
-                transition={transitions.base}
-              >
-                <div className="ss-outlet-view__title-row">
-                  <h3 className="ss-outlet-view__name">{outlet.name}</h3>
-                  <Badge tone="success" dot>
-                    Active
-                  </Badge>
-                </div>
-                <address className="ss-outlet-view__address">
-                  {[
-                    outlet.addressLine1,
-                    outlet.addressLine2,
-                    [outlet.city, outlet.state].filter(Boolean).join(', '),
-                    [outlet.postalCode, outlet.country].filter(Boolean).join(' · '),
-                  ]
-                    .filter(Boolean)
-                    .map((line, i) => (
-                      <span key={i}>{line}</span>
-                    ))}
-                </address>
-                {outlet.contactPhone && (
-                  <div className="ss-outlet-view__phone">
-                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-                      <path
-                        d="M3.5 1.5a1 1 0 011 .8l.5 2.4-1.5 1A8 8 0 008.3 10.5l1-1.5 2.4.5a1 1 0 01.8 1v1.8a1 1 0 01-1.1 1A10 10 0 011.2 3.6 1 1 0 012.2 2.5l1.3-1z"
-                        stroke="currentColor"
-                        strokeWidth="1.2"
-                      />
-                    </svg>
-                    {outlet.contactPhone}
-                  </div>
-                )}
               </motion.div>
             )}
           </AnimatePresence>

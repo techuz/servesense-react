@@ -1,99 +1,104 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Badge } from '@/components/primitives/Badge';
-import { sopProgress, sopSteps, useSop } from '@/lib/mock/sop';
-import { useOrientationSource } from '@/lib/mock/orientationSource';
+import { Button } from '@/components/primitives/Button';
+import { EmptyState } from '@/components/primitives/EmptyState';
+import { useSop, type SopStep } from '@/lib/mock/sop';
 import { useToast } from '@/lib/toast';
 import { fadeUp, stagger } from '@/lib/motion';
-import {
-  OrientationReplaceDrawer,
-  OrientationSourceBanner,
-  OrientationUpload,
-} from '@/components/orientation';
 import { SopStepCard } from './SopStepCard';
+import { SopStepDrawer } from './SopStepDrawer';
 import './SOP.css';
 
 export const SopPage = () => {
-  const { state } = useSop();
-  const { source, uploadSource, clearSource, meta } = useOrientationSource('sop');
+  const { steps, upsert, remove, move, stats } = useSop();
   const { notify } = useToast();
-  const [replaceOpen, setReplaceOpen] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [editing, setEditing] = useState<SopStep | null>(null);
 
-  const progress = sopProgress(state);
-
-  const handleRemove = () => {
-    clearSource();
-    notify({
-      tone: 'info',
-      title: 'SOP document removed',
-      description: 'Upload a new PDF to populate this section.',
-    });
+  const openNew = () => {
+    setEditing(null);
+    setDrawerOpen(true);
+  };
+  const openEdit = (step: SopStep) => {
+    setEditing(step);
+    setDrawerOpen(true);
+  };
+  const handleDelete = (id: string) => {
+    remove(id);
+    notify({ tone: 'info', title: 'Step removed', description: 'The flow of service has been updated.' });
   };
 
+  const editingPosition = editing ? steps.findIndex((s) => s.id === editing.id) + 1 : steps.length + 1;
+
   return (
-    <motion.div
-      className="ss-sop"
-      variants={stagger(0.08, 0)}
-      initial="hidden"
-      animate="visible"
-    >
+    <motion.div className="ss-sop" variants={stagger(0.08, 0)} initial="hidden" animate="visible">
       <motion.header className="ss-sop__header" variants={fadeUp}>
         <div className="ss-sop__heading">
-          <span className="eyebrow">Orientation · {meta.sowRef}</span>
+          <span className="eyebrow">Orientation · §5.3.3</span>
           <h1>Service SOP — Flow of Service</h1>
           <p className="ss-sop__lede">
-            The ten-step choreography every guest should experience. The AI follows this script
-            during live sessions, flags missed steps, and scores adherence in post-session reports.
+            The step-by-step service flow every guest should experience. The AI follows this
+            sequence during live sessions, flags missed steps, and uses the weights to score
+            adherence in post-session reports.
           </p>
         </div>
-        <Badge tone="warning" subtle dot>
-          Mandatory
-        </Badge>
+        <div className="ss-sop__header-actions">
+          <Badge tone="warning" subtle dot>
+            Mandatory
+          </Badge>
+          <Button variant="primary" onClick={openNew}>
+            + Add step
+          </Button>
+        </div>
       </motion.header>
 
-      {source ? (
-        <>
-          <OrientationSourceBanner
-            source={source}
-            onReplace={() => setReplaceOpen(true)}
-            onRemove={handleRemove}
-          />
+      <motion.section className="ss-sop__overview" variants={fadeUp}>
+        <div className="ss-sop__overview-grid">
+          <Stat label="Steps in the flow" big={`${stats.total}`} sub="in sequence" />
+          <Stat label="Total scoring weight" big={`${stats.totalWeight}`} sub="across all steps" />
+          <Stat label="Tracked live" big="Yes" sub="compliance flagged per session" />
+        </div>
+      </motion.section>
 
-          <motion.section className="ss-sop__overview" variants={fadeUp}>
-            <div className="ss-sop__overview-grid">
-              <Stat label="Steps in document" big={`${progress.enabled}`} sub={`of ${progress.total}`} />
-              <Stat label="With phrase library" big={`${progress.customized}`} sub="detailed coaching" />
-              <Stat label="SOP adherence weight" big="40%" sub="in performance score" />
-            </div>
-          </motion.section>
-
-          <motion.ol
-            className="ss-sop__list"
-            variants={stagger(0.05, 0.1)}
-            initial="hidden"
-            animate="visible"
-          >
-            {sopSteps.map((step, i) => (
-              <SopStepCard
-                key={step.key}
-                meta={step}
-                data={state[step.key]}
-                isLast={i === sopSteps.length - 1}
-              />
-            ))}
-          </motion.ol>
-        </>
+      {steps.length === 0 ? (
+        <EmptyState
+          icon={
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
+              <path d="M5 4v16M5 6h10l-2 3 2 3H5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          }
+          title="No SOP steps yet"
+          description="Add the steps of your flow of service so the AI can track compliance during sessions."
+          action={
+            <Button variant="primary" onClick={openNew}>
+              + Add step
+            </Button>
+          }
+        />
       ) : (
-        <motion.div variants={fadeUp}>
-          <OrientationUpload module={meta} onComplete={uploadSource} />
-        </motion.div>
+        <motion.ol className="ss-sop__list" variants={stagger(0.05, 0.1)} initial="hidden" animate="visible">
+          {steps.map((step, i) => (
+            <SopStepCard
+              key={step.id}
+              step={step}
+              index={i}
+              total={steps.length}
+              isLast={i === steps.length - 1}
+              onEdit={openEdit}
+              onMove={move}
+            />
+          ))}
+        </motion.ol>
       )}
 
-      <OrientationReplaceDrawer
-        open={replaceOpen}
-        onClose={() => setReplaceOpen(false)}
-        module={meta}
-        onComplete={uploadSource}
+      <SopStepDrawer
+        open={drawerOpen}
+        step={editing}
+        position={editingPosition}
+        onClose={() => setDrawerOpen(false)}
+        onSave={upsert}
+        onDelete={handleDelete}
       />
     </motion.div>
   );

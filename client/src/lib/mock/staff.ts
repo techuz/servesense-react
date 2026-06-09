@@ -1,15 +1,16 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 /* ============================================================================
-   Mock data for M9 — Staff Management (SOW §2.2).
-   Manager-created staff accounts, scoped to a restaurant + outlet.
+   Mock data — Staff Management (SOW v2 §5.2).
+   Manager-created waiter accounts, scoped to the single restaurant account.
    Real backend will replace the localStorage swap with a fetch.
 
    Phase 1 model: staff are simply active or inactive. No invite/pending
    state — the manager adds them and they're on the floor.
    ============================================================================ */
 
-export type StaffRole = 'waiter' | 'receptionist' | 'bartender';
+/* SOW v2 §5.2.1: Role is a dropdown with "Waiter" the only option for MVP. */
+export type StaffRole = 'waiter';
 export type StaffStatus = 'active' | 'inactive';
 
 export interface StaffMember {
@@ -18,25 +19,25 @@ export interface StaffMember {
   email: string;
   phone: string;          // WhatsApp number (E.164-ish)
   role: StaffRole;
-  outletId: string;
   status: StaffStatus;
   /** When the staff member was added to the system (ISO timestamp). */
   joinedAt: string;
+  /** Last login / activity (ISO timestamp); null if never active. */
+  lastActiveAt: string | null;
   /** Performance preview — populated post-session by the AI engine. */
   sessionCount: number;
+  avgOverallScore: number | null; // 0–100, weighted KPI average
   avgTone: number | null;       // 0–100
   avgEmpathy: number | null;    // 0–100
   upsellRate: number | null;    // 0–1
 }
 
-/* Bumped when the schema changed (dropped inviteStatus / invitedAt /
-   lastLoginAt). Old persisted seeds are wiped so the new shape lands. */
-const STORAGE_KEY = 'ss_mock_staff_v2';
+/* Bumped when the schema changed (Waiter-only role + lastActiveAt +
+   avgOverallScore). Old persisted seeds are wiped so the new shape lands. */
+const STORAGE_KEY = 'ss_mock_staff_v3';
 
 export const roleLabels: Record<StaffRole, string> = {
   waiter: 'Waiter',
-  receptionist: 'Receptionist',
-  bartender: 'Bartender',
 };
 
 export const statusLabels: Record<StaffStatus, string> = {
@@ -91,144 +92,154 @@ export function avatarTintFor(seed: string) {
   return avatarTints[h % avatarTints.length];
 }
 
-/* --- Seed (uses outlet ID from mock/restaurant.ts) ------------------------ */
+/* --- Seed (waiters at the single restaurant account) --------------------- */
 const seed: StaffMember[] = [
   {
     id: 'staff_001',
-    name: 'Aarav Mehta',
-    email: 'aarav.m@lumiere.example',
-    phone: '+91 98861 22134',
+    name: 'Alex Rivera',
+    email: 'alex.rivera@brasakitchen.example',
+    phone: '+1 (212) 555-0182',
     role: 'waiter',
-    outletId: 'outlet_001',
     status: 'active',
     joinedAt: isoOffsetDays(120),
+    lastActiveAt: isoOffsetDays(0),
     sessionCount: 482,
+    avgOverallScore: 88,
     avgTone: 87,
     avgEmpathy: 84,
     upsellRate: 0.32,
   },
   {
     id: 'staff_002',
-    name: 'Priya Nair',
-    email: 'priya.n@lumiere.example',
-    phone: '+91 99007 51290',
+    name: 'Maya Thompson',
+    email: 'maya.thompson@brasakitchen.example',
+    phone: '+1 (212) 555-0193',
     role: 'waiter',
-    outletId: 'outlet_001',
     status: 'active',
     joinedAt: isoOffsetDays(95),
+    lastActiveAt: isoOffsetDays(0),
     sessionCount: 391,
+    avgOverallScore: 92,
     avgTone: 91,
     avgEmpathy: 89,
     upsellRate: 0.41,
   },
   {
     id: 'staff_003',
-    name: 'Devansh Rao',
-    email: 'devansh.r@lumiere.example',
-    phone: '+91 99452 33810',
+    name: 'Diego Morales',
+    email: 'diego.morales@brasakitchen.example',
+    phone: '+1 (212) 555-0144',
     role: 'waiter',
-    outletId: 'outlet_001',
     status: 'active',
     joinedAt: isoOffsetDays(60),
+    lastActiveAt: isoOffsetDays(1),
     sessionCount: 211,
+    avgOverallScore: 74,
     avgTone: 76,
     avgEmpathy: 72,
     upsellRate: 0.19,
   },
   {
     id: 'staff_004',
-    name: 'Meera Iyer',
-    email: 'meera.i@lumiere.example',
-    phone: '+91 98847 11023',
-    role: 'receptionist',
-    outletId: 'outlet_001',
+    name: 'Sophie Bennett',
+    email: 'sophie.bennett@brasakitchen.example',
+    phone: '+1 (212) 555-0117',
+    role: 'waiter',
     status: 'active',
     joinedAt: isoOffsetDays(150),
-    sessionCount: 0,
+    lastActiveAt: isoOffsetDays(2),
+    sessionCount: 268,
+    avgOverallScore: 90,
     avgTone: 93,
     avgEmpathy: 90,
-    upsellRate: null,
+    upsellRate: 0.34,
   },
   {
     id: 'staff_005',
-    name: 'Karan Bhatia',
-    email: 'karan.b@lumiere.example',
-    phone: '+91 98199 67432',
-    role: 'bartender',
-    outletId: 'outlet_001',
+    name: "Liam O'Connor",
+    email: 'liam.oconnor@brasakitchen.example',
+    phone: '+1 (212) 555-0167',
+    role: 'waiter',
     status: 'active',
     joinedAt: isoOffsetDays(80),
+    lastActiveAt: isoOffsetDays(0),
     sessionCount: 167,
+    avgOverallScore: 81,
     avgTone: 82,
     avgEmpathy: 78,
     upsellRate: 0.55,
   },
   {
     id: 'staff_006',
-    name: 'Sana Qureshi',
-    email: 'sana.q@lumiere.example',
-    phone: '+91 99014 88792',
+    name: 'Hannah Kim',
+    email: 'hannah.kim@brasakitchen.example',
+    phone: '+1 (212) 555-0188',
     role: 'waiter',
-    outletId: 'outlet_001',
     status: 'active',
     joinedAt: isoOffsetDays(45),
+    lastActiveAt: isoOffsetDays(1),
     sessionCount: 178,
+    avgOverallScore: 86,
     avgTone: 88,
     avgEmpathy: 85,
     upsellRate: 0.29,
   },
   {
     id: 'staff_007',
-    name: 'Rohit Verma',
-    email: 'rohit.v@lumiere.example',
-    phone: '+91 98442 90011',
+    name: 'Marcus Reed',
+    email: 'marcus.reed@brasakitchen.example',
+    phone: '+1 (212) 555-0150',
     role: 'waiter',
-    outletId: 'outlet_001',
     status: 'active',
     joinedAt: isoOffsetDays(200),
+    lastActiveAt: isoOffsetDays(0),
     sessionCount: 612,
+    avgOverallScore: 83,
     avgTone: 84,
     avgEmpathy: 81,
     upsellRate: 0.36,
   },
   {
     id: 'staff_008',
-    name: 'Tara Krishnan',
-    email: 'tara.k@lumiere.example',
-    phone: '+91 99888 21345',
+    name: 'Elena Vargas',
+    email: 'elena.vargas@brasakitchen.example',
+    phone: '+1 (212) 555-0121',
     role: 'waiter',
-    outletId: 'outlet_001',
     status: 'inactive',
     joinedAt: isoOffsetDays(220),
+    lastActiveAt: isoOffsetDays(34),
     sessionCount: 489,
+    avgOverallScore: 76,
     avgTone: 79,
     avgEmpathy: 74,
     upsellRate: 0.22,
   },
   {
     id: 'staff_009',
-    name: 'Nikhil Sundaram',
-    email: 'nikhil.s@lumiere.example',
-    phone: '+91 98765 43210',
+    name: 'Noah Bennett',
+    email: 'noah.bennett@brasakitchen.example',
+    phone: '+1 (212) 555-0139',
     role: 'waiter',
-    outletId: 'outlet_001',
     status: 'active',
     joinedAt: isoOffsetDays(20),
+    lastActiveAt: isoOffsetDays(3),
     sessionCount: 64,
+    avgOverallScore: 80,
     avgTone: 81,
     avgEmpathy: 79,
     upsellRate: 0.24,
   },
   {
     id: 'staff_010',
-    name: 'Ishaan Kapoor',
-    email: 'ishaan.k@lumiere.example',
-    phone: '+91 90011 23456',
-    role: 'bartender',
-    outletId: 'outlet_001',
+    name: 'Carla Jensen',
+    email: 'carla.jensen@brasakitchen.example',
+    phone: '+1 (212) 555-0176',
+    role: 'waiter',
     status: 'active',
     joinedAt: isoOffsetDays(15),
+    lastActiveAt: isoOffsetDays(1),
     sessionCount: 41,
+    avgOverallScore: 84,
     avgTone: 86,
     avgEmpathy: 80,
     upsellRate: 0.48,
@@ -260,17 +271,18 @@ export function newStaffId() {
   return `staff_${Math.random().toString(36).slice(2, 9)}`;
 }
 
-export function emptyStaff(outletId: string): StaffMember {
+export function emptyStaff(): StaffMember {
   return {
     id: newStaffId(),
     name: '',
     email: '',
     phone: '',
     role: 'waiter',
-    outletId,
     status: 'active',
     joinedAt: new Date().toISOString(),
+    lastActiveAt: null,
     sessionCount: 0,
+    avgOverallScore: null,
     avgTone: null,
     avgEmpathy: null,
     upsellRate: null,

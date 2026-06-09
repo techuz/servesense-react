@@ -2,6 +2,7 @@ import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { Drawer } from '@/components/primitives/Drawer';
 import { Input } from '@/components/primitives/Input';
 import { Select } from '@/components/primitives/Select';
+import { PhoneField } from '@/components/primitives/PhoneField';
 import { Button } from '@/components/primitives/Button';
 import { Switch } from '@/components/primitives/Switch';
 import { useToast } from '@/lib/toast';
@@ -13,7 +14,6 @@ import {
   type StaffMember,
   type StaffRole,
 } from '@/lib/mock/staff';
-import { PRIMARY_OUTLET_ID } from '@/lib/mock/restaurant';
 import './StaffDrawer.css';
 
 interface StaffDrawerProps {
@@ -38,14 +38,14 @@ export const StaffDrawer = ({
 }: StaffDrawerProps) => {
   const { notify } = useToast();
   const [draft, setDraft] = useState<StaffMember>(
-    () => member ?? emptyStaff(PRIMARY_OUTLET_ID),
+    () => member ?? emptyStaff(),
   );
   const [touched, setTouched] = useState<Partial<Record<keyof StaffMember, boolean>>>({});
   const isEdit = !!member;
 
   useEffect(() => {
     if (open) {
-      setDraft(member ?? emptyStaff(PRIMARY_OUTLET_ID));
+      setDraft(member ?? emptyStaff());
       setTouched({});
     }
   }, [open, member]);
@@ -88,7 +88,7 @@ export const StaffDrawer = ({
       description={
         isEdit
           ? 'Update contact details, role, or active state.'
-          : "Add a new team member. They'll appear in performance scoring once the AI service is live."
+          : "Add a waiter — they'll get an email invite with the app link and credentials."
       }
       size="md"
       footer={
@@ -146,33 +146,30 @@ export const StaffDrawer = ({
           value={draft.name}
           onChange={(e) => update({ name: e.target.value })}
           onBlur={() => markTouched('name')}
-          placeholder="e.g. Aarav Mehta"
+          placeholder="e.g. Alex Rivera"
           error={touched.name ? errors.name : undefined}
           required
         />
 
-        <div className="ss-staff-form__row">
-          <Input
-            label="Email"
-            type="email"
-            value={draft.email}
-            onChange={(e) => update({ email: e.target.value })}
-            onBlur={() => markTouched('email')}
-            placeholder="aarav@example.com"
-            error={touched.email ? errors.email : undefined}
-            required
-          />
-          <Input
-            label="WhatsApp number"
-            type="tel"
-            value={draft.phone}
-            onChange={(e) => update({ phone: e.target.value })}
-            onBlur={() => markTouched('phone')}
-            placeholder="+91 98xxx xxxxx"
-            error={touched.phone ? errors.phone : undefined}
-            required
-          />
-        </div>
+        <Input
+          label="Email"
+          type="email"
+          value={draft.email}
+          onChange={(e) => update({ email: e.target.value })}
+          onBlur={() => markTouched('email')}
+          placeholder="alex@brasakitchen.example"
+          error={touched.email ? errors.email : undefined}
+          required
+        />
+
+        <PhoneField
+          label="WhatsApp number"
+          value={draft.phone}
+          onChange={(phone) => update({ phone })}
+          onBlur={() => markTouched('phone')}
+          error={touched.phone ? errors.phone : undefined}
+          required
+        />
 
         <Select
           label="Role"

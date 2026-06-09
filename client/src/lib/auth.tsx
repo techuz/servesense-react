@@ -6,8 +6,18 @@ export interface AuthUser {
   email: string;
   phone: string | null;
   fullName: string;
-  role: 'manager' | 'super_admin';
+  role: 'manager' | 'owner';
   initials: string;
+}
+
+/** Self-service registration payload (SOW v2 §5.1.2). */
+export interface RegisterInput {
+  fullName: string;
+  email: string;
+  phone: string;
+  password: string;
+  restaurantName: string;
+  restaurantAddress: string;
 }
 
 interface AuthState {
@@ -18,6 +28,7 @@ interface AuthState {
 
 interface AuthContextValue extends AuthState {
   login: (identifier: string, password: string) => Promise<void>;
+  register: (input: RegisterInput) => Promise<void>;
   logout: () => void;
 }
 
@@ -116,13 +127,69 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  const register = useCallback(async (input: RegisterInput) => {
+    setState((s) => ({ ...s, status: 'authenticating' }));
+    try {
+      const email = input.email.trim();
+      const fullName = input.fullName.trim() || 'Manager';
+      const initials = fullName
+        .split(/\s+/)
+        .filter(Boolean)
+        .slice(0, 2)
+        .map((p) => p[0]!.toUpperCase())
+        .join('');
+
+      const user: AuthUser = {
+        id: 1,
+        email,
+        phone: input.phone.trim() || null,
+        fullName,
+        role: 'owner',
+        initials,
+      };
+      const token = `mock.${btoa(`${user.id}:${user.email}:${Date.now()}`)}`;
+
+      await new Promise((r) => setTimeout(r, 450));
+
+      // Seed the new account's restaurant from the signup form so the
+      // dashboard reflects what they typed (SOW v2: name + address at signup).
+      try {
+        const existing = JSON.parse(
+          localStorage.getItem('ss_mock_restaurant_profile') ?? '{}',
+        );
+        localStorage.setItem(
+          'ss_mock_restaurant_profile',
+          JSON.stringify({
+            ...existing,
+            name: input.restaurantName.trim(),
+            addressLine1: input.restaurantAddress.trim(),
+            contactEmail: email,
+            contactPhone: input.phone.trim(),
+          }),
+        );
+      } catch {
+        /* ignore — profile seeding is best-effort in design preview */
+      }
+
+      localStorage.setItem(STORAGE_KEY_TOKEN, token);
+      localStorage.setItem(STORAGE_KEY_USER, JSON.stringify(user));
+      setState({ token, user, status: 'authenticated' });
+    } catch (err) {
+      setState((s) => ({ ...s, status: 'unauthenticated' }));
+      throw err as ApiError;
+    }
+  }, []);
+
   const logout = useCallback(() => {
     localStorage.removeItem(STORAGE_KEY_TOKEN);
     localStorage.removeItem(STORAGE_KEY_USER);
     setState({ token: null, user: null, status: 'unauthenticated' });
   }, []);
 
-  const value = useMemo<AuthContextValue>(() => ({ ...state, login, logout }), [state, login, logout]);
+  const value = useMemo<AuthContextValue>(
+    () => ({ ...state, login, register, logout }),
+    [state, login, register, logout],
+  );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

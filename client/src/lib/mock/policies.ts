@@ -1,204 +1,139 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 /* ============================================================================
-   Mock data for M3 — Standard Policies (SOW §3.1).
-   Restaurant-wide. Persisted in localStorage during the design phase.
+   Mock data — Standard Policies (SOW v2 §5.3.1).
+   A flat list of policy records the manager maintains. Each record is just a
+   type + title + description + status (the SOW "Exact Details to Cover" is
+   guidance for what to write in the description, not structured fields).
+   Active policies are what the AI retrieves during live sessions.
+   Persisted in localStorage during the design phase.
    ============================================================================ */
 
-export type DayKey = 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat' | 'sun';
+export type PolicyType =
+  | 'operatingTimings'
+  | 'waiting'
+  | 'reservation'
+  | 'tableHolding'
+  | 'diningRules'
+  | 'guestAccommodation'
+  | 'payments';
 
-export interface DayHours {
-  closed: boolean;
-  open: string;        // 24h "HH:MM"
-  close: string;
-  lastOrder: string;
+export type PolicyStatus = 'active' | 'inactive';
+
+export interface Policy {
+  id: string;
+  type: PolicyType;
+  title: string;
+  description: string;
+  status: PolicyStatus;
 }
 
-export interface OperatingTimings {
-  schedule: Record<DayKey, DayHours>;
-  notes: string;       // holiday hours, special exceptions
-}
+/** The seven policy types from §5.3.1, in the SOW's order. */
+export const policyTypeOrder: PolicyType[] = [
+  'operatingTimings',
+  'waiting',
+  'reservation',
+  'tableHolding',
+  'diningRules',
+  'guestAccommodation',
+  'payments',
+];
 
-export interface WaitingPolicy {
-  walkInsAllowed: boolean;
-  maxWaitMinutes: number;
-  queueRules: string;
-}
-
-export interface ReservationPolicy {
-  bookingEnabled: boolean;
-  advanceBookingDays: number;
-  minPartySize: number;
-  maxPartySize: number;
-  cancellationWindowHours: number;
-  noShowFee: string;
-  rules: string;
-}
-
-export interface TableHolding {
-  maxHoldMinutes: number;
-  rules: string;
-}
-
-export interface DiningRules {
-  dineIn: boolean;
-  takeaway: boolean;
-  delivery: boolean;
-  outsideFoodAllowed: boolean;
-  byob: boolean;
-  rules: string;
-}
-
-export interface GuestAccommodation {
-  childSeating: boolean;
-  highChairs: boolean;
-  elderlyAssistance: boolean;
-  wheelchairAccessible: boolean;
-  petFriendly: boolean;
-  groupBookings: boolean;
-  notes: string;
-}
-
-export interface Payments {
-  cash: boolean;
-  card: boolean;
-  upi: boolean;
-  netBanking: boolean;
-  wallets: boolean;
-  splitBills: boolean;
-  notes: string;
-}
-
-export interface StandardPolicies {
-  operatingTimings: OperatingTimings;
-  waitingPolicy: WaitingPolicy;
-  reservationPolicy: ReservationPolicy;
-  tableHolding: TableHolding;
-  diningRules: DiningRules;
-  guestAccommodation: GuestAccommodation;
-  payments: Payments;
-}
-
-export const dayLabels: Record<DayKey, string> = {
-  mon: 'Monday',
-  tue: 'Tuesday',
-  wed: 'Wednesday',
-  thu: 'Thursday',
-  fri: 'Friday',
-  sat: 'Saturday',
-  sun: 'Sunday',
+export const policyTypeLabels: Record<PolicyType, string> = {
+  operatingTimings: 'Operating Timings',
+  waiting: 'Waiting Policy',
+  reservation: 'Reservation Policy',
+  tableHolding: 'Table Holding',
+  diningRules: 'Dining Rules',
+  guestAccommodation: 'Guest Accommodation',
+  payments: 'Payments',
 };
 
-export const dayOrder: DayKey[] = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
-
-const standardDay: DayHours = {
-  closed: false,
-  open: '12:00',
-  close: '23:00',
-  lastOrder: '22:30',
+/** "Exact details to cover" from the SOW — shown as guidance in the editor. */
+export const policyTypeHints: Record<PolicyType, string> = {
+  operatingTimings: 'Opening time, closing time, last order time.',
+  waiting: 'Walk-in waiting rules, queue handling.',
+  reservation: 'Booking rules, no-show, cancellation.',
+  tableHolding: 'How long a table can be held.',
+  diningRules: 'Dine-in vs takeaway, outside food.',
+  guestAccommodation: 'Child seating, elderly, wheelchair.',
+  payments: 'Cash, card, mobile pay, split bills.',
 };
 
-const seedPolicies: StandardPolicies = {
-  operatingTimings: {
-    schedule: {
-      mon: { ...standardDay, closed: true, open: '', close: '', lastOrder: '' },
-      tue: { ...standardDay },
-      wed: { ...standardDay },
-      thu: { ...standardDay },
-      fri: { ...standardDay, close: '23:30', lastOrder: '23:00' },
-      sat: { ...standardDay, open: '11:30', close: '23:30', lastOrder: '23:00' },
-      sun: { ...standardDay, open: '11:30' },
-    },
-    notes: 'Closed on national holidays. Diwali & New Year hours announced 2 weeks in advance.',
-  },
-  waitingPolicy: {
-    walkInsAllowed: true,
-    maxWaitMinutes: 30,
-    queueRules:
-      'Walk-in guests are seated on a first-come, first-served basis. Group size is confirmed at the door; we do not split tables that exceed a 30-minute wait.',
-  },
-  reservationPolicy: {
-    bookingEnabled: true,
-    advanceBookingDays: 30,
-    minPartySize: 2,
-    maxPartySize: 12,
-    cancellationWindowHours: 4,
-    noShowFee: '₹500 per person',
-    rules:
-      'Reservations can be made up to 30 days in advance. Cancellations within 4 hours of the reservation are charged a no-show fee per person.',
-  },
-  tableHolding: {
-    maxHoldMinutes: 15,
-    rules:
-      'Tables are held for 15 minutes past the reservation time. Beyond this, the table is released to walk-ins. Guests are notified by phone before releasing.',
-  },
-  diningRules: {
-    dineIn: true,
-    takeaway: true,
-    delivery: false,
-    outsideFoodAllowed: false,
-    byob: false,
-    rules:
-      'Outside food and beverages are not permitted. Birthday cakes may be brought in with prior notice; a small plating fee applies.',
-  },
-  guestAccommodation: {
-    childSeating: true,
-    highChairs: true,
-    elderlyAssistance: true,
-    wheelchairAccessible: true,
-    petFriendly: false,
-    groupBookings: true,
-    notes:
-      'Children under 12 receive a complimentary mocktail. Step-free main entrance; assisted ramp access at the side entrance for wheelchair users.',
-  },
-  payments: {
-    cash: true,
-    card: true,
-    upi: true,
-    netBanking: false,
-    wallets: true,
-    splitBills: true,
-    notes:
-      'Split bills supported across cash + card or multiple cards. Service charge of 5% is included and is fully distributed to the team.',
-  },
-};
+const STORAGE_KEY = 'ss_mock_policies_v2';
 
-const STORAGE_KEY = 'ss_mock_policies';
+const seed: Policy[] = [
+  {
+    id: 'policy_001',
+    type: 'operatingTimings',
+    title: 'Hours of operation',
+    description:
+      'Open Tuesday–Sunday. Lunch 11:30 AM–3:00 PM, dinner 5:00 PM–11:00 PM (kitchen last order 10:30 PM). Closed Mondays and on national holidays.',
+    status: 'active',
+  },
+  {
+    id: 'policy_002',
+    type: 'waiting',
+    title: 'Walk-ins & waitlist',
+    description:
+      'Walk-in guests are seated first-come, first-served. During peak hours we hold a waitlist with text-message notification; the maximum quoted wait is 30 minutes before we suggest the bar.',
+    status: 'active',
+  },
+  {
+    id: 'policy_003',
+    type: 'reservation',
+    title: 'Reservations & cancellations',
+    description:
+      'Reservations accepted up to 30 days in advance for parties of 2–8. Cancellations within 4 hours of the booking, or no-shows, are charged $20 per guest to the card on file.',
+    status: 'active',
+  },
+  {
+    id: 'policy_004',
+    type: 'tableHolding',
+    title: 'Table holding',
+    description:
+      'Reserved tables are held for 15 minutes past the booking time. After that the table may be released to walk-ins. We call the guest before releasing.',
+    status: 'active',
+  },
+  {
+    id: 'policy_005',
+    type: 'diningRules',
+    title: 'Dining & outside food',
+    description:
+      'Dine-in and takeaway only — no delivery. Outside food and beverages are not permitted. Celebration cakes are welcome with advance notice; a small plating fee applies.',
+    status: 'active',
+  },
+  {
+    id: 'policy_006',
+    type: 'guestAccommodation',
+    title: 'Accessibility & accommodation',
+    description:
+      'High chairs and booster seats available. Step-free main entrance and wheelchair-accessible restroom. Staff offer assistance to elderly guests on request.',
+    status: 'active',
+  },
+  {
+    id: 'policy_007',
+    type: 'payments',
+    title: 'Accepted payments',
+    description:
+      'Cash, all major credit/debit cards, and mobile pay (Apple Pay / Google Pay). Bills can be split up to four ways. An automatic 20% gratuity applies to parties of 6 or more.',
+    status: 'active',
+  },
+];
 
-/* Deep-merge stored data with seed so additions/removals to the policy shape
-   don't blank out fields the user already has saved. */
-function deepMerge<T>(fallback: T, override: unknown): T {
-  if (
-    typeof fallback !== 'object' ||
-    fallback === null ||
-    Array.isArray(fallback) ||
-    typeof override !== 'object' ||
-    override === null ||
-    Array.isArray(override)
-  ) {
-    return (override === undefined ? fallback : (override as T));
-  }
-  const result: Record<string, unknown> = { ...(fallback as Record<string, unknown>) };
-  for (const key of Object.keys(override as Record<string, unknown>)) {
-    const fb = (fallback as Record<string, unknown>)[key];
-    const ov = (override as Record<string, unknown>)[key];
-    result[key] = deepMerge(fb, ov);
-  }
-  return result as T;
-}
-
-function readPolicies(): StandardPolicies {
+function read(): Policy[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return seedPolicies;
+    if (!raw) return seed;
     const parsed = JSON.parse(raw);
-    return deepMerge(seedPolicies, parsed);
+    if (!Array.isArray(parsed)) return seed;
+    return parsed as Policy[];
   } catch {
-    return seedPolicies;
+    return seed;
   }
 }
 
-function writePolicies(value: StandardPolicies) {
+function write(value: Policy[]) {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(value));
   } catch {
@@ -206,123 +141,49 @@ function writePolicies(value: StandardPolicies) {
   }
 }
 
+export function newPolicyId() {
+  return `policy_${Math.random().toString(36).slice(2, 9)}`;
+}
+
+export function emptyPolicy(type: PolicyType = 'operatingTimings'): Policy {
+  return { id: newPolicyId(), type, title: '', description: '', status: 'active' };
+}
+
 export function usePolicies() {
-  const [policies, setPolicies] = useState<StandardPolicies>(() => readPolicies());
+  const [policies, setPolicies] = useState<Policy[]>(() => read());
 
   useEffect(() => {
-    writePolicies(policies);
+    write(policies);
   }, [policies]);
 
-  const update = useCallback(
-    <K extends keyof StandardPolicies>(section: K, patch: Partial<StandardPolicies[K]>) => {
-      setPolicies((p) => ({ ...p, [section]: { ...p[section], ...patch } }));
-    },
-    [],
-  );
+  const upsert = useCallback((policy: Policy) => {
+    setPolicies((list) => {
+      const idx = list.findIndex((p) => p.id === policy.id);
+      if (idx === -1) return [...list, policy];
+      const next = [...list];
+      next[idx] = policy;
+      return next;
+    });
+  }, []);
 
-  return { policies, update };
-}
+  const remove = useCallback((id: string) => {
+    setPolicies((list) => list.filter((p) => p.id !== id));
+  }, []);
 
-/* --- Completion logic ----------------------------------------------------- */
+  const toggleStatus = useCallback((id: string) => {
+    setPolicies((list) =>
+      list.map((p) =>
+        p.id === id ? { ...p, status: p.status === 'active' ? 'inactive' : 'active' } : p,
+      ),
+    );
+  }, []);
 
-export type PolicySectionKey =
-  | 'operatingTimings'
-  | 'waitingPolicy'
-  | 'reservationPolicy'
-  | 'tableHolding'
-  | 'diningRules'
-  | 'guestAccommodation'
-  | 'payments';
+  const stats = useMemo(() => {
+    const total = policies.length;
+    const active = policies.filter((p) => p.status === 'active').length;
+    const typesCovered = new Set(policies.map((p) => p.type)).size;
+    return { total, active, typesCovered, typeTotal: policyTypeOrder.length };
+  }, [policies]);
 
-export interface PolicySectionMeta {
-  key: PolicySectionKey;
-  title: string;
-  description: string;
-  short: string;       // 1-line summary for the nav
-}
-
-export const policySections: PolicySectionMeta[] = [
-  {
-    key: 'operatingTimings',
-    title: 'Operating Timings',
-    description: 'When the outlet is open, the last order cut-off, and any seasonal exceptions.',
-    short: 'Weekly hours & last order',
-  },
-  {
-    key: 'waitingPolicy',
-    title: 'Waiting Policy',
-    description: 'How walk-ins are handled, queue rules, and the maximum wait you commit to.',
-    short: 'Walk-ins & queue rules',
-  },
-  {
-    key: 'reservationPolicy',
-    title: 'Reservation Policy',
-    description: 'Booking windows, party-size limits, cancellation rules, and no-show charges.',
-    short: 'Bookings & cancellations',
-  },
-  {
-    key: 'tableHolding',
-    title: 'Table Holding',
-    description: 'How long a reserved table is held past the booking time before being released.',
-    short: 'Reserved table holds',
-  },
-  {
-    key: 'diningRules',
-    title: 'Dining Rules',
-    description: 'Dine-in, takeaway, delivery, outside food, and any special restrictions.',
-    short: 'Service modes & restrictions',
-  },
-  {
-    key: 'guestAccommodation',
-    title: 'Guest Accommodation',
-    description: 'Child seating, accessibility, pet policy, and group booking support.',
-    short: 'Accessibility & special needs',
-  },
-  {
-    key: 'payments',
-    title: 'Payments',
-    description: 'Accepted payment methods and bill-splitting rules displayed at billing.',
-    short: 'Payment methods accepted',
-  },
-];
-
-/* Quick completion heuristic per section — used by the nav progress chip. */
-export function isSectionComplete(
-  policies: StandardPolicies,
-  key: PolicySectionKey,
-): boolean {
-  switch (key) {
-    case 'operatingTimings': {
-      const open = Object.values(policies.operatingTimings.schedule).filter((d) => !d.closed);
-      return open.every((d) => d.open && d.close);
-    }
-    case 'waitingPolicy':
-      return policies.waitingPolicy.queueRules.trim().length > 10;
-    case 'reservationPolicy':
-      return policies.reservationPolicy.rules.trim().length > 10;
-    case 'tableHolding':
-      return policies.tableHolding.rules.trim().length > 10;
-    case 'diningRules':
-      return [
-        policies.diningRules.dineIn,
-        policies.diningRules.takeaway,
-        policies.diningRules.delivery,
-      ].some(Boolean);
-    case 'guestAccommodation':
-      return policies.guestAccommodation.notes.trim().length > 0;
-    case 'payments':
-      return [
-        policies.payments.cash,
-        policies.payments.card,
-        policies.payments.upi,
-        policies.payments.wallets,
-        policies.payments.netBanking,
-      ].some(Boolean);
-  }
-}
-
-export function completionStats(policies: StandardPolicies) {
-  const total = policySections.length;
-  const complete = policySections.filter((s) => isSectionComplete(policies, s.key)).length;
-  return { complete, total, percent: Math.round((complete / total) * 100) };
+  return { policies, upsert, remove, toggleStatus, stats };
 }

@@ -4,6 +4,7 @@ import { cn } from '@/lib/cn';
 import {
   avatarTintFor,
   initialsOf,
+  relativeTime,
   roleLabels,
   type StaffMember,
 } from '@/lib/mock/staff';
@@ -13,6 +14,9 @@ interface StaffRowProps {
   onOpen: () => void;
 }
 
+const scoreTone = (score: number) =>
+  score >= 85 ? 'good' : score >= 70 ? 'ok' : 'low';
+
 export const StaffRow = ({ member, onOpen }: StaffRowProps) => {
   const tint = avatarTintFor(member.id);
   const isInactive = member.status === 'inactive';
@@ -20,10 +24,7 @@ export const StaffRow = ({ member, onOpen }: StaffRowProps) => {
   return (
     <motion.div
       role="row"
-      className={cn(
-        'ss-staff-row',
-        isInactive && 'ss-staff-row--inactive',
-      )}
+      className={cn('ss-staff-row', isInactive && 'ss-staff-row--inactive')}
       onClick={onOpen}
       tabIndex={0}
       onKeyDown={(e) => {
@@ -80,16 +81,18 @@ export const StaffRow = ({ member, onOpen }: StaffRowProps) => {
         )}
       </div>
 
-      <div role="cell" className="ss-staff-row__chev" aria-hidden="true">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-          <path
-            d="M9 6l6 6-6 6"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
+      <div role="cell" className="ss-staff-row__score">
+        {member.avgOverallScore != null ? (
+          <span className={cn('ss-staff-row__score-pill', `ss-staff-row__score-pill--${scoreTone(member.avgOverallScore)}`)}>
+            {member.avgOverallScore}%
+          </span>
+        ) : (
+          <span className="ss-staff-row__muted">—</span>
+        )}
+      </div>
+
+      <div role="cell" className="ss-staff-row__last-active">
+        {relativeTime(member.lastActiveAt)}
       </div>
     </motion.div>
   );

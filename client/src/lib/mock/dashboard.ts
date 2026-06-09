@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 
 /* ============================================================================
-   Mock data for M11 — Manager Dashboard (SOW §2.4).
+   Mock data — Manager Dashboard (SOW v2 §5.4).
    Two sections:
      A. ROI & Business Impact — additional revenue, before/after, KPI tiles
      B. Revenue & Sales Analytics — by category, top items, service errors
@@ -29,7 +29,7 @@ export interface KpiTile {
   label: string;
   current: number;
   previous: number;
-  unit: 'pct' | 'rupees' | 'rating' | 'count';
+  unit: 'pct' | 'usd' | 'rating' | 'count';
   /** When true, a lower number is better (e.g. service errors). */
   lowerIsBetter?: boolean;
   /** Short helper line beneath the tile. */
@@ -77,7 +77,7 @@ export interface DashboardMetrics {
 
   // Before/after pre-platform vs current
   upsellRate: BeforeAfter;            // 0–1
-  avgCheckSize: BeforeAfter;          // INR
+  avgCheckSize: BeforeAfter;          // USD
 
   // Core KPI tiles
   kpis: KpiTile[];
@@ -103,25 +103,24 @@ function spark(seed: number, n: number, drift = 0.04): number[] {
   return out;
 }
 
-export function formatINR(n: number, compact = false): string {
+export function formatUSD(n: number, compact = false): string {
   if (compact) {
-    if (n >= 10_000_000) return `₹${(n / 10_000_000).toFixed(2)}Cr`;
-    if (n >= 100_000) return `₹${(n / 100_000).toFixed(2)}L`;
-    if (n >= 1000) return `₹${(n / 1000).toFixed(1)}K`;
+    if (n >= 1_000_000) return `$${(n / 1_000_000).toFixed(2)}M`;
+    if (n >= 1000) return `$${(n / 1000).toFixed(1)}K`;
   }
-  return `₹${n.toLocaleString('en-IN')}`;
+  return `$${n.toLocaleString('en-US')}`;
 }
 
 export function formatKpi(tile: KpiTile, value: number): string {
   switch (tile.unit) {
     case 'pct':
       return `${value.toFixed(1)}%`;
-    case 'rupees':
-      return formatINR(Math.round(value));
+    case 'usd':
+      return formatUSD(Math.round(value));
     case 'rating':
       return `${value.toFixed(2)}`;
     case 'count':
-      return Math.round(value).toLocaleString('en-IN');
+      return Math.round(value).toLocaleString('en-US');
   }
 }
 
@@ -142,26 +141,26 @@ function buildMetrics(period: Period): DashboardMetrics {
   const sparkLen = period === '7d' ? 7 : period === '30d' ? 30 : 12;
   const sparkSeed = 4200;
 
-  const totalRevenue = Math.round(2_840_000 * scale);
-  const additionalRevenue = Math.round(412_000 * scale);
-  const previousAdditional = Math.round(335_000 * scale);
+  const totalRevenue = Math.round(284_000 * scale);
+  const additionalRevenue = Math.round(41_200 * scale);
+  const previousAdditional = Math.round(33_500 * scale);
 
   const categoryRevenue: CategorySlice[] = [
-    { categoryId: 'cat_mains_nv', categoryName: 'Mains · Non-veg', revenue: Math.round(862_000 * scale), orders: Math.round(620 * scale) },
-    { categoryId: 'cat_mains_veg', categoryName: 'Mains · Vegetarian', revenue: Math.round(521_000 * scale), orders: Math.round(710 * scale) },
-    { categoryId: 'cat_pasta', categoryName: 'Pasta & Risotto', revenue: Math.round(478_000 * scale), orders: Math.round(580 * scale) },
-    { categoryId: 'cat_beverages', categoryName: 'Beverages', revenue: Math.round(412_000 * scale), orders: Math.round(1_180 * scale) },
-    { categoryId: 'cat_starters', categoryName: 'Starters', revenue: Math.round(367_000 * scale), orders: Math.round(540 * scale) },
-    { categoryId: 'cat_desserts', categoryName: 'Desserts', revenue: Math.round(200_000 * scale), orders: Math.round(465 * scale) },
+    { categoryId: 'cat_mains', categoryName: 'Main Courses', revenue: Math.round(86_200 * scale), orders: Math.round(620 * scale) },
+    { categoryId: 'cat_tapas', categoryName: 'Tapas', revenue: Math.round(58_400 * scale), orders: Math.round(1_310 * scale) },
+    { categoryId: 'cat_red_wine', categoryName: 'Red Wine', revenue: Math.round(47_800 * scale), orders: Math.round(640 * scale) },
+    { categoryId: 'cat_beverages', categoryName: 'Beverages', revenue: Math.round(31_200 * scale), orders: Math.round(980 * scale) },
+    { categoryId: 'cat_white_wine', categoryName: 'White Wine', revenue: Math.round(22_400 * scale), orders: Math.round(360 * scale) },
+    { categoryId: 'cat_desserts', categoryName: 'Desserts', revenue: Math.round(18_000 * scale), orders: Math.round(465 * scale) },
   ];
 
   const topItems: TopItem[] = [
-    { itemId: 'item_006', itemName: 'Slow-braised Lamb Shank', categoryName: 'Mains · Non-veg', revenue: Math.round(287_000 * scale), units: Math.round(244 * scale) },
-    { itemId: 'item_013', itemName: 'Smoked Old Fashioned', categoryName: 'Beverages', revenue: Math.round(195_000 * scale), units: Math.round(271 * scale) },
-    { itemId: 'item_001', itemName: 'Truffle Burrata', categoryName: 'Starters', revenue: Math.round(172_000 * scale), units: Math.round(239 * scale) },
-    { itemId: 'item_008', itemName: 'Cacio e Pepe', categoryName: 'Pasta & Risotto', revenue: Math.round(165_000 * scale), units: Math.round(258 * scale) },
-    { itemId: 'item_007', itemName: 'Pan-seared Atlantic Salmon', categoryName: 'Mains · Non-veg', revenue: Math.round(151_000 * scale), units: Math.round(154 * scale) },
-    { itemId: 'item_010', itemName: 'Dark Chocolate Fondant', categoryName: 'Desserts', revenue: Math.round(98_000 * scale), units: Math.round(204 * scale) },
+    { itemId: 'item_006', itemName: 'Ibérico Pork Secreto', categoryName: 'Main Courses', revenue: Math.round(28_700 * scale), units: Math.round(244 * scale) },
+    { itemId: 'item_013', itemName: 'Conde Valdemar Rioja', categoryName: 'Red Wine', revenue: Math.round(19_500 * scale), units: Math.round(271 * scale) },
+    { itemId: 'item_008', itemName: 'Seafood Paella', categoryName: 'Main Courses', revenue: Math.round(17_200 * scale), units: Math.round(158 * scale) },
+    { itemId: 'item_001', itemName: 'Gambas al Ajillo', categoryName: 'Tapas', revenue: Math.round(16_500 * scale), units: Math.round(239 * scale) },
+    { itemId: 'item_005', itemName: 'Txistorra Sausage', categoryName: 'Tapas', revenue: Math.round(12_100 * scale), units: Math.round(186 * scale) },
+    { itemId: 'item_010', itemName: 'Crema Catalana', categoryName: 'Desserts', revenue: Math.round(9_800 * scale), units: Math.round(204 * scale) },
   ];
 
   const kpis: KpiTile[] = [
@@ -176,9 +175,9 @@ function buildMetrics(period: Period): DashboardMetrics {
     {
       key: 'avg_order_size',
       label: 'Average Order Size',
-      current: 1_980,
-      previous: 1_640,
-      unit: 'rupees',
+      current: 58,
+      previous: 44,
+      unit: 'usd',
       helper: 'Total revenue ÷ orders',
     },
     {
@@ -225,7 +224,7 @@ function buildMetrics(period: Period): DashboardMetrics {
     totalRevenue,
 
     upsellRate: { before: 0.165, after: 0.34 },
-    avgCheckSize: { before: 1_640, after: 1_980 },
+    avgCheckSize: { before: 44, after: 58 },
 
     kpis,
     categoryRevenue,

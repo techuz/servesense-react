@@ -1,25 +1,39 @@
 import { useCallback, useEffect, useState } from 'react';
 
 /* ============================================================================
-   Mock data for M4 — Menu Knowledge (SOW §3.2).
+   Mock data — Menu Knowledge (SOW v2 §5.3.2).
+   Manager uploads a file → system parses → manager reviews & edits items and
+   (mandatorily) tags allergens. Allergen tagging is the food-safety layer:
+   the live recommendation engine excludes allergen-matching dishes at the
+   database level before any AI ranking.
    ============================================================================ */
 
-export type DishType = 'veg' | 'vegan' | 'egg' | 'non-veg' | 'seafood';
-export type SpiceLevel = 'none' | 'mild' | 'medium' | 'hot' | 'fiery';
-export type PortionSize = 'light' | 'medium' | 'filling';
-export type TasteNote =
-  | 'spicy'
-  | 'mild'
-  | 'sweet'
-  | 'savoury'
-  | 'tangy'
-  | 'bitter'
-  | 'umami'
-  | 'smoky'
-  | 'creamy'
-  | 'crisp';
+/* Dish Type — SOW radio: Veg / Non-Veg (two options only). */
+export type DishType = 'veg' | 'non-veg';
 
-export type Allergen = 'gluten' | 'dairy' | 'nuts' | 'shellfish' | 'eggs' | 'soy' | 'sesame' | 'mustard';
+/* Portion Size — SOW: Light / Medium / Filling. */
+export type PortionSize = 'light' | 'medium' | 'filling';
+
+/* Taste Profile — SOW multi-select (exactly these six). */
+export type TasteNote = 'spicy' | 'mild' | 'sweet' | 'savory' | 'smoky' | 'tangy';
+
+/* Allergens — SOW multi-select (the full thirteen). MANDATORY per item. */
+export type Allergen =
+  | 'shellfish'
+  | 'nuts'
+  | 'dairy'
+  | 'gluten'
+  | 'eggs'
+  | 'soy'
+  | 'fish'
+  | 'sesame'
+  | 'celery'
+  | 'mustard'
+  | 'lupin'
+  | 'molluscs'
+  | 'sulphites';
+
+export type MenuItemStatus = 'active' | 'inactive';
 
 export interface MenuCategory {
   id: string;
@@ -32,35 +46,28 @@ export interface MenuItem {
   categoryId: string;
   name: string;
   description: string;
+  price: number;             // USD
   dishType: DishType;
-  spiceLevel: SpiceLevel;
   portionSize: PortionSize;
   tasteProfile: TasteNote[];
   ingredients: string[];
   allergens: Allergen[];
-  price: number;
-  isPopular: boolean;
-  isSignature: boolean;
-  isAvailable: boolean;
+  /** True once the manager has explicitly tagged allergens OR confirmed none.
+   *  Save is blocked until this is true (food-safety gate). */
+  allergensConfirmed: boolean;
+  /* Priority tags (§4.3.4 — manager-defined badges the AI biases toward). */
+  isSpecial: boolean;
+  isHighMargin: boolean;
+  isChefsPick: boolean;
+  status: MenuItemStatus;
 }
 
-const STORAGE_CATS = 'ss_mock_menu_categories';
-const STORAGE_ITEMS = 'ss_mock_menu_items';
+const STORAGE_CATS = 'ss_mock_menu_categories_v2';
+const STORAGE_ITEMS = 'ss_mock_menu_items_v3';
 
 export const dishTypeLabels: Record<DishType, string> = {
-  veg: 'Vegetarian',
-  vegan: 'Vegan',
-  egg: 'Egg',
-  'non-veg': 'Non-vegetarian',
-  seafood: 'Seafood',
-};
-
-export const spiceLabels: Record<SpiceLevel, string> = {
-  none: 'No heat',
-  mild: 'Mild',
-  medium: 'Medium',
-  hot: 'Hot',
-  fiery: 'Fiery',
+  veg: 'Veg',
+  'non-veg': 'Non-Veg',
 };
 
 export const portionLabels: Record<PortionSize, string> = {
@@ -69,249 +76,314 @@ export const portionLabels: Record<PortionSize, string> = {
   filling: 'Filling',
 };
 
-export const allergenLabels: Record<Allergen, string> = {
-  gluten: 'Gluten',
-  dairy: 'Dairy',
-  nuts: 'Nuts',
-  shellfish: 'Shellfish',
-  eggs: 'Eggs',
-  soy: 'Soy',
-  sesame: 'Sesame',
-  mustard: 'Mustard',
-};
-
+export const tasteOrder: TasteNote[] = ['spicy', 'mild', 'sweet', 'savory', 'smoky', 'tangy'];
 export const tasteLabels: Record<TasteNote, string> = {
   spicy: 'Spicy',
   mild: 'Mild',
   sweet: 'Sweet',
-  savoury: 'Savoury',
-  tangy: 'Tangy',
-  bitter: 'Bitter',
-  umami: 'Umami',
+  savory: 'Savory',
   smoky: 'Smoky',
-  creamy: 'Creamy',
-  crisp: 'Crisp',
+  tangy: 'Tangy',
 };
 
+export const allergenOrder: Allergen[] = [
+  'shellfish',
+  'nuts',
+  'dairy',
+  'gluten',
+  'eggs',
+  'soy',
+  'fish',
+  'sesame',
+  'celery',
+  'mustard',
+  'lupin',
+  'molluscs',
+  'sulphites',
+];
+export const allergenLabels: Record<Allergen, string> = {
+  shellfish: 'Shellfish',
+  nuts: 'Nuts',
+  dairy: 'Dairy',
+  gluten: 'Gluten',
+  eggs: 'Eggs',
+  soy: 'Soy',
+  fish: 'Fish',
+  sesame: 'Sesame',
+  celery: 'Celery',
+  mustard: 'Mustard',
+  lupin: 'Lupin',
+  molluscs: 'Molluscs',
+  sulphites: 'Sulphites',
+};
+
+/* Category enum default per §5.3.2 (configurable by manager). */
 const seedCategories: MenuCategory[] = [
-  { id: 'cat_starters', name: 'Starters', order: 1 },
-  { id: 'cat_mains_veg', name: 'Mains · Vegetarian', order: 2 },
-  { id: 'cat_mains_nv', name: 'Mains · Non-vegetarian', order: 3 },
-  { id: 'cat_pasta', name: 'Pasta & Risotto', order: 4 },
-  { id: 'cat_desserts', name: 'Desserts', order: 5 },
-  { id: 'cat_beverages', name: 'Beverages', order: 6 },
+  { id: 'cat_tapas', name: 'Tapas', order: 1 },
+  { id: 'cat_sandwiches', name: 'Sandwiches', order: 2 },
+  { id: 'cat_salads', name: 'Salads', order: 3 },
+  { id: 'cat_mains', name: 'Main Courses', order: 4 },
+  { id: 'cat_white_wine', name: 'White Wine', order: 5 },
+  { id: 'cat_red_wine', name: 'Red Wine', order: 6 },
+  { id: 'cat_desserts', name: 'Desserts', order: 7 },
+  { id: 'cat_beverages', name: 'Beverages', order: 8 },
 ];
 
 const seedItems: MenuItem[] = [
   {
     id: 'item_001',
-    categoryId: 'cat_starters',
-    name: 'Truffle Burrata',
-    description:
-      'Stracciatella heart with cold-pressed truffle oil, candied walnut, and saffron honey on grilled sourdough.',
-    dishType: 'veg',
-    spiceLevel: 'none',
+    categoryId: 'cat_tapas',
+    name: 'Gambas al Ajillo',
+    description: 'Sizzling shrimp in garlic-chilli olive oil with a splash of sherry and crusty bread.',
+    price: 16,
+    dishType: 'non-veg',
     portionSize: 'light',
-    tasteProfile: ['creamy', 'savoury', 'mild'],
-    ingredients: ['burrata cheese', 'truffle oil', 'walnuts', 'sourdough', 'honey', 'saffron'],
-    allergens: ['dairy', 'gluten', 'nuts'],
-    price: 720,
-    isPopular: true,
-    isSignature: true,
-    isAvailable: true,
+    tasteProfile: ['savory', 'spicy'],
+    ingredients: ['shrimp', 'garlic', 'olive oil', 'chilli', 'sherry', 'parsley'],
+    allergens: ['shellfish', 'sulphites'],
+    allergensConfirmed: true,
+    isSpecial: false,
+    isHighMargin: true,
+    isChefsPick: false,
+    status: 'active',
   },
   {
     id: 'item_002',
-    categoryId: 'cat_starters',
-    name: 'Smoked Beetroot Carpaccio',
-    description: 'Beetroot smoked over applewood, citrus reduction, micro-greens, goat cheese crumble.',
+    categoryId: 'cat_tapas',
+    name: 'Padrón Peppers',
+    description: 'Blistered Padrón peppers, flaked sea salt, finished with a drizzle of olive oil.',
+    price: 9,
     dishType: 'veg',
-    spiceLevel: 'mild',
     portionSize: 'light',
-    tasteProfile: ['smoky', 'tangy', 'savoury'],
-    ingredients: ['beetroot', 'goat cheese', 'orange', 'olive oil', 'micro-greens'],
-    allergens: ['dairy'],
-    price: 540,
-    isPopular: false,
-    isSignature: false,
-    isAvailable: true,
+    tasteProfile: ['savory', 'smoky'],
+    ingredients: ['padrón peppers', 'olive oil', 'sea salt'],
+    allergens: [],
+    allergensConfirmed: true,
+    isSpecial: false,
+    isHighMargin: false,
+    isChefsPick: false,
+    status: 'active',
   },
   {
     id: 'item_003',
-    categoryId: 'cat_starters',
-    name: 'Crispy Calamari',
-    description: 'Lightly battered squid rings with charred lemon, paprika aioli, and pickled chillies.',
-    dishType: 'seafood',
-    spiceLevel: 'medium',
-    portionSize: 'light',
-    tasteProfile: ['crisp', 'tangy', 'spicy'],
-    ingredients: ['squid', 'paprika', 'lemon', 'aioli', 'chillies'],
-    allergens: ['gluten', 'shellfish', 'eggs', 'mustard'],
-    price: 680,
-    isPopular: true,
-    isSignature: false,
-    isAvailable: true,
+    categoryId: 'cat_tapas',
+    name: 'Spanish Tortilla',
+    description: 'Classic slow-cooked potato and onion omelette, served warm with alioli.',
+    price: 11,
+    dishType: 'veg',
+    portionSize: 'medium',
+    tasteProfile: ['savory', 'mild'],
+    ingredients: ['eggs', 'potato', 'onion', 'olive oil', 'alioli'],
+    allergens: ['eggs'],
+    allergensConfirmed: true,
+    isSpecial: false,
+    isHighMargin: false,
+    isChefsPick: false,
+    status: 'active',
   },
   {
     id: 'item_004',
-    categoryId: 'cat_mains_veg',
-    name: 'Wood-fired Margherita',
-    description:
-      'San Marzano tomato base, fior di latte mozzarella, fresh basil, finished with extra-virgin olive oil.',
+    categoryId: 'cat_tapas',
+    name: 'Patatas Bravas',
+    description: 'Crisp potatoes with smoky brava sauce and a cool garlic alioli.',
+    price: 10,
     dishType: 'veg',
-    spiceLevel: 'none',
-    portionSize: 'medium',
-    tasteProfile: ['savoury', 'mild', 'creamy'],
-    ingredients: ['tomato', 'mozzarella', 'basil', 'olive oil', 'wheat flour'],
-    allergens: ['dairy', 'gluten'],
-    price: 520,
-    isPopular: true,
-    isSignature: false,
-    isAvailable: true,
+    portionSize: 'light',
+    tasteProfile: ['spicy', 'tangy', 'smoky'],
+    ingredients: ['potato', 'tomato', 'smoked paprika', 'garlic', 'alioli', 'eggs'],
+    allergens: ['eggs'],
+    allergensConfirmed: true,
+    isSpecial: false,
+    isHighMargin: true,
+    isChefsPick: false,
+    status: 'active',
   },
   {
     id: 'item_005',
-    categoryId: 'cat_mains_veg',
-    name: 'Roasted Cauliflower Steak',
-    description: 'Whole cauliflower roasted with za’atar, tahini drizzle, pomegranate, and crispy chickpeas.',
-    dishType: 'vegan',
-    spiceLevel: 'mild',
-    portionSize: 'filling',
-    tasteProfile: ['savoury', 'tangy', 'crisp'],
-    ingredients: ['cauliflower', 'tahini', 'pomegranate', 'chickpeas', 'za’atar'],
-    allergens: ['sesame'],
-    price: 580,
-    isPopular: false,
-    isSignature: true,
-    isAvailable: true,
+    categoryId: 'cat_tapas',
+    name: 'Txistorra Sausage',
+    description: 'Fast-cured Basque sausage, pan-seared, with a cider reduction.',
+    price: 13,
+    dishType: 'non-veg',
+    portionSize: 'light',
+    tasteProfile: ['smoky', 'spicy'],
+    ingredients: ['pork', 'paprika', 'garlic', 'cider'],
+    allergens: ['sulphites'],
+    allergensConfirmed: true,
+    isSpecial: true,
+    isHighMargin: true,
+    isChefsPick: false,
+    status: 'active',
   },
   {
     id: 'item_006',
-    categoryId: 'cat_mains_nv',
-    name: 'Slow-braised Lamb Shank',
-    description: '6-hour braise in red wine and rosemary jus, root vegetable mash, gremolata.',
+    categoryId: 'cat_mains',
+    name: 'Ibérico Pork Secreto',
+    description: 'Grilled acorn-fed Ibérico pork, piquillo pepper purée, charred spring onion.',
+    price: 32,
     dishType: 'non-veg',
-    spiceLevel: 'mild',
     portionSize: 'filling',
-    tasteProfile: ['savoury', 'umami', 'smoky'],
-    ingredients: ['lamb', 'red wine', 'rosemary', 'root vegetables', 'parsley'],
+    tasteProfile: ['savory', 'smoky'],
+    ingredients: ['ibérico pork', 'piquillo pepper', 'spring onion', 'olive oil'],
     allergens: [],
-    price: 1180,
-    isPopular: true,
-    isSignature: true,
-    isAvailable: true,
+    allergensConfirmed: true,
+    isSpecial: true,
+    isHighMargin: true,
+    isChefsPick: true,
+    status: 'active',
   },
   {
     id: 'item_007',
-    categoryId: 'cat_mains_nv',
-    name: 'Pan-seared Atlantic Salmon',
-    description: 'Crisp-skin salmon, lemon-dill butter, asparagus, charred fingerling potatoes.',
-    dishType: 'seafood',
-    spiceLevel: 'none',
+    categoryId: 'cat_mains',
+    name: 'Pulpo a la Gallega',
+    description: 'Galician-style octopus over potato, smoked paprika, and good olive oil.',
+    price: 26,
+    dishType: 'non-veg',
     portionSize: 'medium',
-    tasteProfile: ['savoury', 'tangy', 'creamy'],
-    ingredients: ['salmon', 'butter', 'lemon', 'dill', 'asparagus', 'potatoes'],
-    allergens: ['dairy'],
-    price: 980,
-    isPopular: false,
-    isSignature: false,
-    isAvailable: true,
+    tasteProfile: ['smoky', 'savory'],
+    ingredients: ['octopus', 'potato', 'smoked paprika', 'olive oil', 'sea salt'],
+    allergens: ['molluscs'],
+    allergensConfirmed: true,
+    isSpecial: false,
+    isHighMargin: false,
+    isChefsPick: false,
+    status: 'active',
   },
   {
     id: 'item_008',
-    categoryId: 'cat_pasta',
-    name: 'Cacio e Pepe',
-    description: 'Hand-cut tonnarelli, aged Pecorino Romano, black peppercorn, finished tableside.',
-    dishType: 'veg',
-    spiceLevel: 'mild',
-    portionSize: 'medium',
-    tasteProfile: ['creamy', 'savoury', 'umami'],
-    ingredients: ['pasta', 'pecorino romano', 'black pepper'],
-    allergens: ['dairy', 'gluten', 'eggs'],
-    price: 640,
-    isPopular: true,
-    isSignature: true,
-    isAvailable: true,
+    categoryId: 'cat_mains',
+    name: 'Seafood Paella',
+    description: 'Bomba rice, saffron, shrimp, mussels, and white fish, finished with lemon. For two.',
+    price: 48,
+    dishType: 'non-veg',
+    portionSize: 'filling',
+    tasteProfile: ['savory', 'smoky'],
+    ingredients: ['bomba rice', 'saffron', 'shrimp', 'mussels', 'white fish', 'peas', 'lemon'],
+    allergens: ['shellfish', 'molluscs', 'fish'],
+    allergensConfirmed: true,
+    isSpecial: true,
+    isHighMargin: true,
+    isChefsPick: true,
+    status: 'active',
   },
   {
     id: 'item_009',
-    categoryId: 'cat_pasta',
-    name: 'Mushroom Truffle Risotto',
-    description: 'Carnaroli rice, mixed wild mushrooms, parmesan, truffle butter, herb oil.',
+    categoryId: 'cat_salads',
+    name: 'Ensalada de Marcona',
+    description: 'Little gem, manchego shavings, Marcona almonds, sherry vinaigrette.',
+    price: 12,
     dishType: 'veg',
-    spiceLevel: 'none',
-    portionSize: 'filling',
-    tasteProfile: ['creamy', 'umami', 'savoury'],
-    ingredients: ['carnaroli rice', 'mushrooms', 'parmesan', 'truffle butter'],
-    allergens: ['dairy'],
-    price: 780,
-    isPopular: false,
-    isSignature: false,
-    isAvailable: false,
+    portionSize: 'light',
+    tasteProfile: ['tangy', 'savory', 'mild'],
+    ingredients: ['little gem lettuce', 'manchego', 'marcona almonds', 'sherry vinegar', 'olive oil'],
+    allergens: ['nuts', 'dairy', 'sulphites'],
+    allergensConfirmed: true,
+    isSpecial: false,
+    isHighMargin: false,
+    isChefsPick: false,
+    status: 'active',
   },
   {
     id: 'item_010',
     categoryId: 'cat_desserts',
-    name: 'Dark Chocolate Fondant',
-    description: '70% single-origin dark chocolate, molten centre, vanilla bean ice cream, sea salt.',
+    name: 'Crema Catalana',
+    description: 'Citrus-and-cinnamon custard under a brittle caramelised sugar crust.',
+    price: 10,
     dishType: 'veg',
-    spiceLevel: 'none',
     portionSize: 'light',
-    tasteProfile: ['sweet', 'creamy', 'bitter'],
-    ingredients: ['dark chocolate', 'butter', 'eggs', 'flour', 'vanilla', 'cream'],
-    allergens: ['dairy', 'eggs', 'gluten'],
-    price: 480,
-    isPopular: true,
-    isSignature: false,
-    isAvailable: true,
+    tasteProfile: ['sweet', 'tangy'],
+    ingredients: ['milk', 'eggs', 'sugar', 'cinnamon', 'lemon', 'cornstarch'],
+    allergens: ['dairy', 'eggs'],
+    allergensConfirmed: true,
+    isSpecial: false,
+    isHighMargin: false,
+    isChefsPick: false,
+    status: 'active',
   },
   {
     id: 'item_011',
     categoryId: 'cat_desserts',
-    name: 'Coconut Panna Cotta',
-    description: 'Silky coconut cream set with agar, mango coulis, passionfruit, toasted coconut.',
-    dishType: 'vegan',
-    spiceLevel: 'none',
+    name: 'Basque Burnt Cheesecake',
+    description: 'Caramelised top, molten centre, a whisper of sea salt.',
+    price: 11,
+    dishType: 'veg',
     portionSize: 'light',
-    tasteProfile: ['sweet', 'tangy', 'creamy'],
-    ingredients: ['coconut cream', 'agar', 'mango', 'passionfruit', 'sugar'],
-    allergens: [],
-    price: 420,
-    isPopular: false,
-    isSignature: false,
-    isAvailable: true,
+    tasteProfile: ['sweet'],
+    ingredients: ['cream cheese', 'cream', 'eggs', 'sugar', 'flour'],
+    allergens: ['dairy', 'eggs', 'gluten'],
+    allergensConfirmed: true,
+    isSpecial: false,
+    isHighMargin: true,
+    isChefsPick: false,
+    status: 'active',
   },
   {
     id: 'item_012',
-    categoryId: 'cat_beverages',
-    name: 'House Cold Brew',
-    description: 'Single-origin Coorg AA beans, 18-hour cold brew, served over a single ice rock.',
-    dishType: 'vegan',
-    spiceLevel: 'none',
+    categoryId: 'cat_white_wine',
+    name: 'Albariño, Rías Baixas',
+    description: 'Crisp, aromatic Galician white — stone fruit and a saline finish. Glass.',
+    price: 14,
+    dishType: 'veg',
     portionSize: 'light',
-    tasteProfile: ['bitter', 'savoury'],
-    ingredients: ['coffee'],
-    allergens: [],
-    price: 280,
-    isPopular: true,
-    isSignature: false,
-    isAvailable: true,
+    tasteProfile: ['tangy', 'mild'],
+    ingredients: ['white wine'],
+    allergens: ['sulphites'],
+    allergensConfirmed: true,
+    isSpecial: false,
+    isHighMargin: true,
+    isChefsPick: false,
+    status: 'active',
   },
   {
     id: 'item_013',
-    categoryId: 'cat_beverages',
-    name: 'Smoked Old Fashioned',
-    description: 'Bourbon, demerara, orange bitters, applewood-smoked under glass at the table.',
-    dishType: 'vegan',
-    spiceLevel: 'none',
+    categoryId: 'cat_red_wine',
+    name: 'Conde Valdemar Rioja Reserva',
+    description: 'Elegant Tempranillo — cherry, leather, vanilla oak. Pairs with the tapas board. Glass.',
+    price: 16,
+    dishType: 'veg',
     portionSize: 'light',
-    tasteProfile: ['smoky', 'sweet', 'tangy'],
-    ingredients: ['bourbon', 'demerara sugar', 'orange bitters', 'applewood'],
-    allergens: [],
-    price: 720,
-    isPopular: true,
-    isSignature: true,
-    isAvailable: true,
+    tasteProfile: ['savory', 'smoky'],
+    ingredients: ['red wine'],
+    allergens: ['sulphites'],
+    allergensConfirmed: true,
+    isSpecial: true,
+    isHighMargin: true,
+    isChefsPick: false,
+    status: 'active',
+  },
+  {
+    id: 'item_014',
+    categoryId: 'cat_sandwiches',
+    name: 'Bocadillo de Jamón',
+    description: 'Crusty baguette, Ibérico ham, rubbed tomato, olive oil.',
+    price: 14,
+    dishType: 'non-veg',
+    portionSize: 'medium',
+    tasteProfile: ['savory', 'mild'],
+    ingredients: ['baguette', 'ibérico ham', 'tomato', 'olive oil'],
+    allergens: ['gluten'],
+    allergensConfirmed: true,
+    isSpecial: false,
+    isHighMargin: false,
+    isChefsPick: false,
+    status: 'inactive',
+  },
+  {
+    id: 'item_015',
+    categoryId: 'cat_beverages',
+    name: 'Red Sangría',
+    description: 'House red, macerated citrus and berries, a splash of brandy. Glass.',
+    price: 12,
+    dishType: 'veg',
+    portionSize: 'light',
+    tasteProfile: ['sweet', 'tangy'],
+    ingredients: ['red wine', 'orange', 'lemon', 'berries', 'brandy'],
+    allergens: ['sulphites'],
+    allergensConfirmed: true,
+    isSpecial: false,
+    isHighMargin: false,
+    isChefsPick: false,
+    status: 'active',
   },
 ];
 
@@ -385,14 +457,17 @@ export function useMenuItems() {
     setItems((list) => list.filter((i) => i.id !== id));
   }, []);
 
-  const toggle = useCallback(
-    (id: string, key: 'isAvailable' | 'isPopular' | 'isSignature') => {
-      setItems((list) =>
-        list.map((i) => (i.id === id ? { ...i, [key]: !i[key] } : i)),
-      );
-    },
-    [],
-  );
+  const toggle = useCallback((id: string, key: 'status' | 'isSpecial' | 'isHighMargin') => {
+    setItems((list) =>
+      list.map((i) => {
+        if (i.id !== id) return i;
+        if (key === 'status') {
+          return { ...i, status: i.status === 'active' ? 'inactive' : 'active' };
+        }
+        return { ...i, [key]: !i[key] };
+      }),
+    );
+  }, []);
 
   const bulkImport = useCallback((newItems: MenuItem[]) => {
     setItems((list) => [...list, ...newItems]);
@@ -405,60 +480,86 @@ export function newMenuItemId() {
   return `item_${Math.random().toString(36).slice(2, 9)}`;
 }
 
-/* --- Simulated PDF extraction (for design preview) ----------------------- */
-export function simulateExtraction(filename: string): Promise<MenuItem[]> {
+export function emptyMenuItem(categoryId: string): MenuItem {
+  return {
+    id: newMenuItemId(),
+    categoryId,
+    name: '',
+    description: '',
+    price: 0,
+    dishType: 'veg',
+    portionSize: 'medium',
+    tasteProfile: [],
+    ingredients: [],
+    allergens: [],
+    allergensConfirmed: false,
+    isSpecial: false,
+    isHighMargin: false,
+    isChefsPick: false,
+    status: 'active',
+  };
+}
+
+/* --- Simulated PDF extraction (design preview) ---------------------------
+   The parser extracts name / description / price / category only. Allergens,
+   taste, and portion are NOT inferred — the manager must tag them in review.
+   So extracted items arrive with allergensConfirmed = false to force the
+   mandatory food-safety step. */
+export function simulateExtraction(_filename: string): Promise<MenuItem[]> {
   return new Promise((resolve) => {
-    // Pretend the PDF was parsed and these items were detected.
     const extracted: MenuItem[] = [
       {
         id: newMenuItemId(),
-        categoryId: 'cat_starters',
-        name: 'Avocado Bruschetta',
-        description: 'Toasted ciabatta, smashed avocado, pickled red onion, lime, chilli flakes.',
-        dishType: 'vegan',
-        spiceLevel: 'mild',
+        categoryId: 'cat_tapas',
+        name: 'Croquetas de Jamón',
+        description: 'Creamy ham croquettes with a golden crumb. Six pieces.',
+        price: 12,
+        dishType: 'non-veg',
         portionSize: 'light',
-        tasteProfile: ['tangy', 'crisp', 'savoury'],
-        ingredients: ['avocado', 'ciabatta', 'red onion', 'lime'],
-        allergens: ['gluten'],
-        price: 460,
-        isPopular: false,
-        isSignature: false,
-        isAvailable: true,
+        tasteProfile: [],
+        ingredients: ['ham', 'milk', 'flour', 'breadcrumbs', 'egg'],
+        allergens: [],
+        allergensConfirmed: false,
+        isSpecial: false,
+        isHighMargin: false,
+        isChefsPick: false,
+        status: 'active',
       },
       {
         id: newMenuItemId(),
-        categoryId: 'cat_mains_veg',
-        name: 'Paneer Tikka Masala',
-        description: 'Charred paneer cubes in a tomato-fenugreek gravy with cream and butter.',
+        categoryId: 'cat_tapas',
+        name: 'Pan con Tomate',
+        description: 'Grilled bread rubbed with ripe tomato, garlic, and olive oil.',
+        price: 7,
         dishType: 'veg',
-        spiceLevel: 'medium',
+        portionSize: 'light',
+        tasteProfile: [],
+        ingredients: ['bread', 'tomato', 'garlic', 'olive oil'],
+        allergens: [],
+        allergensConfirmed: false,
+        isSpecial: false,
+        isHighMargin: false,
+        isChefsPick: false,
+        status: 'active',
+      },
+      {
+        id: newMenuItemId(),
+        categoryId: 'cat_mains',
+        name: 'Fideuà de Marisco',
+        description: 'Toasted noodle paella with shrimp, squid, and alioli.',
+        price: 44,
+        dishType: 'non-veg',
         portionSize: 'filling',
-        tasteProfile: ['creamy', 'spicy', 'tangy'],
-        ingredients: ['paneer', 'tomato', 'cream', 'spices', 'fenugreek'],
-        allergens: ['dairy'],
-        price: 620,
-        isPopular: false,
-        isSignature: false,
-        isAvailable: true,
-      },
-      {
-        id: newMenuItemId(),
-        categoryId: 'cat_desserts',
-        name: 'Lemon Tart',
-        description: 'Buttery shortcrust, sharp lemon curd, torched Italian meringue.',
-        dishType: 'veg',
-        spiceLevel: 'none',
-        portionSize: 'light',
-        tasteProfile: ['sweet', 'tangy'],
-        ingredients: ['lemon', 'butter', 'eggs', 'flour', 'sugar'],
-        allergens: ['dairy', 'eggs', 'gluten'],
-        price: 380,
-        isPopular: false,
-        isSignature: false,
-        isAvailable: true,
+        tasteProfile: [],
+        ingredients: ['noodles', 'shrimp', 'squid', 'saffron', 'alioli'],
+        allergens: [],
+        allergensConfirmed: false,
+        isSpecial: false,
+        isHighMargin: false,
+        isChefsPick: false,
+        status: 'active',
       },
     ];
-    setTimeout(() => resolve(extracted), 2200 + filename.length * 0); // ~2.2s "processing"
+    setTimeout(() => resolve(extracted), 2200);
   });
 }

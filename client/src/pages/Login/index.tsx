@@ -1,5 +1,5 @@
 import { FormEvent, useMemo, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/primitives/Button';
 import { Input } from '@/components/primitives/Input';
@@ -171,7 +171,7 @@ export const LoginPage = () => {
               error={visibleErrors.identifier}
               hint={
                 !visibleErrors.identifier
-                  ? 'Use the email or phone your super-admin invited.'
+                  ? 'Use the email or phone for your restaurant account.'
                   : undefined
               }
               aria-invalid={!!visibleErrors.identifier}
@@ -222,7 +222,7 @@ export const LoginPage = () => {
           </motion.div>
 
           <motion.small variants={fadeUp} className="ss-login__help">
-            Manager accounts are provisioned by your super-admin. Contact them for access.
+            New to ServeSense? <Link to="/signup" className="text-link">Create your restaurant account</Link>
           </motion.small>
 
           <motion.div variants={fadeUp} className="ss-login__hint">

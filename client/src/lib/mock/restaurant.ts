@@ -1,9 +1,12 @@
 import { useCallback, useEffect, useState } from 'react';
 
 /* ============================================================================
-   Mock data for M2 — Restaurant Profile & Outlets.
-   Persisted in localStorage so design reviewers can edit and refresh.
-   When the real API ships, swap these hooks for fetch-based queries.
+   Mock data — Restaurant Profile (SOW v2 §5.1.2).
+   One restaurant per account (no outlet concept — multi-location is Phase 2).
+   Captures the name + address the manager enters at signup, plus brand
+   metadata used across the dashboard. Persisted in localStorage so design
+   reviewers can edit and refresh. Swap for fetch-based queries when the API
+   ships.
    ============================================================================ */
 
 export interface RestaurantProfile {
@@ -17,57 +20,36 @@ export interface RestaurantProfile {
   website: string;
   timezone: string;
   currency: string;
-}
-
-export interface Outlet {
-  id: string;
-  name: string;
+  /* Address — captured at signup (SOW v2 §5.1.2 "Restaurant Address"). */
   addressLine1: string;
   addressLine2: string;
   city: string;
   state: string;
   country: string;
   postalCode: string;
-  contactPhone: string;
-  status: 'active' | 'inactive';
 }
 
 const PROFILE_KEY = 'ss_mock_restaurant_profile';
-const OUTLETS_KEY = 'ss_mock_outlets';
 
 const seedProfile: RestaurantProfile = {
-  name: 'Lumière Bistro',
-  tagline: 'Modern European, served with intention.',
+  name: 'Brasa Spanish Kitchen',
+  tagline: 'Tapas, wood-fired plates, and natural Spanish wines.',
   description:
-    'A 78-seat neighbourhood bistro — wood-fired mains, natural wines, and a service standard worth talking about.',
-  cuisine: 'Modern European',
+    'A 78-seat neighbourhood spot in the West Village — shared tapas, a wood-fired hearth, and a service standard worth talking about.',
+  cuisine: 'Spanish',
   logoUrl: null,
-  contactEmail: 'hello@lumierebistro.example',
-  contactPhone: '+91 98123 45678',
-  website: 'www.lumierebistro.example',
-  timezone: 'Asia/Kolkata',
-  currency: 'INR',
+  contactEmail: 'hello@brasakitchen.example',
+  contactPhone: '+1 (212) 555-0142',
+  website: 'www.brasakitchen.example',
+  timezone: 'America/New_York',
+  currency: 'USD',
+  addressLine1: '128 Bleecker Street',
+  addressLine2: '',
+  city: 'New York',
+  state: 'NY',
+  country: 'United States',
+  postalCode: '10012',
 };
-
-/* Phase 1 ships single-outlet per manager. The data model still carries
- * outletId on staff and sessions so multi-outlet support is non-breaking
- * when it lands later, but the UI never exposes multi-outlet management. */
-export const PRIMARY_OUTLET_ID = 'outlet_001';
-
-const seedOutlets: Outlet[] = [
-  {
-    id: PRIMARY_OUTLET_ID,
-    name: 'Lumière — Indiranagar',
-    addressLine1: '12, 100ft Road',
-    addressLine2: 'HAL 2nd Stage',
-    city: 'Bengaluru',
-    state: 'Karnataka',
-    country: 'India',
-    postalCode: '560038',
-    contactPhone: '+91 80 4123 9900',
-    status: 'active',
-  },
-];
 
 function read<T>(key: string, fallback: T): T {
   try {
@@ -89,9 +71,12 @@ function write<T>(key: string, value: T) {
 
 /* --- Profile -------------------------------------------------------------- */
 export function useRestaurantProfile() {
-  const [profile, setProfile] = useState<RestaurantProfile>(() =>
-    read(PROFILE_KEY, seedProfile),
-  );
+  const [profile, setProfile] = useState<RestaurantProfile>(() => ({
+    // Deep-merge seed with stored so address fields added later never blank
+    // out an existing reviewer's saved profile.
+    ...seedProfile,
+    ...read(PROFILE_KEY, {} as Partial<RestaurantProfile>),
+  }));
 
   useEffect(() => {
     write(PROFILE_KEY, profile);
@@ -106,63 +91,17 @@ export function useRestaurantProfile() {
   return { profile, updateProfile, resetProfile };
 }
 
-/* --- Outlets -------------------------------------------------------------- */
-/**
- * Phase 1 = single outlet per manager. `useOutlets` still returns an array
- * (sessions/staff continue to reference outletId), but the UI only ever
- * exposes the primary outlet via `usePrimaryOutlet`. When multi-outlet
- * support lands, restore the upsert/remove/toggle actions and the array
- * is already in the right shape.
- */
-export function useOutlets() {
-  const [outlets] = useState<Outlet[]>(() => {
-    const stored = read<Outlet[]>(OUTLETS_KEY, seedOutlets);
-    // Migration: prior versions seeded two outlets. Collapse to the primary.
-    if (stored.length > 1) {
-      const primary = stored.find((o) => o.id === PRIMARY_OUTLET_ID) ?? stored[0];
-      write(OUTLETS_KEY, [primary]);
-      return [primary];
-    }
-    return stored;
-  });
-
-  return { outlets };
-}
-
-/** Convenience hook for the primary outlet + inline editing. */
-export function usePrimaryOutlet() {
-  const [outlets, setOutlets] = useState<Outlet[]>(() => {
-    const stored = read<Outlet[]>(OUTLETS_KEY, seedOutlets);
-    if (stored.length > 1) {
-      const primary = stored.find((o) => o.id === PRIMARY_OUTLET_ID) ?? stored[0];
-      return [primary];
-    }
-    return stored;
-  });
-
-  useEffect(() => {
-    write(OUTLETS_KEY, outlets);
-  }, [outlets]);
-
-  const outlet = outlets[0] ?? { ...seedOutlets[0] };
-
-  const updateOutlet = useCallback((patch: Partial<Outlet>) => {
-    setOutlets(([current = seedOutlets[0]]) => [{ ...current, ...patch }]);
-  }, []);
-
-  return { outlet, updateOutlet };
-}
-
 export const cuisineOptions = [
-  'Modern European',
+  'Spanish',
+  'Modern American',
   'Italian',
   'French',
-  'Japanese',
-  'Indian',
   'Mediterranean',
-  'Pan-Asian',
+  'Mexican',
+  'Japanese',
   'Steakhouse',
   'Seafood',
+  'Farm to Table',
   'Casual Dining',
   'Fine Dining',
   'Café & Bakery',
@@ -170,21 +109,16 @@ export const cuisineOptions = [
 ];
 
 export const timezoneOptions = [
-  { value: 'Asia/Kolkata', label: 'Asia / Kolkata (IST)' },
-  { value: 'Asia/Dubai', label: 'Asia / Dubai (GST)' },
-  { value: 'Asia/Singapore', label: 'Asia / Singapore (SGT)' },
-  { value: 'Europe/London', label: 'Europe / London (GMT)' },
-  { value: 'Europe/Paris', label: 'Europe / Paris (CET)' },
-  { value: 'America/New_York', label: 'America / New York (EST)' },
-  { value: 'America/Los_Angeles', label: 'America / Los Angeles (PST)' },
+  { value: 'America/New_York', label: 'America / New York (ET)' },
+  { value: 'America/Chicago', label: 'America / Chicago (CT)' },
+  { value: 'America/Denver', label: 'America / Denver (MT)' },
+  { value: 'America/Los_Angeles', label: 'America / Los Angeles (PT)' },
+  { value: 'America/Phoenix', label: 'America / Phoenix (MST)' },
   { value: 'UTC', label: 'UTC' },
 ];
 
 export const currencyOptions = [
-  { value: 'INR', label: '₹ Indian Rupee (INR)' },
   { value: 'USD', label: '$ US Dollar (USD)' },
   { value: 'EUR', label: '€ Euro (EUR)' },
   { value: 'GBP', label: '£ Pound Sterling (GBP)' },
-  { value: 'AED', label: 'د.إ UAE Dirham (AED)' },
-  { value: 'SGD', label: 'S$ Singapore Dollar (SGD)' },
 ];

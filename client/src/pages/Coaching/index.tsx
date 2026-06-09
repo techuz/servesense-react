@@ -20,7 +20,7 @@ import './Coaching.css';
 
 type Filter = 'all' | LessonCategory;
 
-const filterOrder: Filter[] = ['all', 'tone', 'empathy', 'menu', 'upsell', 'safety', 'sop'];
+const filterOrder: Filter[] = ['all', 'tone', 'empathy', 'menu', 'upsell'];
 
 const filterLabel = (f: Filter) => (f === 'all' ? 'All' : categoryLabels[f]);
 
@@ -41,8 +41,6 @@ export const CoachingPage = () => {
       empathy: 0,
       menu: 0,
       upsell: 0,
-      safety: 0,
-      sop: 0,
     };
     for (const l of lessons) out[l.category] += 1;
     return out;
@@ -83,7 +81,7 @@ export const CoachingPage = () => {
       {/* --- Header ----------------------------------------------------- */}
       <motion.header className="ss-coaching__header" variants={fadeUp}>
         <div>
-          <span className="eyebrow">Knowledge · §2.6</span>
+          <span className="eyebrow">Knowledge · §5.5</span>
           <h1>Coaching &amp; Lessons</h1>
           <p className="ss-coaching__lede">
             Short, KPI-mapped lessons the AI auto-recommends when a waiter's score dips. Assign

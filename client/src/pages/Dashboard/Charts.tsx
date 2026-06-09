@@ -1,7 +1,7 @@
 import { useId, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { fadeUp } from '@/lib/motion';
-import { formatINR } from '@/lib/mock/dashboard';
+import { formatUSD } from '@/lib/mock/dashboard';
 
 /* ============================================================================
    Inline SVG / div-based charts for the dashboard.
@@ -417,4 +417,4 @@ export const CategoryDonut = ({
 };
 
 /* --- Number formatting passthrough -------------------------------------- */
-export { formatINR };
+export { formatUSD };

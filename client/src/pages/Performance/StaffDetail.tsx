@@ -8,14 +8,18 @@ import { EmptyState } from '@/components/primitives/EmptyState';
 import { useStaff } from '@/lib/mock/staff';
 import { DateFilterControl } from '@/components/primitives/DateFilterControl';
 import {
+  ALL_TIME_FILTER,
   formatSessionDate,
-  healthScoreTone,
+  overallScoreTone,
   serviceModeLabels,
+  staffTrendSeries,
   useStaffPerformance,
   useStaffSessions,
   type DateFilter,
   type Session,
+  type TrendMetric,
 } from '@/lib/mock/performance';
+import { useLessons, categoryLabels, kpiLabels } from '@/lib/mock/coaching';
 import {
   avatarTintFor,
   initialsOf,
@@ -25,9 +29,19 @@ import {
 import { fadeUp, stagger } from '@/lib/motion';
 import { cn } from '@/lib/cn';
 import { SessionDrawer } from './SessionDrawer';
+import { TrendChart } from './TrendChart';
 import './StaffDetail.css';
 
 type ModeFilter = 'all' | 'lunch' | 'dinner';
+
+const trendDayOptions = [7, 30, 90] as const;
+const trendMetrics: { key: TrendMetric; label: string; unit: string; accent: string }[] = [
+  { key: 'overall', label: 'Overall score', unit: '', accent: 'var(--ss-green-700)' },
+  { key: 'tone', label: 'Tone', unit: '/100', accent: 'var(--ss-green-500)' },
+  { key: 'empathy', label: 'Empathy', unit: '/100', accent: 'var(--ss-gold-500)' },
+  { key: 'menu', label: 'Menu knowledge', unit: '%', accent: 'var(--ss-gold-700)' },
+  { key: 'upsell', label: 'Upsell success', unit: '%', accent: 'var(--ss-green-600)' },
+];
 
 export const StaffDetailPage = () => {
   const { staffId } = useParams<{ staffId: string }>();
@@ -38,12 +52,23 @@ export const StaffDetailPage = () => {
   });
   const perf = useStaffPerformance(staffId, dateFilter);
   const sessions = useStaffSessions(staffId, dateFilter);
+  const allSessions = useStaffSessions(staffId, ALL_TIME_FILTER);
 
   const [search, setSearch] = useState('');
   const [modeFilter, setModeFilter] = useState<ModeFilter>('all');
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
+  const [trendDays, setTrendDays] = useState<number>(30);
 
+  const { lessons } = useLessons();
   const member = staff.find((s) => s.id === staffId);
+
+  const assignedLessons = useMemo(
+    () =>
+      lessons
+        .map((l) => ({ lesson: l, assignment: l.assignments.find((a) => a.staffId === staffId) }))
+        .filter((x) => x.assignment),
+    [lessons, staffId],
+  );
 
   const selectedSession = useMemo(
     () => sessions.find((s) => s.id === selectedSessionId) ?? null,
@@ -85,7 +110,7 @@ export const StaffDetailPage = () => {
   }
 
   const tint = avatarTintFor(member.id);
-  const tone = healthScoreTone(perf.healthScore);
+  const tone = overallScoreTone(perf.overallScore);
 
   return (
     <motion.div
@@ -142,8 +167,8 @@ export const StaffDetailPage = () => {
         <div className="ss-staff-detail__hero-right">
           <DateFilterControl value={dateFilter} onChange={setDateFilter} />
           <div className={cn('ss-staff-detail__health-tile', `ss-staff-detail__health-tile--${tone}`)}>
-            <span className="ss-staff-detail__health-label">Health score</span>
-            <div className="ss-staff-detail__health-num">{perf.healthScore}</div>
+            <span className="ss-staff-detail__health-label">Overall score</span>
+            <div className="ss-staff-detail__health-num">{perf.overallScore}</div>
             <span className="ss-staff-detail__health-cap">
               {tone === 'green'
                 ? 'Performing strong'
@@ -217,6 +242,85 @@ export const StaffDetailPage = () => {
           hint={`${perf.totalSessions} sessions`}
           star
         />
+      </motion.section>
+
+      {/* --- Trend graphs (7/30/90 day) ------------------------------ */}
+      <motion.section className="ss-staff-detail__trends" variants={fadeUp}>
+        <div className="ss-staff-detail__sessions-head">
+          <div>
+            <span className="eyebrow ss-staff-detail__sessions-eyebrow">Performance trend</span>
+            <h2>How {member.name.split(' ')[0]} is trending</h2>
+          </div>
+          <div className="ss-staff-detail__trend-toggle" role="tablist" aria-label="Trend window">
+            {trendDayOptions.map((d) => (
+              <button
+                key={d}
+                type="button"
+                role="tab"
+                aria-selected={trendDays === d}
+                onClick={() => setTrendDays(d)}
+                className={cn('ss-staff-detail__trend-btn', trendDays === d && 'ss-staff-detail__trend-btn--on')}
+              >
+                {trendDays === d && (
+                  <motion.span layoutId="ss-trend-pill" className="ss-staff-detail__trend-pill" />
+                )}
+                <span>{d}d</span>
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="ss-staff-detail__trend-grid">
+          {trendMetrics.map((m) => (
+            <TrendChart
+              key={m.key}
+              label={m.label}
+              unit={m.unit}
+              accent={m.accent}
+              points={staffTrendSeries(allSessions, m.key, trendDays)}
+            />
+          ))}
+        </div>
+      </motion.section>
+
+      {/* --- Coaching assignments + completion ----------------------- */}
+      <motion.section className="ss-staff-detail__coaching" variants={fadeUp}>
+        <div className="ss-staff-detail__sessions-head">
+          <div>
+            <span className="eyebrow ss-staff-detail__sessions-eyebrow">Coaching</span>
+            <h2>Assigned lessons ({assignedLessons.length})</h2>
+          </div>
+        </div>
+        {assignedLessons.length === 0 ? (
+          <p className="ss-staff-detail__coaching-empty">
+            No coaching lessons assigned. The AI auto-assigns one when a KPI stays below threshold for
+            two consecutive weeks.
+          </p>
+        ) : (
+          <div className="ss-coach-list">
+            {assignedLessons.map(({ lesson, assignment }) => {
+              const pct = Math.round((assignment?.completion ?? 0) * 100);
+              const done = pct >= 90;
+              return (
+                <div key={lesson.id} className="ss-coach-row">
+                  <div className="ss-coach-row__main">
+                    <span className="ss-coach-row__title">{lesson.title}</span>
+                    <span className="ss-coach-row__meta">
+                      {categoryLabels[lesson.category]} · KPI: {kpiLabels[lesson.mappedKpi]}
+                    </span>
+                  </div>
+                  <div className="ss-coach-row__progress">
+                    <div className="ss-coach-row__bar" aria-hidden="true">
+                      <span style={{ width: `${pct}%` }} className={cn(done && 'ss-coach-row__bar--done')} />
+                    </div>
+                    <span className={cn('ss-coach-row__pct', done && 'ss-coach-row__pct--done')}>
+                      {done ? 'Completed' : `${pct}%`}
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </motion.section>
 
       {/* --- Sessions list ------------------------------------------- */}
