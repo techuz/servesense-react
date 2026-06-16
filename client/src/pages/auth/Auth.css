@@ -1,0 +1,100 @@
+/* ============================================================================
+   Secondary auth screens — forgot / reset / verify
+   Reuse the .ss-login two-panel layout; these are the extra bits.
+   ============================================================================ */
+.ss-auth__inner {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-5);
+  width: 100%;
+}
+
+/* Centered confirmation layout (forgot "sent" + verify-email). */
+.ss-auth__sent {
+  text-align: center;
+  align-items: center;
+  gap: var(--sp-6);
+}
+
+/* Centered confirmation: the whole column (logo included) centers. Used by
+   verify-email directly; the forgot "sent" state opts in via the form modifier
+   below since its logo lives one level up in .ss-login__form. */
+.ss-login__form--center {
+  align-items: center;
+}
+
+/* Centered "menu divider" hairline under the confirmation heading — echoes
+   the gold rule on the brand panel. */
+.ss-auth__sent .ss-login__form-header {
+  position: relative;
+  padding-bottom: var(--sp-4);
+  align-items: center;
+}
+.ss-auth__sent .ss-login__form-header::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  transform: translateX(-50%);
+  width: 56px;
+  height: 2px;
+  border-radius: var(--radius-pill);
+  background: linear-gradient(90deg, var(--ss-gold-500), var(--ss-gold-300));
+}
+.ss-auth__sent .ss-login__form-header p {
+  max-width: 40ch;
+}
+
+.ss-auth__icon {
+  position: relative;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: var(--ss-green-700);
+  background: linear-gradient(140deg, var(--ss-green-50), var(--ss-cream-0));
+  box-shadow:
+    0 10px 28px -10px rgba(58, 107, 76, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.85);
+}
+/* Gold hairline ring tying the icon to the brand-panel frame + logo mark. */
+.ss-auth__icon::after {
+  content: '';
+  position: absolute;
+  inset: -5px;
+  border-radius: 50%;
+  border: 1px solid rgba(201, 149, 60, 0.40);
+}
+
+.ss-auth__actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-3);
+  width: 100%;
+}
+
+.ss-auth__text-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: var(--font-sans);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  color: var(--ss-green-700);
+  padding: var(--sp-1) var(--sp-2);
+  border-radius: var(--radius-md);
+  transition: color var(--duration-fast) var(--ease-out), background var(--duration-fast) var(--ease-out);
+}
+
+.ss-auth__text-btn:hover:not(:disabled) {
+  color: var(--ss-green-900);
+  background: var(--ss-green-100);
+  box-shadow: inset 0 0 0 1px rgba(58, 107, 76, 0.18);
+}
+
+.ss-auth__text-btn:disabled {
+  color: var(--color-text-muted);
+  cursor: default;
+}

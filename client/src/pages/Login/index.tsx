@@ -118,15 +118,15 @@ export const LoginPage = () => {
             animate="visible"
           >
             <motion.li variants={fadeUp}>
-              <span className="ss-login__highlight-num">01</span>
+              <span className="ss-login__highlight-num">I</span>
               <span>Live AI coaching during every guest interaction.</span>
             </motion.li>
             <motion.li variants={fadeUp}>
-              <span className="ss-login__highlight-num">02</span>
+              <span className="ss-login__highlight-num">II</span>
               <span>KPI-driven performance scoring with personalized micro-lessons.</span>
             </motion.li>
             <motion.li variants={fadeUp}>
-              <span className="ss-login__highlight-num">03</span>
+              <span className="ss-login__highlight-num">III</span>
               <span>ROI, upsell, and tone analytics for every shift.</span>
             </motion.li>
           </motion.ul>
@@ -195,6 +195,12 @@ export const LoginPage = () => {
               aria-invalid={!!visibleErrors.password}
               required
             />
+          </motion.div>
+
+          <motion.div variants={fadeUp} className="ss-login__forgot">
+            <Link to="/forgot-password" className="text-link">
+              Forgot password?
+            </Link>
           </motion.div>
 
           {serverError && (

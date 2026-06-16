@@ -7,6 +7,50 @@
   gap: var(--sp-5);
 }
 
+/* --- Assign drawer: lesson context chip ------------------------------- */
+.ss-lesson-assign__context {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
+  background: var(--ss-cream-50);
+  border: 1px solid var(--color-border);
+  border-left: 3px solid var(--accent);
+  border-radius: var(--radius-lg);
+}
+
+.ss-lesson-assign__cat {
+  flex-shrink: 0;
+  padding: 3px var(--sp-2);
+  border-radius: var(--radius-pill);
+  color: #fff;
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--tracking-tight);
+}
+
+.ss-lesson-assign__title {
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
+  color: var(--color-text);
+}
+
+.ss-lesson-form__assign-hint {
+  font-size: var(--fs-xs);
+  color: var(--color-text-muted);
+  font-weight: var(--fw-muted);
+  line-height: var(--lh-relaxed);
+  padding: var(--sp-3) var(--sp-4);
+  background: var(--ss-cream-50);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+}
+
+.ss-lesson-form__assign-hint strong {
+  color: var(--ss-green-700);
+  font-weight: var(--fw-semibold);
+}
+
 .ss-lesson-form__field {
   display: flex;
   flex-direction: column;

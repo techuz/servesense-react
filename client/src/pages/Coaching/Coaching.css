@@ -567,6 +567,36 @@
   color: var(--lesson-accent);
 }
 
+.ss-lesson__action-btns {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+}
+
+.ss-lesson__assign-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: var(--sp-2) var(--sp-3);
+  border: none;
+  background: transparent;
+  color: var(--ss-warm-gray-500);
+  font-family: var(--font-sans);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--tracking-tight);
+  cursor: pointer;
+  border-radius: var(--radius-md);
+  transition:
+    color var(--duration-base) var(--ease-out),
+    background var(--duration-base) var(--ease-out);
+}
+
+.ss-lesson__assign-btn:hover {
+  color: var(--lesson-accent);
+  background: var(--color-surface);
+}
+
 /* --- Footer note ------------------------------------------------------ */
 .ss-coaching__footer-note {
   display: inline-flex;

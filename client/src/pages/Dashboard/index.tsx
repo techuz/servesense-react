@@ -122,9 +122,6 @@ export const DashboardPage = () => {
     metrics.topItems.forEach((i) =>
       rows.push(`Item,"${i.itemName}",${i.categoryName},${i.revenue},${i.units}`),
     );
-    metrics.serviceErrors.forEach((e) =>
-      rows.push(`Service error,"${e.type}",,${e.count},`),
-    );
     const blob = new Blob([rows.join('\n')], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -144,7 +141,7 @@ export const DashboardPage = () => {
       {/* --- Hero header ----------------------------------------------- */}
       <motion.header className="ss-dash__header" variants={fadeUp}>
         <div>
-          <span className="eyebrow">Manager · §5.4</span>
+          <span className="eyebrow">Performance Report</span>
           <h1>Welcome back, {firstName}.</h1>
           <p className="ss-dash__lede">
             ROI, revenue, and service quality at your restaurant — refreshed every shift, scoped to
@@ -160,7 +157,7 @@ export const DashboardPage = () => {
       <motion.section variants={fadeUp} className="ss-dash__section">
         <div className="ss-dash__section-head">
           <div>
-            <span className="eyebrow ss-dash__section-eyebrow">A · ROI & Business Impact</span>
+            <span className="eyebrow ss-dash__section-eyebrow">ROI &amp; Business Impact</span>
             <h2>How much ServeSense is moving the needle</h2>
           </div>
           <Badge tone="brand" subtle dot>
@@ -249,7 +246,7 @@ export const DashboardPage = () => {
       <motion.section variants={fadeUp} className="ss-dash__section">
         <div className="ss-dash__section-head">
           <div>
-            <span className="eyebrow ss-dash__section-eyebrow">B · Revenue & Sales Analytics</span>
+            <span className="eyebrow ss-dash__section-eyebrow">Revenue &amp; Sales Analytics</span>
             <h2>Where the money is coming from</h2>
           </div>
           <div className="ss-dash__filters">
@@ -265,7 +262,18 @@ export const DashboardPage = () => {
               onChange={(e) => setWaiterFilter(e.target.value)}
               options={waiterOptions}
             />
-            <Button variant="secondary" onClick={exportCsv}>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={exportCsv}
+              className="ss-dash__filter-btn"
+              leadingIcon={
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="M12 3v12m0 0l-4-4m4 4l4-4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                  <path d="M5 17v2a2 2 0 002 2h10a2 2 0 002-2v-2" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                </svg>
+              }
+            >
               Export CSV
             </Button>
           </div>
@@ -361,51 +369,6 @@ export const DashboardPage = () => {
               />
             )}
           </div>
-        </div>
-
-        {/* Service Errors — clean compact list */}
-        <div className="ss-dash__panel ss-dash__panel--errors">
-          <div className="ss-dash__panel-head">
-            <h3>Service errors</h3>
-            <span className="ss-dash__panel-sub">
-              SOP misses detected by the AI ·{' '}
-              <strong>{metrics.serviceErrors.reduce((s, e) => s + e.count, 0)}</strong> total
-            </span>
-          </div>
-          <ul className="ss-errors" role="list">
-            {metrics.serviceErrors.map((err) => (
-              <li key={err.type} className="ss-errors__row">
-                <div className="ss-errors__text">
-                  <span className="ss-errors__type">{err.type}</span>
-                  <span className="ss-errors__desc">{err.description}</span>
-                </div>
-                <span className="ss-errors__count">{err.count}</span>
-                <span
-                  className={cn(
-                    'ss-errors__trend',
-                    err.trend < 0
-                      ? 'ss-errors__trend--better'
-                      : 'ss-errors__trend--worse',
-                  )}
-                >
-                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none">
-                    <path
-                      d={
-                        err.trend < 0
-                          ? 'M12 5v14M5 12l7 7 7-7'
-                          : 'M12 19V5M5 12l7-7 7 7'
-                      }
-                      stroke="currentColor"
-                      strokeWidth="2.4"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                  {Math.abs(err.trend * 100).toFixed(0)}%
-                </span>
-              </li>
-            ))}
-          </ul>
         </div>
       </motion.section>
 

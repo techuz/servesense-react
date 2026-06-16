@@ -1,5 +1,4 @@
 import { FormEvent, useEffect, useMemo, useState } from 'react';
-import { motion } from 'framer-motion';
 import { Drawer } from '@/components/primitives/Drawer';
 import { Input } from '@/components/primitives/Input';
 import { Textarea } from '@/components/primitives/Textarea';
@@ -7,7 +6,6 @@ import { Select } from '@/components/primitives/Select';
 import { Button } from '@/components/primitives/Button';
 import { Switch } from '@/components/primitives/Switch';
 import { useToast } from '@/lib/toast';
-import { cn } from '@/lib/cn';
 import {
   categoryAccent,
   categoryLabels,
@@ -17,22 +15,14 @@ import {
   youtubeIdFromUrl,
   youtubeThumb,
   type Lesson,
-  type LessonAssignment,
   type LessonCategory,
   type MappedKpi,
 } from '@/lib/mock/coaching';
-import {
-  avatarTintFor,
-  initialsOf,
-  roleLabels,
-  type StaffMember,
-} from '@/lib/mock/staff';
 import './LessonDrawer.css';
 
 interface LessonDrawerProps {
   open: boolean;
   lesson: Lesson | null;
-  staff: StaffMember[];
   onClose: () => void;
   onSave: (lesson: Lesson) => void;
   onDelete?: (id: string) => void;
@@ -41,57 +31,21 @@ interface LessonDrawerProps {
 export const LessonDrawer = ({
   open,
   lesson,
-  staff,
   onClose,
   onSave,
   onDelete,
 }: LessonDrawerProps) => {
   const { notify } = useToast();
   const [draft, setDraft] = useState<Lesson>(() => lesson ?? emptyLesson());
-  const [staffSearch, setStaffSearch] = useState('');
   const isEdit = !!lesson;
 
   useEffect(() => {
     if (open) {
       setDraft(lesson ?? emptyLesson());
-      setStaffSearch('');
     }
   }, [open, lesson]);
 
   const update = (patch: Partial<Lesson>) => setDraft((d) => ({ ...d, ...patch }));
-
-  const toggleAssignment = (staffId: string) => {
-    setDraft((d) => {
-      const exists = d.assignments.find((a) => a.staffId === staffId);
-      if (exists) {
-        return { ...d, assignments: d.assignments.filter((a) => a.staffId !== staffId) };
-      }
-      const fresh: LessonAssignment = {
-        staffId,
-        completion: 0,
-        completedAt: null,
-        assignedAt: new Date().toISOString(),
-      };
-      return { ...d, assignments: [...d.assignments, fresh] };
-    });
-  };
-
-  /* --- Filtered staff for picker ------------------------------------ */
-  const filteredStaff = useMemo(() => {
-    const q = staffSearch.trim().toLowerCase();
-    if (!q) return staff;
-    return staff.filter(
-      (s) =>
-        s.name.toLowerCase().includes(q) ||
-        s.email.toLowerCase().includes(q) ||
-        roleLabels[s.role].toLowerCase().includes(q),
-    );
-  }, [staff, staffSearch]);
-
-  const assignedSet = useMemo(
-    () => new Set(draft.assignments.map((a) => a.staffId)),
-    [draft.assignments],
-  );
 
   /* --- Live thumbnail preview --------------------------------------- */
   const thumb = useMemo(() => youtubeThumb(draft.youtubeUrl), [draft.youtubeUrl]);
@@ -227,106 +181,10 @@ export const LessonDrawer = ({
           />
         </div>
 
-        {/* --- Staff multi-select ----------------------------------- */}
-        <div className="ss-lesson-form__field">
-          <div className="ss-lesson-form__picker-head">
-            <label className="ss-lesson-form__label">
-              Assigned staff
-              <span className="ss-lesson-form__count">
-                {draft.assignments.length} selected
-              </span>
-            </label>
-          </div>
-
-          <Input
-            placeholder="Search by name, email, or role..."
-            value={staffSearch}
-            onChange={(e) => setStaffSearch(e.target.value)}
-            leadingIcon={
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="2" />
-                <path
-                  d="M20 20l-3.5-3.5"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                />
-              </svg>
-            }
-          />
-
-          <div className="ss-lesson-picker">
-            {filteredStaff.length === 0 ? (
-              <div className="ss-lesson-picker__empty">
-                No staff match "{staffSearch}"
-              </div>
-            ) : (
-              filteredStaff.map((s) => {
-                const checked = assignedSet.has(s.id);
-                const tint = avatarTintFor(s.id);
-                const assignment = draft.assignments.find((a) => a.staffId === s.id);
-                return (
-                  <label
-                    key={s.id}
-                    className={cn(
-                      'ss-lesson-picker__row',
-                      checked && 'ss-lesson-picker__row--on',
-                    )}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={checked}
-                      onChange={() => toggleAssignment(s.id)}
-                      className="ss-lesson-picker__cb-input"
-                    />
-                    <span className="ss-lesson-picker__cb" aria-hidden="true">
-                      <motion.svg
-                        width="12"
-                        height="12"
-                        viewBox="0 0 14 14"
-                        initial={false}
-                        animate={{
-                          scale: checked ? 1 : 0.4,
-                          opacity: checked ? 1 : 0,
-                        }}
-                        transition={{ type: 'spring', stiffness: 600, damping: 30 }}
-                      >
-                        <path
-                          d="M3 7.5l2.5 2.5L11 4"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </motion.svg>
-                    </span>
-                    <span
-                      className="ss-lesson-picker__avatar"
-                      aria-hidden="true"
-                      style={{ backgroundColor: tint.bg, color: tint.fg }}
-                    >
-                      {initialsOf(s.name)}
-                    </span>
-                    <div className="ss-lesson-picker__name-block">
-                      <span className="ss-lesson-picker__name">{s.name}</span>
-                      <span className="ss-lesson-picker__role">{roleLabels[s.role]}</span>
-                    </div>
-                    {checked && assignment && (
-                      <span className="ss-lesson-picker__status">
-                        {assignment.completion >= 0.9
-                          ? 'Completed'
-                          : assignment.completion > 0
-                            ? `${Math.round(assignment.completion * 100)}%`
-                            : 'Not started'}
-                      </span>
-                    )}
-                  </label>
-                );
-              })
-            )}
-          </div>
-        </div>
+        <p className="ss-lesson-form__assign-hint">
+          Staff are assigned separately — save this lesson, then use{' '}
+          <strong>Assign</strong> on its card to choose who takes it.
+        </p>
 
         <div className="ss-lesson-form__divider" />
 

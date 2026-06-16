@@ -1,7 +1,13 @@
+/* ============================================================================
+   Auth — "The Maître d' Stand"
+   An editorial, printed-menu take on the auth split. Shared by login, signup,
+   forgot / reset / verify. Arivex language throughout: forest + gold + cream,
+   DM Serif display + Outfit body.
+   ============================================================================ */
 .ss-login {
   min-height: 100vh;
   display: grid;
-  grid-template-columns: 1.1fr 1fr;
+  grid-template-columns: 1.28fr 1fr;
   background-color: var(--color-bg);
 }
 
@@ -9,19 +15,19 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: var(--sp-12);
+  padding: clamp(var(--sp-12), 5vw, var(--sp-24));
   position: relative;
 }
 
 /* ============================================================================
-   Brand panel (left)
+   Brand panel (left) — the "menu cover"
    ============================================================================ */
 .ss-login__panel--brand {
-  background:
-    linear-gradient(160deg, var(--ss-green-900) 0%, var(--ss-green-800) 55%, var(--ss-green-700) 100%);
+  background: var(--atmosphere-dark);
   color: var(--ss-cream-50);
   overflow: hidden;
   isolation: isolate;
+  padding-left: clamp(var(--sp-16), 6vw, var(--sp-24));
 }
 
 .ss-login__backdrop {
@@ -43,60 +49,132 @@
 }
 
 .ss-login__blob--gold {
-  background: radial-gradient(circle at center, rgba(232, 199, 123, 0.55), transparent 60%);
+  background: var(--glow-gold);
   top: -240px;
   right: -160px;
 }
 
 .ss-login__blob--green {
-  background: radial-gradient(circle at center, rgba(90, 154, 110, 0.50), transparent 60%);
+  background: var(--glow-green);
   bottom: -260px;
   left: -200px;
+}
+
+/* Giant serif glyph bleeding off the lower-right corner */
+.ss-login__watermark {
+  position: absolute;
+  right: clamp(-3rem, -2vw, -1.5rem);
+  bottom: clamp(-7rem, -7vw, -3rem);
+  font-family: var(--font-serif);
+  font-size: clamp(22rem, 36vw, 38rem);
+  line-height: 0.7;
+  color: rgba(246, 242, 236, 0.045);
+  user-select: none;
+  pointer-events: none;
+  z-index: 0;
 }
 
 .ss-login__dots {
   position: absolute;
   inset: 0;
-  background-image: radial-gradient(circle at 1px 1px, rgba(255, 255, 255, 0.06) 1px, transparent 0);
-  background-size: 28px 28px;
-  opacity: 0.5;
+  background-image: var(--dot-grid-dark);
+  background-size: 30px 30px;
+  opacity: 0.6;
   mask-image: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.9), transparent 75%);
 }
 
 .ss-login__grain {
   position: absolute;
   inset: 0;
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='200' height='200' filter='url(%23n)' opacity='0.35'/></svg>");
-  opacity: 0.06;
+  background-image: var(--tex-grain);
+  opacity: var(--tex-grain-opacity);
   mix-blend-mode: overlay;
   pointer-events: none;
+}
+
+/* Embossed gold hairline frame + engraved corner brackets */
+.ss-login__frame {
+  position: absolute;
+  inset: clamp(16px, 1.8vw, 26px);
+  border: 1px solid rgba(232, 199, 123, 0.20);
+  border-radius: 3px;
+  pointer-events: none;
+  z-index: 1;
+}
+.ss-login__frame::before,
+.ss-login__frame::after {
+  content: '';
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  border: 1.5px solid var(--ss-gold-300);
+}
+.ss-login__frame::before {
+  top: -1px;
+  left: -1px;
+  border-right: none;
+  border-bottom: none;
+}
+.ss-login__frame::after {
+  bottom: -1px;
+  right: -1px;
+  border-left: none;
+  border-top: none;
+}
+
+/* Vertical letterspaced wordmark up the left edge */
+.ss-login__spine {
+  position: absolute;
+  left: clamp(20px, 2.2vw, 38px);
+  top: 50%;
+  transform: translateY(-50%) rotate(180deg);
+  writing-mode: vertical-rl;
+  font-size: var(--fs-xs);
+  letter-spacing: 0.4em;
+  text-transform: uppercase;
+  font-weight: var(--fw-medium);
+  color: rgba(232, 199, 123, 0.55);
+  z-index: 2;
+  white-space: nowrap;
 }
 
 .ss-login__brand-content {
   position: relative;
   z-index: 1;
-  max-width: 500px;
+  max-width: 520px;
   display: flex;
   flex-direction: column;
   gap: var(--sp-5);
 }
 
 .ss-login__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-3);
   color: var(--ss-gold-300);
+  letter-spacing: 0.22em;
+}
+.ss-login__eyebrow::before {
+  content: '';
+  width: 26px;
+  height: 1px;
+  background: var(--ss-gold-300);
+  opacity: 0.8;
 }
 
 .ss-login__headline {
   color: var(--ss-cream-0);
-  font-size: clamp(var(--fs-3xl), 4.2vw, 3.6rem);
-  letter-spacing: -0.025em;
-  line-height: 1.05;
+  font-size: clamp(var(--fs-4xl), 5.2vw, 4.4rem);
+  letter-spacing: -0.03em;
+  line-height: 1.0;
+  margin-top: var(--sp-2);
 }
 
 .ss-login__headline-accent {
   display: block;
   color: var(--ss-gold-300);
   font-style: italic;
-  margin-top: 0.15em;
+  margin-top: 0.12em;
 }
 
 /* Text reveal masks */
@@ -107,8 +185,8 @@
   display: inline-block;
   overflow: hidden;
   vertical-align: bottom;
-  line-height: 1.05;
-  padding-bottom: 0.06em;
+  line-height: 1.0;
+  padding-bottom: 0.08em;
 }
 .ss-text-reveal__word {
   display: inline-block;
@@ -117,44 +195,46 @@
 }
 
 .ss-login__lede {
-  color: rgba(255, 255, 255, 0.78);
+  color: rgba(246, 242, 236, 0.74);
   font-size: var(--fs-md);
   font-weight: var(--fw-muted);
   line-height: var(--lh-relaxed);
-  max-width: 44ch;
+  max-width: 46ch;
 }
 
+/* Tasting-menu "courses" — serif numerals + hairline dividers */
 .ss-login__highlights {
   list-style: none;
   padding: 0;
   margin: var(--sp-6) 0 0;
   display: flex;
   flex-direction: column;
-  gap: var(--sp-4);
-  border-top: 1px solid rgba(255, 255, 255, 0.12);
-  padding-top: var(--sp-6);
+  border-top: 1px solid rgba(232, 199, 123, 0.20);
 }
 
 .ss-login__highlights li {
   display: grid;
-  grid-template-columns: 32px 1fr;
+  grid-template-columns: 44px 1fr;
   align-items: baseline;
   gap: var(--sp-4);
-  color: rgba(255, 255, 255, 0.82);
+  padding: var(--sp-4) 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  color: rgba(246, 242, 236, 0.84);
   font-size: var(--fs-sm);
   font-weight: var(--fw-muted);
   line-height: var(--lh-relaxed);
 }
+.ss-login__highlights li:last-child {
+  border-bottom: none;
+}
 
 .ss-login__highlight-num {
   font-family: var(--font-serif);
+  font-style: italic;
   color: var(--ss-gold-300);
-  font-size: var(--fs-md);
+  font-size: var(--fs-xl);
   line-height: 1;
   letter-spacing: var(--tracking-tight);
-  /* Nudge the serif numeral so its visual centre lines up with the first
-     line of body text. DM Serif Display sits high in its box. */
-  transform: translateY(0.08em);
 }
 
 /* ============================================================================
@@ -162,6 +242,7 @@
    ============================================================================ */
 .ss-login__panel--form {
   background-color: var(--color-bg);
+  background-image: var(--atmosphere-page);
 }
 
 .ss-login__form {
@@ -173,6 +254,7 @@
 }
 
 .ss-login__logo-mark {
+  position: relative;
   width: 56px;
   height: 56px;
   display: grid;
@@ -188,6 +270,14 @@
     inset 0 1px 0 rgba(255, 255, 255, 0.2);
   margin-bottom: var(--sp-2);
 }
+/* gold hairline ring — ties the mark to the brand-panel frame */
+.ss-login__logo-mark::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: calc(var(--radius-lg) + 4px);
+  border: 1px solid rgba(201, 149, 60, 0.35);
+}
 
 .ss-login__form-header {
   display: flex;
@@ -197,6 +287,7 @@
 
 .ss-login__form-header h2 {
   font-size: var(--fs-3xl);
+  letter-spacing: -0.02em;
 }
 
 .ss-login__form-header p {
@@ -216,6 +307,13 @@
   color: var(--color-text-muted);
   text-align: center;
   margin-top: var(--sp-2);
+}
+
+.ss-login__forgot {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: calc(var(--sp-3) * -1);
+  font-size: var(--fs-sm);
 }
 
 .ss-login__hint {
@@ -250,7 +348,7 @@
    ============================================================================ */
 @media (max-width: 1024px) {
   .ss-login__panel {
-    padding: var(--sp-10);
+    padding: var(--sp-12);
   }
   .ss-login__highlights { display: none; }
 }

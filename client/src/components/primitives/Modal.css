@@ -1,0 +1,98 @@
+.ss-modal-root {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal);
+}
+
+.ss-modal__overlay {
+  position: absolute;
+  inset: 0;
+  background-color: rgba(15, 26, 18, 0.45);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+.ss-modal__centerer {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--sp-5);
+  overflow-y: auto;
+}
+
+.ss-modal {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  background-color: var(--color-surface);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-card-hover), var(--sheen-card);
+  border: var(--border-card);
+  margin: auto;
+}
+
+.ss-modal--sm { max-width: 420px; }
+.ss-modal--md { max-width: 520px; }
+.ss-modal--lg { max-width: 640px; }
+
+.ss-modal__close {
+  position: absolute;
+  top: var(--sp-4);
+  right: var(--sp-4);
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-md);
+  display: grid;
+  place-items: center;
+  color: var(--color-text-muted);
+  transition: background-color var(--duration-fast) var(--ease-out), color var(--duration-fast) var(--ease-out);
+}
+
+.ss-modal__close:hover {
+  background-color: var(--ss-warm-gray-100);
+  color: var(--color-text);
+}
+
+.ss-modal__header {
+  padding: var(--sp-6) var(--sp-6) 0;
+}
+
+.ss-modal__title {
+  font-family: var(--font-serif);
+  font-size: var(--fs-xl);
+  font-weight: var(--fw-regular);
+  letter-spacing: var(--tracking-tighter);
+  line-height: 1.2;
+  color: var(--color-text);
+}
+
+.ss-modal__desc {
+  font-size: var(--fs-sm);
+  color: var(--color-text-muted);
+  font-weight: var(--fw-muted);
+  line-height: var(--lh-relaxed);
+  margin-top: var(--sp-1);
+}
+
+.ss-modal__body {
+  padding: var(--sp-5) var(--sp-6) var(--sp-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+.ss-modal__footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--sp-3);
+  padding: var(--sp-4) var(--sp-6);
+  border-top: 1px solid var(--color-border);
+}
+
+@media (max-width: 480px) {
+  .ss-modal__footer { flex-direction: column-reverse; }
+  .ss-modal__footer > * { width: 100%; }
+}

@@ -8,16 +8,38 @@
   gap: var(--sp-8);
 }
 
-/* --- Header -------------------------------------------------------------- */
+/* --- Header (editorial masthead) ---------------------------------------- */
 .ss-dash__header {
   display: flex;
   justify-content: space-between;
   align-items: flex-end;
   gap: var(--sp-6);
   flex-wrap: wrap;
+  padding-bottom: var(--sp-6);
+  /* Gold "masthead" hairline that fades to the right — echoes the auth panel. */
+  border-width: 0 0 1px;
+  border-style: solid;
+  border-image: linear-gradient(90deg, var(--ss-gold-400) 0%, rgba(201, 149, 60, 0.14) 42%, transparent 78%) 1;
 }
 
 .ss-dash__header h1 { margin-top: var(--sp-2); }
+
+/* Gold leading tick on the masthead + hero eyebrows (matches the auth eyebrow). */
+.ss-dash__header .eyebrow,
+.ss-dash__hero-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+.ss-dash__header .eyebrow::before,
+.ss-dash__hero-eyebrow::before {
+  content: '';
+  width: 22px;
+  height: 1px;
+  background: var(--ss-gold-500);
+  opacity: 0.9;
+  flex-shrink: 0;
+}
 
 .ss-dash__lede {
   color: var(--color-text-muted);
@@ -89,6 +111,9 @@
   align-items: flex-end;
   gap: var(--sp-4);
   flex-wrap: wrap;
+  padding-bottom: var(--sp-4);
+  /* "Menu divider" hairline beneath every section head. */
+  border-bottom: 1px solid var(--color-border);
 }
 
 .ss-dash__section-head h2 {
@@ -97,16 +122,49 @@
   line-height: var(--lh-tight);
 }
 
-/* §5.4.2 filter toolbar */
+
+/* §5.4.2 filter toolbar — sleek pill controls */
 .ss-dash__filters {
   display: flex;
   align-items: center;
-  gap: var(--sp-3);
+  gap: var(--sp-2);
   flex-wrap: wrap;
 }
 
 .ss-dash__filters .ss-field {
-  min-width: 150px;
+  min-width: 0;
+}
+
+/* Selects → compact, fully-rounded pills (matches the period picker + button). */
+.ss-dash__filters .ss-field__control {
+  border-radius: var(--radius-pill);
+  background: var(--color-card);
+  box-shadow: var(--shadow-xs);
+}
+.ss-dash__filters .ss-field__control:hover:not(:focus-within) {
+  border-color: var(--ss-warm-gray-300);
+  background: var(--ss-cream-0);
+}
+.ss-dash__filters .ss-field__input {
+  min-height: 38px;
+  padding: 0 var(--sp-4);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  color: var(--color-text);
+}
+.ss-dash__filters .ss-field__input--select {
+  padding-right: var(--sp-8);
+}
+.ss-dash__filters .ss-field__select-chev {
+  right: var(--sp-3);
+  color: var(--ss-warm-gray-500);
+}
+
+/* Export button → same pill height + radius as the selects. */
+.ss-dash__filters .ss-dash__filter-btn.ss-btn--sm {
+  min-height: 38px;
+  border-radius: var(--radius-pill);
+  padding-inline: var(--sp-4);
 }
 
 .ss-dash__panel-empty {
@@ -143,6 +201,17 @@
   overflow: hidden;
   min-height: 260px;
   box-shadow: var(--shadow-md);
+}
+
+/* Inset gold hairline frame — the same "printed menu" motif as the auth panel. */
+.ss-dash__revenue-hero::after {
+  content: '';
+  position: absolute;
+  inset: 12px;
+  border: 1px solid rgba(232, 199, 123, 0.16);
+  border-radius: calc(var(--radius-xl) - 6px);
+  pointer-events: none;
+  z-index: 3;
 }
 
 /* Sparkline fills the entire card as a subtle background */
@@ -598,8 +667,6 @@
   box-shadow: var(--shadow-card-hover);
 }
 
-.ss-dash__panel--errors { margin-top: var(--sp-5); }
-
 .ss-dash__panel-head {
   display: flex;
   justify-content: space-between;
@@ -790,86 +857,6 @@
   box-shadow: 0 0 10px rgba(201, 149, 60, 0.22);
 }
 
-/* ============================================================================
-   Service errors panel — clean compact list
-   Quiet by default: small icon, type/desc, count, trend pill.
-   No severity tints, no inline bars — the panel reads as a focused log.
-   ============================================================================ */
-.ss-errors {
-  display: flex;
-  flex-direction: column;
-}
-
-.ss-errors__row {
-  display: grid;
-  grid-template-columns: minmax(180px, 1fr) auto auto;
-  align-items: center;
-  gap: var(--sp-3);
-  padding: var(--sp-3) 0;
-  border-top: 1px solid var(--color-border);
-  transition: background var(--duration-fast) var(--ease-out);
-}
-
-.ss-errors__row:first-child { border-top: none; padding-top: var(--sp-2); }
-
-.ss-errors__row:hover .ss-errors__type {
-  color: var(--ss-green-700);
-}
-
-.ss-errors__text {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-  min-width: 0;
-}
-
-.ss-errors__type {
-  font-size: var(--fs-sm);
-  font-weight: var(--fw-semibold);
-  color: var(--color-text);
-  letter-spacing: var(--tracking-tight);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  transition: color var(--duration-fast) var(--ease-out);
-}
-
-.ss-errors__desc {
-  font-size: var(--fs-xs);
-  color: var(--color-text-muted);
-  font-weight: var(--fw-muted);
-  line-height: 1.4;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.ss-errors__count {
-  font-family: var(--font-serif);
-  font-size: var(--fs-lg);
-  line-height: 1;
-  color: var(--ss-green-900);
-  letter-spacing: -0.02em;
-  font-variant-numeric: tabular-nums;
-  text-align: right;
-  min-width: 40px;
-}
-
-.ss-errors__trend {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  padding: 3px var(--sp-2);
-  border-radius: var(--radius-pill);
-  font-size: var(--fs-xs);
-  font-weight: var(--fw-semibold);
-  flex-shrink: 0;
-  font-variant-numeric: tabular-nums;
-}
-
-.ss-errors__trend--better { background: var(--ss-green-50); color: var(--ss-green-700); }
-.ss-errors__trend--worse { background: var(--ss-danger-50); color: var(--ss-danger-500); }
-
 /* --- Footer note ------------------------------------------------------- */
 .ss-dash__footer-note {
   display: inline-flex;
@@ -910,7 +897,6 @@
 @media (max-width: 720px) {
   .ss-dash__kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .ss-dash__revenue-content { max-width: 100%; }
-  .ss-errors__desc { display: none; }
 }
 
 @media (max-width: 480px) {
