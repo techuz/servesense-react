@@ -8,13 +8,10 @@ import { Switch } from '@/components/primitives/Switch';
 import { useToast } from '@/lib/toast';
 import { cn } from '@/lib/cn';
 import {
-  allergenLabels,
-  allergenOrder,
   dishTypeLabels,
   portionLabels,
   tasteLabels,
   tasteOrder,
-  type Allergen,
   type DishType,
   type MenuCategory,
   type MenuItem,
@@ -52,19 +49,12 @@ export const MenuItemForm = ({
   const { notify } = useToast();
   const [draft, setDraft] = useState<MenuItem>(item);
   const [ingredientInput, setIngredientInput] = useState('');
+  const [allergenInput, setAllergenInput] = useState('');
   const [attemptedSave, setAttemptedSave] = useState(false);
 
   const update = (patch: Partial<MenuItem>) => setDraft((d) => ({ ...d, ...patch }));
 
   const allergensResolved = draft.allergens.length > 0 || draft.allergensConfirmed;
-
-  const toggleAllergen = (a: Allergen) => {
-    setDraft((d) => {
-      const has = d.allergens.includes(a);
-      const allergens = has ? d.allergens.filter((x) => x !== a) : [...d.allergens, a];
-      return { ...d, allergens, allergensConfirmed: allergens.length > 0 ? false : d.allergensConfirmed };
-    });
-  };
 
   const toggleTaste = (t: TasteNote) =>
     setDraft((d) => ({
@@ -87,6 +77,25 @@ export const MenuItemForm = ({
       addIngredient();
     } else if (e.key === 'Backspace' && !ingredientInput && draft.ingredients.length) {
       update({ ingredients: draft.ingredients.slice(0, -1) });
+    }
+  };
+
+  const addAllergen = () => {
+    const v = allergenInput.trim().toLowerCase();
+    if (!v) return;
+    if (!draft.allergens.includes(v)) {
+      // Adding an allergen supersedes a prior "no allergens" confirmation.
+      update({ allergens: [...draft.allergens, v], allergensConfirmed: false });
+    }
+    setAllergenInput('');
+  };
+
+  const onAllergenKey = (e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' || e.key === ',') {
+      e.preventDefault();
+      addAllergen();
+    } else if (e.key === 'Backspace' && !allergenInput && draft.allergens.length) {
+      update({ allergens: draft.allergens.slice(0, -1) });
     }
   };
 
@@ -257,22 +266,28 @@ export const MenuItemForm = ({
           <span className="ss-allergens__req">Required · food-safety layer</span>
         </div>
 
-        <div className="ss-allergens__grid">
-          {allergenOrder.map((a) => {
-            const on = draft.allergens.includes(a);
-            return (
+        <div className="ss-tags ss-tags--allergen">
+          {draft.allergens.map((a) => (
+            <span key={a} className="ss-tag ss-tag--allergen">
+              {a}
               <button
-                key={a}
                 type="button"
-                aria-pressed={on}
-                className={cn('ss-allergen', on && 'ss-allergen--on')}
-                onClick={() => toggleAllergen(a)}
+                className="ss-tag__x"
+                onClick={() => update({ allergens: draft.allergens.filter((x) => x !== a) })}
+                aria-label={`Remove ${a}`}
               >
-                <span className="ss-allergen__box" aria-hidden="true" />
-                {allergenLabels[a]}
+                ×
               </button>
-            );
-          })}
+            </span>
+          ))}
+          <input
+            className="ss-tags__input"
+            value={allergenInput}
+            onChange={(e) => setAllergenInput(e.target.value)}
+            onKeyDown={onAllergenKey}
+            onBlur={addAllergen}
+            placeholder={draft.allergens.length ? 'Add another…' : 'Type an allergen, press Enter'}
+          />
         </div>
 
         <label className="ss-allergens__none">

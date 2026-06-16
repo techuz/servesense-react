@@ -51,7 +51,9 @@ export interface MenuItem {
   portionSize: PortionSize;
   tasteProfile: TasteNote[];
   ingredients: string[];
-  allergens: Allergen[];
+  /** Free-form, manager-typed allergen tags (mirrors `ingredients`). Seeded
+   *  values use the canonical thirteen but the field accepts anything. */
+  allergens: string[];
   /** True once the manager has explicitly tagged allergens OR confirmed none.
    *  Save is blocked until this is true (food-safety gate). */
   allergensConfirmed: boolean;
@@ -116,6 +118,11 @@ export const allergenLabels: Record<Allergen, string> = {
   molluscs: 'Molluscs',
   sulphites: 'Sulphites',
 };
+
+/* Allergens are now free-form (manager-typed, like ingredients). Render a known
+   canonical label when we have one, otherwise capitalise the typed value. */
+export const formatAllergen = (a: string): string =>
+  allergenLabels[a as Allergen] ?? a.replace(/\b\w/g, (c) => c.toUpperCase());
 
 /* Category enum default per §5.3.2 (configurable by manager). */
 const seedCategories: MenuCategory[] = [
