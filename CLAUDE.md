@@ -479,6 +479,17 @@ Seed data is realistic (Lumière Bistro brand, two outlets, full menu, full SOP 
 
 ## 15. Build Log
 
+### Day 11 — Menu allergens: checkbox grid → free-form tag input (2026-06-16)
+
+Small UX-alignment pass on **Menu Knowledge (M4)** per dev request: make the allergens field behave like the ingredients field.
+
+- **`mock/menu.ts`** — `MenuItem.allergens` retyped `Allergen[]` → **`string[]`** (free-form, manager-typed, mirroring `ingredients`). The `Allergen` union + `allergenOrder` + `allergenLabels` are kept as the canonical thirteen. New **`formatAllergen(a: string)`** helper renders a known canonical label when one exists, else title-cases the typed value — so seeded lowercase values (`shellfish`) still read as "Shellfish".
+- **`MenuItemForm.tsx`** — replaced the 13-checkbox `ss-allergens__grid` with a tag-input identical in mechanics to ingredients (`allergenInput` state + `addAllergen`/`onAllergenKey`: Enter/comma to add, Backspace-on-empty to pop, blur to commit, × to remove). Removed `toggleAllergen` and the `allergenLabels`/`allergenOrder`/`Allergen` imports. **Food-safety gate preserved**: save still blocked until ≥1 allergen tagged or "no allergens" explicitly confirmed; adding a chip auto-clears a prior `allergensConfirmed`. Kept the `.ss-allergens` wrapper (error border, head, required note, none-checkbox, error message).
+- **`MenuItemRow.tsx`** — `allergenLabels[a]` → `formatAllergen(a)` (the list display now takes a plain string).
+- **`Menu.css`** — added `.ss-tags--allergen` / `.ss-tag--allergen` (red-tinted variant of the shared `.ss-tags` so the field keeps its food-safety identity rather than looking like the neutral ingredient chips).
+
+Existing localStorage menu data deep-merges with seed, so no data wipe. Typecheck clean. No new files, no deps.
+
 ### Day 10 — Developer design-review reconciliation + editorial design pass (auth & dashboard) (2026-06-16)
 
 Two threads: (1) reconciled the developer's `Design changes.pdf` review against the SOW, (2) a creative design elevation of the auth module and dashboard using the `frontend-design` skill.

@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import { Badge } from '@/components/primitives/Badge';
-import { allergenLabels, dishTypeLabels, portionLabels, type MenuItem } from '@/lib/mock/menu';
+import { formatAllergen, dishTypeLabels, portionLabels, type MenuItem } from '@/lib/mock/menu';
 import { fadeUp } from '@/lib/motion';
 import { cn } from '@/lib/cn';
 import { DishMark } from './MenuIcons';
@@ -69,7 +69,7 @@ export const MenuItemRow = ({ item, currency, onEdit }: Props) => {
                       <circle cx="6" cy="9" r="0.6" fill="currentColor" />
                     </svg>
                   </span>
-                  {item.allergens.map((a) => allergenLabels[a]).join(' · ')}
+                  {item.allergens.map(formatAllergen).join(' · ')}
                 </span>
               </>
             ) : item.allergensConfirmed ? (
