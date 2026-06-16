@@ -8,6 +8,9 @@ export interface AuthUser {
   fullName: string;
   role: 'manager' | 'owner';
   initials: string;
+  /** Firebase-style email verification (SOW v2 §5.1). Existing logins are
+   *  assumed verified; fresh registrations start unverified. */
+  emailVerified: boolean;
 }
 
 /** Self-service registration payload (SOW v2 §5.1.2). */
@@ -30,6 +33,12 @@ interface AuthContextValue extends AuthState {
   login: (identifier: string, password: string) => Promise<void>;
   register: (input: RegisterInput) => Promise<void>;
   logout: () => void;
+  /** Mark the signed-in account's email as verified (mock — no real link). */
+  markEmailVerified: () => void;
+  /** Request a password-reset email (mock — simulated send). */
+  requestPasswordReset: (email: string) => Promise<void>;
+  /** Set a new password from a reset link (mock — simulated). */
+  resetPassword: (password: string) => Promise<void>;
 }
 
 const STORAGE_KEY_TOKEN = 'ss_token';
@@ -113,6 +122,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         fullName,
         role: 'manager',
         initials,
+        emailVerified: true,
       };
       const token = `mock.${btoa(`${user.id}:${user.email}:${Date.now()}`)}`;
 
@@ -146,6 +156,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         fullName,
         role: 'owner',
         initials,
+        emailVerified: false,
       };
       const token = `mock.${btoa(`${user.id}:${user.email}:${Date.now()}`)}`;
 
@@ -186,9 +197,53 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setState({ token: null, user: null, status: 'unauthenticated' });
   }, []);
 
+  const markEmailVerified = useCallback(() => {
+    setState((s) => {
+      if (!s.user) return s;
+      const user = { ...s.user, emailVerified: true };
+      try {
+        localStorage.setItem(STORAGE_KEY_USER, JSON.stringify(user));
+      } catch {
+        /* ignore */
+      }
+      return { ...s, user };
+    });
+  }, []);
+
+  const requestPasswordReset = useCallback(async (email: string) => {
+    // Mock — Firebase Auth email flow per SOW v2 §5.1.1. We just simulate the send.
+    if (!email.trim() || !email.includes('@')) {
+      throw {
+        status: 400,
+        code: 'INVALID_EMAIL',
+        message: 'Enter the email on your account',
+      } satisfies ApiError;
+    }
+    await new Promise((r) => setTimeout(r, 600));
+  }, []);
+
+  const resetPassword = useCallback(async (password: string) => {
+    if (password.length < 8) {
+      throw {
+        status: 400,
+        code: 'WEAK_PASSWORD',
+        message: 'Password must be at least 8 characters',
+      } satisfies ApiError;
+    }
+    await new Promise((r) => setTimeout(r, 600));
+  }, []);
+
   const value = useMemo<AuthContextValue>(
-    () => ({ ...state, login, register, logout }),
-    [state, login, register, logout],
+    () => ({
+      ...state,
+      login,
+      register,
+      logout,
+      markEmailVerified,
+      requestPasswordReset,
+      resetPassword,
+    }),
+    [state, login, register, logout, markEmailVerified, requestPasswordReset, resetPassword],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

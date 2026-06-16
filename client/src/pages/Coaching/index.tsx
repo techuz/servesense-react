@@ -16,6 +16,7 @@ import { fadeUp, stagger } from '@/lib/motion';
 import { cn } from '@/lib/cn';
 import { LessonCard } from './LessonCard';
 import { LessonDrawer } from './LessonDrawer';
+import { LessonAssignDrawer } from './LessonAssignDrawer';
 import './Coaching.css';
 
 type Filter = 'all' | LessonCategory;
@@ -33,6 +34,7 @@ export const CoachingPage = () => {
   const [search, setSearch] = useState('');
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [editing, setEditing] = useState<Lesson | null>(null);
+  const [assigning, setAssigning] = useState<Lesson | null>(null);
 
   const counts = useMemo(() => {
     const out: Record<Filter, number> = {
@@ -196,6 +198,7 @@ export const CoachingPage = () => {
                 lesson={l}
                 staff={staff}
                 onEdit={() => openEdit(l)}
+                onAssign={() => setAssigning(l)}
                 onToggleActive={() => {
                   toggleActive(l.id);
                   notify({
@@ -218,7 +221,6 @@ export const CoachingPage = () => {
       <LessonDrawer
         open={drawerOpen}
         lesson={editing}
-        staff={staff}
         onClose={() => setDrawerOpen(false)}
         onSave={(l) => {
           upsert(l);
@@ -232,6 +234,22 @@ export const CoachingPage = () => {
           const title = lessons.find((l) => l.id === id)?.title ?? 'Lesson';
           remove(id);
           notify({ tone: 'info', title: 'Lesson removed', description: title });
+        }}
+      />
+
+      <LessonAssignDrawer
+        open={!!assigning}
+        lesson={assigning}
+        staff={staff}
+        onClose={() => setAssigning(null)}
+        onSave={(l) => {
+          upsert(l);
+          const n = l.assignments.length;
+          notify({
+            tone: 'success',
+            title: 'Assignments saved',
+            description: `${l.title} · ${n} staff assigned`,
+          });
         }}
       />
     </motion.div>

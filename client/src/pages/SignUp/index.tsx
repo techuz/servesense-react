@@ -102,8 +102,11 @@ export const SignUpPage = () => {
         restaurantName: values.restaurantName,
         restaurantAddress: values.restaurantAddress,
       });
-      notify({ tone: 'success', title: 'Account created', description: 'Welcome to ServeSense — taking you to your dashboard…' });
-      window.setTimeout(() => navigate('/dashboard', { replace: true }), 280);
+      notify({ tone: 'success', title: 'Account created', description: 'Just verify your email to finish setting up.' });
+      window.setTimeout(
+        () => navigate('/verify-email', { replace: true, state: { email: values.email.trim() } }),
+        280,
+      );
     } catch (e2) {
       const message = (e2 as { message?: string })?.message ?? 'Could not create your account. Please try again.';
       notify({ tone: 'error', title: 'Sign-up failed', description: message });

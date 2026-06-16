@@ -13,17 +13,37 @@ import {
   timezoneOptions,
   useRestaurantProfile,
 } from '@/lib/mock/restaurant';
+import { useTables, type RestaurantTable } from '@/lib/mock/tables';
 import { useToast } from '@/lib/toast';
 import { fadeUp, stagger, transitions } from '@/lib/motion';
+import { cn } from '@/lib/cn';
 import { LogoUpload } from './LogoUpload';
+import { TableDrawer } from './TableDrawer';
 import './Restaurant.css';
 
 export const RestaurantPage = () => {
   const { profile, updateProfile } = useRestaurantProfile();
+  const { tables, upsert: upsertTable, remove: removeTable, isDuplicateNumber, stats: tableStats } =
+    useTables();
   const { notify } = useToast();
 
   const [editingProfile, setEditingProfile] = useState(false);
   const [profileDraft, setProfileDraft] = useState(profile);
+
+  const [tableDrawerOpen, setTableDrawerOpen] = useState(false);
+  const [editingTable, setEditingTable] = useState<RestaurantTable | null>(null);
+
+  const openAddTable = () => {
+    setEditingTable(null);
+    setTableDrawerOpen(true);
+  };
+  const openEditTable = (table: RestaurantTable) => {
+    setEditingTable(table);
+    setTableDrawerOpen(true);
+  };
+
+  // Group tables by section, preserving first-seen section order.
+  const sections = Array.from(new Set(tables.map((t) => t.section)));
 
   const brandInitial = profile.name.trim().charAt(0).toUpperCase() || 'S';
 
@@ -275,6 +295,94 @@ export const RestaurantPage = () => {
           </AnimatePresence>
         </Card>
       </motion.section>
+
+      {/* ============================================================
+          Tables — floor plan (not in SOW; added per dev request)
+          ============================================================ */}
+      <motion.section variants={fadeUp} className="ss-tables">
+        <div className="ss-tables__head">
+          <div>
+            <h2 className="ss-tables__title">Tables</h2>
+            <p className="ss-tables__lede">
+              Define your floor so the waiter app can pick a table when starting a session.
+            </p>
+          </div>
+          <div className="ss-tables__head-actions">
+            <Badge tone="brand" subtle dot>
+              {tableStats.active} active · {tableStats.seats} seats
+            </Badge>
+            <Button variant="primary" onClick={openAddTable}>
+              + Add table
+            </Button>
+          </div>
+        </div>
+
+        {tables.length === 0 ? (
+          <Card padding="lg" elevation="low" className="ss-tables__empty">
+            <p>No tables yet.</p>
+            <Button variant="secondary" onClick={openAddTable}>
+              + Add your first table
+            </Button>
+          </Card>
+        ) : (
+          <div className="ss-tables__sections">
+            {sections.map((section) => {
+              const inSection = tables.filter((t) => t.section === section);
+              return (
+                <div key={section} className="ss-tables__section">
+                  <div className="ss-tables__section-head">
+                    <h3>{section}</h3>
+                    <span>{inSection.length} table{inSection.length === 1 ? '' : 's'}</span>
+                  </div>
+                  <div className="ss-tables__grid">
+                    {inSection.map((t) => (
+                      <button
+                        key={t.id}
+                        type="button"
+                        className={cn('ss-table-card', t.status === 'inactive' && 'ss-table-card--off')}
+                        onClick={() => openEditTable(t)}
+                      >
+                        <span className="ss-table-card__num">{t.number}</span>
+                        <span className="ss-table-card__seats">
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                            <circle cx="12" cy="8" r="3.4" stroke="currentColor" strokeWidth="1.8" />
+                            <path d="M5 20c0-3.3 3-5.5 7-5.5s7 2.2 7 5.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                          </svg>
+                          {t.seats}
+                        </span>
+                        {t.status === 'inactive' && (
+                          <span className="ss-table-card__off-tag">Inactive</span>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </motion.section>
+
+      <TableDrawer
+        open={tableDrawerOpen}
+        table={editingTable}
+        onClose={() => setTableDrawerOpen(false)}
+        isDuplicateNumber={isDuplicateNumber}
+        onSave={(t) => {
+          const isNew = !editingTable;
+          upsertTable(t);
+          notify({
+            tone: 'success',
+            title: isNew ? 'Table added' : 'Table updated',
+            description: `Table ${t.number} · ${t.section}`,
+          });
+        }}
+        onDelete={(id) => {
+          const t = tables.find((x) => x.id === id);
+          removeTable(id);
+          notify({ tone: 'info', title: 'Table removed', description: t ? `Table ${t.number}` : undefined });
+        }}
+      />
     </motion.div>
   );
 };

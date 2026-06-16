@@ -1,120 +1,174 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 /* ============================================================================
-   Mock data — Service SOP / Flow of Service (SOW v2 §5.3.3).
-   Manager-defined, reorderable steps. Each step has only the SOW fields:
-   Step Number (the array order), Step Name, Description, Expected Outcome,
-   and Scoring Weight. The AI tracks compliance and uses the weights in
-   per-session scoring.
+   Mock data — Service SOP / Flow of Service (SOW v2 §5.3.3, extended per dev).
+
+   The manager uploads a service document; an LLM extracts the flow as a set of
+   STAGES (the SOP steps — Greeting, Seating, …), and within each stage a set of
+   RULES the AI checks during live sessions. Each rule has a priority
+   (must / should), an instruction, and an optional verbatim script.
+
+   The manager can edit any extracted rule, add rules, and add stages. Stage-level
+   Expected Outcome + Scoring Weight (SOW §5.3.3) are preserved for KPI scoring.
    ============================================================================ */
 
-export interface SopStep {
+export type SopRulePriority = 'must' | 'should';
+
+export interface SopRule {
   id: string;
-  name: string;             // max 100
-  description: string;      // max 500
-  expectedOutcome: string;  // max 200, optional
-  scoringWeight: number;    // decimal; default equal weight
+  priority: SopRulePriority;
+  instruction: string;   // what the waiter must/should do
+  script: string;        // optional verbatim line ("Welcome to…")
 }
 
-const STORAGE_KEY = 'ss_mock_sop_v2';
+export interface SopStage {
+  id: string;
+  name: string;             // e.g. "Greeting"
+  expectedOutcome: string;  // SOW §5.3.3 (optional)
+  scoringWeight: number;    // SOW §5.3.3 — weight in KPI scoring
+  rules: SopRule[];
+}
 
-/* Default SOP steps preloaded per §5.3.3 (manager can edit / reorder / add). */
-const seed: SopStep[] = [
+/** Metadata for the source document the SOP was extracted from. */
+export interface SopSource {
+  fileName: string;
+  uploadedAt: string;  // ISO
+  pageCount: number;
+}
+
+export interface SopState {
+  source: SopSource | null;
+  stages: SopStage[];
+}
+
+const STORAGE_KEY = 'ss_mock_sop_v3';
+
+export const priorityLabels: Record<SopRulePriority, string> = {
+  must: 'Must',
+  should: 'Should',
+};
+
+/* Default flow (pre-loaded as if extracted from the seed document). */
+const seedStages: SopStage[] = [
   {
     id: 'sop_greeting',
     name: 'Greeting',
-    description:
-      'Approach the guest within 30 seconds of arrival with a genuine smile and eye contact. Acknowledge any reservation or recognise repeat guests by name when possible.',
     expectedOutcome: 'First impression',
     scoringWeight: 10,
+    rules: [
+      { id: 'r_greet_1', priority: 'must', instruction: 'Approach the guest within 30 seconds of arrival with eye contact and a genuine smile.', script: 'Welcome to Brasa — great to have you with us tonight.' },
+      { id: 'r_greet_2', priority: 'should', instruction: 'Recognise repeat guests by name and acknowledge any reservation.', script: '' },
+    ],
   },
   {
     id: 'sop_seating',
     name: 'Seating',
-    description:
-      'Confirm party size and any seating preferences before walking the guest to the table. Assist elderly or accessibility-needs guests.',
     expectedOutcome: 'Comfort',
     scoringWeight: 10,
+    rules: [
+      { id: 'r_seat_1', priority: 'must', instruction: 'Confirm party size before walking the guest to the table.', script: '' },
+      { id: 'r_seat_2', priority: 'should', instruction: 'Offer assistance to elderly guests or those with accessibility needs.', script: '' },
+    ],
   },
   {
     id: 'sop_menu_handover',
     name: 'Menu Handover',
-    description:
-      'Present menus open to the first page, then pause. Briefly mention specials, allergens of concern in tonight’s rotation, and the chef’s pick if asked.',
     expectedOutcome: 'Clarity',
     scoringWeight: 10,
+    rules: [
+      { id: 'r_menu_1', priority: 'must', instruction: 'Present menus open and pause before listing specials.', script: '' },
+      { id: 'r_menu_2', priority: 'should', instruction: 'Mention tonight’s specials and the chef’s pick if asked.', script: 'Tonight the chef is recommending the seafood paella.' },
+    ],
   },
   {
     id: 'sop_order_taking',
     name: 'Order Taking',
-    description:
-      'Take starter, mains, and sides in clear order. Listen actively, do not interrupt, and repeat the order back before moving to the next guest.',
     expectedOutcome: 'Error reduction',
     scoringWeight: 10,
+    rules: [
+      { id: 'r_order_1', priority: 'must', instruction: 'Listen actively without interrupting, and repeat each item back as it is ordered.', script: '' },
+    ],
   },
   {
     id: 'sop_order_confirmation',
     name: 'Order Confirmation',
-    description:
-      'Before sending the ticket to the kitchen, repeat the full order back to the table. Re-state any allergy notes, preferences, and modifications.',
     expectedOutcome: 'Trust',
     scoringWeight: 10,
+    rules: [
+      { id: 'r_conf_1', priority: 'must', instruction: 'Repeat the full order back to the table before sending the ticket.', script: 'Let me read that back to make sure I have it right…' },
+      { id: 'r_conf_2', priority: 'must', instruction: 'Re-state any allergy notes and confirm them with the guest.', script: '' },
+    ],
   },
   {
     id: 'sop_serving',
     name: 'Serving',
-    description:
-      'Serve from the guest’s right when possible, announce each dish clearly, and ensure water, bread, and condiments are on the table before stepping back.',
     expectedOutcome: 'Satisfaction',
     scoringWeight: 10,
+    rules: [
+      { id: 'r_serve_1', priority: 'must', instruction: 'Announce each dish clearly as it is placed.', script: '' },
+      { id: 'r_serve_2', priority: 'should', instruction: 'Ensure water, bread, and condiments are on the table before stepping back.', script: '' },
+    ],
   },
   {
     id: 'sop_table_check',
     name: 'Table Check',
-    description:
-      'Within two minutes of serving the mains, return once to ensure everything is to the guest’s satisfaction. Do not linger or hover after the check.',
     expectedOutcome: 'Care without hovering',
     scoringWeight: 10,
+    rules: [
+      { id: 'r_check_1', priority: 'should', instruction: 'Return once within two minutes of serving the mains to check satisfaction; do not hover.', script: 'How is everything tasting so far?' },
+    ],
   },
   {
     id: 'sop_clearing',
     name: 'Clearing',
-    description:
-      'Wait until all guests have finished before clearing. Ask once if everyone is done; never assume from cutlery placement alone.',
     expectedOutcome: 'Closure',
     scoringWeight: 10,
+    rules: [
+      { id: 'r_clear_1', priority: 'should', instruction: 'Wait until all guests have finished before clearing; ask once rather than assuming.', script: '' },
+    ],
   },
   {
     id: 'sop_billing',
     name: 'Billing',
-    description:
-      'Bring the bill folder face-down when requested. Itemise any modifications, the service / gratuity breakdown, and accepted payment methods clearly.',
     expectedOutcome: 'Smooth end',
     scoringWeight: 10,
+    rules: [
+      { id: 'r_bill_1', priority: 'must', instruction: 'Bring the bill folder face-down when requested and itemise any modifications.', script: '' },
+    ],
   },
   {
     id: 'sop_farewell',
     name: 'Farewell',
-    description:
-      'Acknowledge each guest as they leave. Thank them by name where known, hand over any to-go items personally, and hold the door for guests with their hands full.',
     expectedOutcome: 'Brand recall',
     scoringWeight: 10,
+    rules: [
+      { id: 'r_fare_1', priority: 'should', instruction: 'Acknowledge each guest as they leave, thanking them by name where known.', script: 'Thank you for joining us — we hope to see you again soon.' },
+    ],
   },
 ];
 
-function read(): SopStep[] {
+const seedState: SopState = {
+  source: {
+    fileName: 'brasa_service_sop_2026.pdf',
+    uploadedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3).toISOString(),
+    pageCount: 6,
+  },
+  stages: seedStages,
+};
+
+function read(): SopState {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return seed;
+    if (!raw) return seedState;
     const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed)) return seed;
-    return parsed as SopStep[];
+    if (!parsed || !Array.isArray(parsed.stages)) return seedState;
+    return parsed as SopState;
   } catch {
-    return seed;
+    return seedState;
   }
 }
 
-function write(value: SopStep[]) {
+function write(value: SopState) {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(value));
   } catch {
@@ -122,38 +176,65 @@ function write(value: SopStep[]) {
   }
 }
 
-export function newSopStepId() {
-  return `sop_${Math.random().toString(36).slice(2, 9)}`;
+const rid = (p: string) => `${p}_${Math.random().toString(36).slice(2, 9)}`;
+
+export function emptyRule(): SopRule {
+  return { id: rid('r'), priority: 'must', instruction: '', script: '' };
 }
 
-export function emptySopStep(): SopStep {
-  return { id: newSopStepId(), name: '', description: '', expectedOutcome: '', scoringWeight: 10 };
+export function emptyStage(): SopStage {
+  return { id: rid('sop'), name: '', expectedOutcome: '', scoringWeight: 10, rules: [emptyRule()] };
+}
+
+/** Simulate the LLM extracting stages + rules from an uploaded document. */
+export function simulateSopExtraction(_fileName: string): Promise<SopStage[]> {
+  // Deterministic in design preview — returns a fresh copy of the seed flow.
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve(seedStages.map((s) => ({ ...s, rules: s.rules.map((r) => ({ ...r })) })));
+    }, 2200);
+  });
 }
 
 export function useSop() {
-  const [steps, setSteps] = useState<SopStep[]>(() => read());
+  const [state, setState] = useState<SopState>(() => read());
 
   useEffect(() => {
-    write(steps);
-  }, [steps]);
+    write(state);
+  }, [state]);
 
-  const upsert = useCallback((step: SopStep) => {
-    setSteps((list) => {
-      const idx = list.findIndex((s) => s.id === step.id);
-      if (idx === -1) return [...list, step];
+  const setStages = (updater: (stages: SopStage[]) => SopStage[]) =>
+    setState((s) => ({ ...s, stages: updater(s.stages) }));
+
+  /* --- Document --------------------------------------------------------- */
+  const setFromUpload = useCallback((fileName: string, stages: SopStage[], pageCount: number) => {
+    setState({
+      source: { fileName, uploadedAt: new Date().toISOString(), pageCount },
+      stages,
+    });
+  }, []);
+
+  const clearSource = useCallback(() => {
+    setState({ source: null, stages: [] });
+  }, []);
+
+  /* --- Stages ----------------------------------------------------------- */
+  const upsertStage = useCallback((stage: SopStage) => {
+    setStages((list) => {
+      const idx = list.findIndex((s) => s.id === stage.id);
+      if (idx === -1) return [...list, stage];
       const next = [...list];
-      next[idx] = step;
+      next[idx] = stage;
       return next;
     });
   }, []);
 
-  const remove = useCallback((id: string) => {
-    setSteps((list) => list.filter((s) => s.id !== id));
+  const removeStage = useCallback((id: string) => {
+    setStages((list) => list.filter((s) => s.id !== id));
   }, []);
 
-  /** Move a step up (-1) or down (+1) in the sequence. */
-  const move = useCallback((id: string, dir: -1 | 1) => {
-    setSteps((list) => {
+  const moveStage = useCallback((id: string, dir: -1 | 1) => {
+    setStages((list) => {
       const idx = list.findIndex((s) => s.id === id);
       const target = idx + dir;
       if (idx === -1 || target < 0 || target >= list.length) return list;
@@ -163,11 +244,50 @@ export function useSop() {
     });
   }, []);
 
-  const stats = useMemo(() => {
-    const total = steps.length;
-    const totalWeight = steps.reduce((sum, s) => sum + (Number(s.scoringWeight) || 0), 0);
-    return { total, totalWeight };
-  }, [steps]);
+  /* --- Rules (scoped to a stage) ---------------------------------------- */
+  const updateStageRules = (stageId: string, fn: (rules: SopRule[]) => SopRule[]) =>
+    setStages((list) => list.map((s) => (s.id === stageId ? { ...s, rules: fn(s.rules) } : s)));
 
-  return { steps, upsert, remove, move, stats };
+  const addRule = useCallback((stageId: string) => {
+    updateStageRules(stageId, (rules) => [...rules, emptyRule()]);
+  }, []);
+
+  const upsertRule = useCallback((stageId: string, rule: SopRule) => {
+    updateStageRules(stageId, (rules) => {
+      const idx = rules.findIndex((r) => r.id === rule.id);
+      if (idx === -1) return [...rules, rule];
+      const next = [...rules];
+      next[idx] = rule;
+      return next;
+    });
+  }, []);
+
+  const removeRule = useCallback((stageId: string, ruleId: string) => {
+    updateStageRules(stageId, (rules) => rules.filter((r) => r.id !== ruleId));
+  }, []);
+
+  const stats = useMemo(() => {
+    const stageCount = state.stages.length;
+    const ruleCount = state.stages.reduce((n, s) => n + s.rules.length, 0);
+    const mustCount = state.stages.reduce(
+      (n, s) => n + s.rules.filter((r) => r.priority === 'must').length,
+      0,
+    );
+    const totalWeight = state.stages.reduce((n, s) => n + (Number(s.scoringWeight) || 0), 0);
+    return { stageCount, ruleCount, mustCount, totalWeight };
+  }, [state.stages]);
+
+  return {
+    source: state.source,
+    stages: state.stages,
+    setFromUpload,
+    clearSource,
+    upsertStage,
+    removeStage,
+    moveStage,
+    addRule,
+    upsertRule,
+    removeRule,
+    stats,
+  };
 }

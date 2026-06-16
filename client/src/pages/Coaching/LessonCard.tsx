@@ -22,12 +22,13 @@ interface LessonCardProps {
   lesson: Lesson;
   staff: StaffMember[];
   onEdit: () => void;
+  onAssign: () => void;
   onToggleActive: () => void;
 }
 
 const MAX_AVATAR_STACK = 4;
 
-export const LessonCard = ({ lesson, staff, onEdit, onToggleActive }: LessonCardProps) => {
+export const LessonCard = ({ lesson, staff, onEdit, onAssign, onToggleActive }: LessonCardProps) => {
   const [thumbBroken, setThumbBroken] = useState(false);
   const thumb = useMemo(() => youtubeThumb(lesson.youtubeUrl), [lesson.youtubeUrl]);
   const pct = lessonCompletionPct(lesson);
@@ -182,22 +183,37 @@ export const LessonCard = ({ lesson, staff, onEdit, onToggleActive }: LessonCard
           </span>
         </div>
 
-        <button
-          type="button"
-          className="ss-lesson__edit-btn"
-          onClick={onEdit}
-        >
-          Edit
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
-            <path
-              d="M9 6l6 6-6 6"
-              stroke="currentColor"
-              strokeWidth="2.2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-        </button>
+        <div className="ss-lesson__action-btns">
+          <button
+            type="button"
+            className="ss-lesson__assign-btn"
+            onClick={onAssign}
+          >
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
+              <circle cx="9" cy="8" r="3.4" stroke="currentColor" strokeWidth="1.8" />
+              <path d="M3.5 19c0-3 2.5-5 5.5-5s5.5 2 5.5 5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+              <path d="M18 8v6M21 11h-6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+            </svg>
+            Assign
+          </button>
+
+          <button
+            type="button"
+            className="ss-lesson__edit-btn"
+            onClick={onEdit}
+          >
+            Edit
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+              <path
+                d="M9 6l6 6-6 6"
+                stroke="currentColor"
+                strokeWidth="2.2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </button>
+        </div>
       </div>
     </motion.article>
   );

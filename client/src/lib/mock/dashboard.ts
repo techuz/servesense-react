@@ -58,14 +58,6 @@ export interface TopItem {
   units: number;
 }
 
-export interface ServiceError {
-  type: string;
-  description: string;
-  count: number;
-  /** -1..1 — trend vs prior period. Positive means more errors (worse). */
-  trend: number;
-}
-
 export interface DashboardMetrics {
   period: Period;
   // Hero
@@ -85,9 +77,6 @@ export interface DashboardMetrics {
   // Revenue & sales
   categoryRevenue: CategorySlice[];
   topItems: TopItem[];
-
-  // Service errors
-  serviceErrors: ServiceError[];
 }
 
 /* --- Helpers -------------------------------------------------------------- */
@@ -207,14 +196,6 @@ function buildMetrics(period: Period): DashboardMetrics {
     },
   ];
 
-  const serviceErrors: ServiceError[] = [
-    { type: 'Missed greeting', description: 'Welcome step skipped or under 5 seconds', count: Math.round(12 * scale), trend: -0.31 },
-    { type: 'Allergy not confirmed', description: 'Allergy disclosure missed on a flagged dish', count: Math.round(9 * scale), trend: -0.48 },
-    { type: 'Order not repeated back', description: 'Order confirmation step skipped', count: Math.round(8 * scale), trend: -0.22 },
-    { type: 'Table check missed', description: 'Post-serve check-in not detected within 5 min', count: Math.round(6 * scale), trend: 0.18 },
-    { type: 'Farewell skipped', description: 'No farewell phrase detected at session end', count: Math.round(3 * scale), trend: -0.6 },
-  ];
-
   return {
     period,
     additionalRevenue,
@@ -229,7 +210,6 @@ function buildMetrics(period: Period): DashboardMetrics {
     kpis,
     categoryRevenue,
     topItems,
-    serviceErrors,
   };
 }
 

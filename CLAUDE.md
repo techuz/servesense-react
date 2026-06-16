@@ -421,6 +421,7 @@ All primitives live in `client/src/components/primitives/`. They use design toke
 | **Card** | `Card.tsx` + `Header/Title/Description/Body/Footer` | M2, M3, etc. — sans semibold title (post-M2 typography polish) |
 | **Badge** | `Badge.tsx` | Status indicators — 7 tones (neutral, brand, gold, success, warning, danger, info) × subtle / solid |
 | **Drawer** | `Drawer.tsx` | M2 outlet form, M9 staff form, M10 lesson form, plus the shared `OrientationReplaceDrawer` — right-side spring slide, overlay blur, ESC + click-outside, body scroll lock |
+| **Modal** | `Modal.tsx` | M9 invite-success confirmation (`InviteSuccessModal`) — centered dialog mirroring Drawer's portal + overlay + ESC + scroll-lock conventions, but scales in from center; sm/md/lg sizes, optional `forceful` (hides close + disables click-outside for required steps) |
 | **EmptyState** | `EmptyState.tsx` | M2 outlets, M4 menu filters, M6 situations, M8 goals — dashed card with gradient icon tile + CTA slot |
 | **TimePicker** | `TimePicker.tsx` | (Reserved for primitives library; M3 operating timings now read-only) — **portal-rendered** popover (escapes ancestor `overflow: hidden`); flips above when no room below; preset quick-times grid + stepper editor + AM/PM sliding toggle |
 | **PhraseList** | `PhraseList.tsx` | M5, M6, M7 — list of phrases with three visual tones: do (green) / avoid (red) / quote (gold). Gained a `readOnly` prop in the orientation refactor — same chips, no input row, no remove buttons. |
@@ -460,7 +461,8 @@ and follow the exact shape the future REST endpoints will return.
 | `usePolicies()` | `mock/policies.ts` | `ss_mock_policies` | `{ policies, update }` for the 7 policy sections |
 | `useMenuCategories()` | `mock/menu.ts` | `ss_mock_menu_categories` | `{ categories, addCategory, renameCategory, removeCategory }` |
 | `useMenuItems()` | `mock/menu.ts` | `ss_mock_menu_items` | `{ items, upsert, remove, toggle, bulkImport }` |
-| `useSop()` | `mock/sop.ts` | `ss_mock_sop` | `{ state, updateStep }` for the 10 SOP steps |
+| `useSop()` | `mock/sop.ts` | `ss_mock_sop_v3` | `{ source, stages, setFromUpload, clearSource, upsertStage, removeStage, moveStage, addRule, upsertRule, removeRule, stats }` — document-fed **stages → rules** model (Day 9). `source` = uploaded-doc metadata; each `SopStage` (Name / Expected Outcome / Scoring Weight) holds `SopRule[]` (priority `must`/`should` + instruction + optional script). `simulateSopExtraction()` fakes the LLM parse. |
+| `useTables()` | `mock/tables.ts` | `ss_mock_tables_v1` | `{ tables, upsert, remove, toggleStatus, isDuplicateNumber, stats }` — restaurant floor plan (number / seats / section / status). **Not in SOW v2** — added Day 9 per dev request so the waiter app can pick a table instead of free-typing. 10 seeded tables across Main Dining / Patio / Bar / Private Room. |
 | `useCommunication()` | `mock/communication.ts` | `ss_mock_communication` | `{ data, updateAspect, upsertSituation, removeSituation }` |
 | `useExcellence()` | `mock/excellence.ts` | `ss_mock_excellence` | `{ data, updatePrinciple, updateArea }` |
 | `useSalesGoals()` | `mock/goals.ts` | `ss_mock_sales_goals` | `{ goals, upsert, remove, toggleEnabled, stats }` |
@@ -476,6 +478,57 @@ Seed data is realistic (Lumière Bistro brand, two outlets, full menu, full SOP 
 ---
 
 ## 15. Build Log
+
+### Day 10 — Developer design-review reconciliation + editorial design pass (auth & dashboard) (2026-06-16)
+
+Two threads: (1) reconciled the developer's `Design changes.pdf` review against the SOW, (2) a creative design elevation of the auth module and dashboard using the `frontend-design` skill.
+
+**Developer design-review (`Design changes.pdf`, 7 items) — cross-checked vs SOW v2, verified in-browser.**
+All 7 items turned out to be **already implemented in the uncommitted Day-9 working tree**; this session verified each live in a headless Chrome (puppeteer-core driving the running Vite app) rather than re-building:
+1. Email verification flow — `pages/auth/VerifyEmail` ✅
+2. Forgot-password flow — `ForgotPassword` + `ResetPassword` (SOW §5.1 explicitly allows it) ✅
+3. Restaurant table creation — `useTables` + `TableDrawer` ✅ (NOT in SOW — net-new; waiter free-types table # per §4.2.1)
+4. Add-lesson vs assign-lesson split — `LessonAssignDrawer` ✅ (minor UX divergence from §5.5.1's single form)
+5. SOP document → LLM-extracted stages+rules, manager edits/adds — `mock/sop.ts` stages→rules + `SopUpload`/`SopStageCard` ✅ (extends §5.3.3's flat step form)
+6. Service Errors panel removed from dashboard ✅ — **direct divergence from SOW §5.4.2** (which lists it as required). Decision: **follow the developer over the literal SOW**; the §5.4.1 before/after "Service Errors" KPI tile is **kept** (only the standalone panel is gone).
+7. Waiter invite-success modal — `InviteSuccessModal` + `Modal` primitive ✅
+   - Decision recorded: when the dev PDF conflicts with SOW v2, the dev PDF wins (it post-dates the doc and reflects the running product).
+
+**Design system extended — "The Maître d' / Service Report" editorial language (via `frontend-design` skill).**
+Kept Arivex strictly (forest + gold + cream, DM Serif Display + Outfit); the new layer is an *editorial, printed-menu* sensibility now shared across auth + dashboard.
+
+- **Auth module redesign** (`Login.css` rewritten, `LoginBackdrop.tsx`, `AuthBrandPanel`, all 5 screens inherit it):
+  - Brand panel reframed as a **printed-menu cover**: embossed gold hairline **frame** with engraved corner brackets, vertical letterspaced **"ServeSense" spine**, oversized serif headline, a giant serif **"S" watermark** bleeding off the corner, and Roman-numeral **"courses"** (replaced the `01/02/03` list). Uses the `--atmosphere-dark` / `--glow-*` / `--dot-grid-dark` / `--tex-grain` tokens.
+  - **Iterations from stakeholder feedback:** (a) the secondary screens' confirmation states (forgot "sent" + verify-email) were tried left-aligned then reverted to **centered + polished** — refined gold-ringed mail icon, centered gold "menu-divider" hairline under the heading, logo **centered** as the brand anchor (kept rather than removed so narrow screens, where the brand panel is hidden, still show branding); (b) removed the gold hairline that sat under the brand eyebrow (`.ss-login__headline::before`); (c) improved the `.ss-auth__text-btn` ("Use a different email") hover visibility → `green-100` pill + inset ring.
+- **Dashboard redesign** (`Dashboard/index.tsx` + `Dashboard.css`) — "Service Report":
+  - Editorial **masthead header** (gold-tick eyebrow "Performance Report" replacing "Manager · §5.4"; gold hairline rule fading right beneath the header), **"menu-divider" hairline** under each section head, **inset gold frame** on the dark revenue hero (same motif as the auth panel).
+  - **Iterations from feedback:** big gold serif Roman-numeral section indices (I / II) were added then **removed**; the §5.4.2 filter controls (category / staff selects + Export CSV) restyled into **sleek consistent pills** (38px, fully-rounded, `shadow-xs`, Export gained a download icon), scoped under `.ss-dash__filters` so the shared Select/Button primitives are untouched.
+
+All work design-data only; typecheck clean throughout. No new dependencies.
+
+### Day 9 — Auth flows, SOP document-extraction restructure, Tables, Modal, drawer splits (2026-06-15)
+
+A feature day layered on top of the v2 build. **Recovered after an accidental power loss** — all working-tree changes were intact on disk except `SOP.css`, whose new component styles (`.ss-sop__source`, `.ss-stage`, `.ss-rule`, `.ss-sop-upload*`, `.ss-sop__add-stage-row`) were never saved; the restructured SOP page/components compiled but rendered unstyled. The CSS was rebuilt in the existing token vocabulary (source banner mirrors the old orientation-banner language; the upload drop/extraction states mirror the M4 Menu upload). Typecheck + production build clean (~588 kB JS / 172 kB CSS).
+
+**Auth — full account-lifecycle flows (SOW v2 §5.1).** New `pages/auth/` directory: `ForgotPassword`, `ResetPassword`, `VerifyEmail`, plus a shared `AuthBrandPanel` (the login left-panel brand lockup extracted for reuse, reusing `LoginBackdrop` + `TextReveal`) and `Auth.css`.
+- `auth.tsx` — `AuthUser` gained `emailVerified` (existing logins assumed verified; fresh registrations start `false`); context gained `markEmailVerified()`, `requestPasswordReset(email)`, `resetPassword(password)` (all mock/simulated, Firebase-shaped per §5.1.1).
+- **Sign-Up** now routes to `/verify-email` (passing the email via router state) instead of straight to the dashboard.
+- **Login** gained a "Forgot password?" link (`.ss-login__forgot`).
+- **Routes** — `/forgot-password` + `/reset-password` under `PublicOnlyRoute`; `/verify-email` sits outside both guards (account is authenticated but unverified right after sign-up).
+- Design-preview affordances throughout (no real email sent): "Open reset link" / "I've verified — continue" stand-ins, 30s resend cooldown on verify.
+
+**SOP — flat steps → document-fed stages-with-rules (§5.3.3, dev-extended).** The biggest change. Manager uploads a service document; an LLM "extracts" the flow as **stages** (Greeting, Seating, …) and, within each, the **rules** the AI checks live (priority `must`/`should` + instruction + optional verbatim script).
+- `mock/sop.ts` rewritten: `SopStep` → `SopStage` (holds `SopRule[]`) + `SopSource` + `SopState`; storage `ss_mock_sop_v2` → `ss_mock_sop_v3`; `simulateSopExtraction()` added; hook surface expanded (stage CRUD + reorder + per-stage rule CRUD + `setFromUpload`/`clearSource`; `stats` now `{ stageCount, ruleCount, mustCount, totalWeight }`). Seeded as if extracted from `brasa_service_sop_2026.pdf`.
+- Deleted `SopStepCard.tsx` + `SopStepDrawer.tsx`; added `SopStageCard.tsx` (inline-editable stage: name input, reorder/delete, outcome + weight, rule rows with priority select) and `SopUpload.tsx` (drop → simulated extraction, PDF/DOCX/TXT).
+- `pages/SOP/index.tsx` — no-source → full-bleed upload empty state; with source → source banner (filename + "uploaded N ago · N pages") with Replace (Drawer + compact `SopUpload`) + remove, overview stats, editable stage list, "+ Add stage".
+
+**Restaurant Tables — floor plan (NOT in SOW v2; dev request).** New `mock/tables.ts` (`useTables`, storage `ss_mock_tables_v1`) + `TableDrawer.tsx` (number / seats / section / active, case-insensitive duplicate-number guard). Restaurant page gained a Tables section below the profile card: section-grouped grid of clickable table chips (number + seat count, inactive dimmed) + "active · seats" badge. Rationale: the waiter app can later pick a table from this list instead of free-typing the session table number.
+
+**Coaching — assignment split out of the editor.** New `LessonAssignDrawer.tsx` — a dedicated staff-assignment surface (edits only the lesson's `assignments` array; all other fields pass through). `LessonDrawer` lost its `staff` prop + the inline staff picker (now create/edit content only). `LessonCard` gained an `onAssign` action.
+
+**Staff — invite-success confirmation.** New `InviteSuccessModal.tsx` (+ `.css`) using the new `Modal` primitive — shown after adding a *new* waiter (edits still toast), with an "Add another" path. Drove the creation of the shared `Modal` primitive.
+
+**Dashboard — Service Errors panel removed.** Dropped the "Service errors" panel from `Dashboard/index.tsx`, the `ServiceError` type + `serviceErrors` seed from `mock/dashboard.ts`, and the service-error rows from the CSV export.
 
 ### Day 8 — Module 8: in-app notification surface (2026-06-09)
 

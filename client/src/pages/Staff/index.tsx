@@ -15,6 +15,7 @@ import { fadeUp, stagger } from '@/lib/motion';
 import { cn } from '@/lib/cn';
 import { StaffRow } from './StaffRow';
 import { StaffDrawer } from './StaffDrawer';
+import { InviteSuccessModal } from './InviteSuccessModal';
 import './Staff.css';
 
 type StatusFilter = 'all' | StaffStatus;
@@ -43,6 +44,7 @@ export const StaffPage = () => {
   const [sort, setSort] = useState<SortKey>('name');
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [editing, setEditing] = useState<StaffMember | null>(null);
+  const [invited, setInvited] = useState<StaffMember | null>(null);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -242,12 +244,14 @@ export const StaffPage = () => {
         member={editing}
         onClose={() => setDrawerOpen(false)}
         onSave={(m) => {
+          const isNew = !editing;
           upsert(m);
-          notify({
-            tone: 'success',
-            title: editing ? 'Staff updated' : 'Staff added',
-            description: m.name,
-          });
+          if (isNew) {
+            // New waiter → surface the invite-sent confirmation modal.
+            setInvited(m);
+          } else {
+            notify({ tone: 'success', title: 'Staff updated', description: m.name });
+          }
         }}
         onDelete={(id) => {
           const name = staff.find((s) => s.id === id)?.name ?? 'Staff';
@@ -263,6 +267,16 @@ export const StaffPage = () => {
             title: member.status === 'active' ? 'Deactivated' : 'Reactivated',
             description: member.name,
           });
+        }}
+      />
+
+      <InviteSuccessModal
+        open={!!invited}
+        member={invited}
+        onClose={() => setInvited(null)}
+        onAddAnother={() => {
+          setInvited(null);
+          openAdd();
         }}
       />
     </motion.div>

@@ -3,6 +3,9 @@ import { AppShell } from '@/components/layout/AppShell';
 import { ProtectedRoute, PublicOnlyRoute } from '@/components/ProtectedRoute';
 import { LoginPage } from '@/pages/Login';
 import { SignUpPage } from '@/pages/SignUp';
+import { ForgotPasswordPage } from '@/pages/auth/ForgotPassword';
+import { ResetPasswordPage } from '@/pages/auth/ResetPassword';
+import { VerifyEmailPage } from '@/pages/auth/VerifyEmail';
 import { DashboardPage } from '@/pages/Dashboard';
 import { RestaurantPage } from '@/pages/Restaurant';
 import { PoliciesPage } from '@/pages/Policies';
@@ -32,6 +35,28 @@ export const router = createBrowserRouter([
         <SignUpPage />
       </PublicOnlyRoute>
     ),
+  },
+  {
+    path: '/forgot-password',
+    element: (
+      <PublicOnlyRoute>
+        <ForgotPasswordPage />
+      </PublicOnlyRoute>
+    ),
+  },
+  {
+    path: '/reset-password',
+    element: (
+      <PublicOnlyRoute>
+        <ResetPasswordPage />
+      </PublicOnlyRoute>
+    ),
+  },
+  {
+    // Reached right after sign-up; the account is authenticated but unverified,
+    // so this sits outside both guards.
+    path: '/verify-email',
+    element: <VerifyEmailPage />,
   },
   {
     path: '/',
