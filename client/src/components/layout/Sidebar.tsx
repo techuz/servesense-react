@@ -1,38 +1,38 @@
-import { NavLink, useLocation } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { fadeUp, stagger, transitions } from '@/lib/motion';
-import './Sidebar.css';
+import { NavLink, useLocation } from "react-router-dom";
+import { motion } from "framer-motion";
+import { fadeUp, stagger, transitions } from "@/lib/motion";
+import "./Sidebar.css";
 
 type NavItem = { to: string; label: string };
 type NavGroup = { label?: string; items: NavItem[] };
 
 const navGroups: NavGroup[] = [
   {
-    items: [{ to: '/dashboard', label: 'Dashboard' }],
+    items: [{ to: "/dashboard", label: "Dashboard" }],
   },
   {
-    label: 'Setup',
+    label: "Setup",
     items: [
-      { to: '/restaurant', label: 'Restaurant' },
-      { to: '/staff', label: 'Staff' },
+      { to: "/restaurant", label: "Restaurant" },
+      { to: "/staff", label: "Staff" },
     ],
   },
   {
-    label: 'Orientation',
+    label: "Orientation",
     items: [
-      { to: '/orientation/policies', label: 'Standard Policies' },
-      { to: '/orientation/menu', label: 'Menu Knowledge' },
-      { to: '/orientation/sop', label: 'Service SOP' },
-      { to: '/orientation/tone', label: 'Communication & Tone' },
-      { to: '/orientation/excellence', label: 'Best Practices' },
-      { to: '/orientation/goals', label: 'Sales Goals' },
+      { to: "/orientation/policies", label: "Standard Policies" },
+      { to: "/orientation/menu", label: "Menu Knowledge" },
+      { to: "/orientation/sop", label: "Service SOP" },
+      // { to: '/orientation/tone', label: 'Communication & Tone' },
+      // { to: '/orientation/excellence', label: 'Best Practices' },
+      { to: "/orientation/goals", label: "Sales Goals" },
     ],
   },
   {
-    label: 'Performance',
+    label: "Performance",
     items: [
-      { to: '/performance', label: 'Staff Performance' },
-      { to: '/coaching', label: 'Coaching & Lessons' },
+      { to: "/performance", label: "Staff Performance" },
+      { to: "/coaching", label: "Coaching & Lessons" },
     ],
   },
 ];
@@ -71,28 +71,33 @@ export const Sidebar = () => {
       >
         {navGroups.map((group, idx) => (
           <motion.div key={idx} className="ss-sidebar__group" variants={fadeUp}>
-            {group.label && <div className="ss-sidebar__group-label">{group.label}</div>}
+            {group.label && (
+              <div className="ss-sidebar__group-label">{group.label}</div>
+            )}
             <ul className="ss-sidebar__list">
               {group.items.map((item) => {
                 const isActive =
                   location.pathname === item.to ||
-                  (item.to !== '/dashboard' && location.pathname.startsWith(item.to));
+                  (item.to !== "/dashboard" &&
+                    location.pathname.startsWith(item.to));
                 return (
                   <li key={item.to} className="ss-sidebar__list-item">
                     <NavLink
                       to={item.to}
                       className={({ isActive: routerActive }) =>
-                        `ss-sidebar__link ${routerActive || isActive ? 'ss-sidebar__link--active' : ''}`
+                        `ss-sidebar__link ${routerActive || isActive ? "ss-sidebar__link--active" : ""}`
                       }
                     >
-                      {(isActive) && (
+                      {isActive && (
                         <motion.span
                           layoutId="sidebar-active-pill"
                           className="ss-sidebar__pill"
                           transition={transitions.softSpring}
                         />
                       )}
-                      <span className="ss-sidebar__link-label">{item.label}</span>
+                      <span className="ss-sidebar__link-label">
+                        {item.label}
+                      </span>
                     </NavLink>
                   </li>
                 );
